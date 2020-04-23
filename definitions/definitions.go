@@ -14,37 +14,42 @@ type AudioInterface interface {
 	GetDeviceInfo(GetDeviceInfoRequest) GetDeviceInfoResponse
 }
 
-// Source defines a single input channel on an audio interface.
-// Generally, SampleRate must match the device driver. If there
-// is disagreement, an error is returned.
-type Source struct {
-	Channel      int    `json:"channel"`      // Unambiguous correspondance with physical input
+// HardwarePort defines a single IO port on an audio interface.
+// Notably, this struct does not contain informataion about it
+// being an input or output. SampleRate typically must match the
+// device driver. If there is disagreement, an error is returned.
+type HardwarePort struct {
+	Channel      int    `json:"channel"`      // Correspondance with physical input
 	SampleRate   int    `json:"sampleRate"`   // e.g. 192000. Must match driver.
 	SampleFormat string `json:"sampleFormat"` // I16, U16, or F32
 }
 
-// Sink defines a UDP destination for sending the audio stream
-type Sink struct {
+// Address defines a UDP address for sending or receiving raw audio.
+type Address struct {
 	Host string `json:"host"`
 	Port int    `json:"port"`
 }
 
-// Stream describes a stream of audio from a hardware input
-// to a destination IP address. The sink uniquely identifies
-// the stream, so an error should be returned if there is
-// an attempt to create multiple streams with the same sink.
+// Stream defines a unidirectional flow of audio involving a hardware
+// input (probably XLR) and a remote port. Default is input behavior,
+// where the input of the interface the audio to the remote port.
+// The opposite (IsOutput == true) reverses the direction. The host
+// address used for outputs should be 0.0.0.0 (all network interfaces).
 type Stream struct {
-	Source Source `json:"source"` // Hardware source
-	Sink   Sink   `json:"sink"`   // Network sink
+	IsOutput     bool         `json:"isOutput"`     // If true, direction is Address -> HardwarePort
+	Address      Address      `json:"address"`      //
+	HardwarePort HardwarePort `json:"hardwarePort"` //
 }
 
 // StreamWithMetrics boxes a Stream object with some metrics
-// collected over its lifetime.
+// collected over its lifetime. TotalSent and TotalReceive
+// are intentionally disambiguated, even though one will
+// always be zero (streams are unidirectional).
 type StreamWithMetrics struct {
-	Stream    Stream `json:"stream"`    //
-	TotalSent int    `json:"totalSent"` // Total bytes sent since creation
-	Started   string `json:"started"`   // time.UnixDate format
-	LocalPort int    `json:"localPort"` // Local outbound UDP port
+	Stream        Stream `json:"stream"`        //
+	TotalSent     int    `json:"totalSent"`     // Total bytes sent since creation (inputs only)
+	TotalReceived int    `json:"totalReceived"` // Total bytes received since creation (outputs only)
+	Created       string `json:"created"`       // time.UnixDate format
 }
 
 // CreateStreamRequest ...
@@ -54,11 +59,12 @@ type CreateStreamRequest struct {
 
 // CreateStreamResponse ...
 type CreateStreamResponse struct {
+	Created string `json:"created"` // time.UnixDate format
 }
 
-// DeleteStreamRequest ...
+// DeleteStreamRequest request to delete a stream
 type DeleteStreamRequest struct {
-	Sink Sink `json:"sink"` // Uniquely identifies the stream
+	Stream Stream `json:"stream"`
 }
 
 // DeleteStreamResponse ...
@@ -67,7 +73,6 @@ type DeleteStreamResponse struct {
 
 // ListStreamsRequest ...
 type ListStreamsRequest struct {
-	FilterChannel *int `json:"filterChannel,omitempty"`
 }
 
 // ListStreamsResponse aggregates all existing streams with

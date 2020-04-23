@@ -38,6 +38,15 @@ type Stream struct {
 	Sink   Sink   `json:"sink"`   // Network sink
 }
 
+// StreamWithMetrics boxes a Stream object with some metrics
+// collected over its lifetime.
+type StreamWithMetrics struct {
+	Stream    Stream `json:"stream"`    //
+	TotalSent int    `json:"totalSent"` // Total bytes sent since creation
+	Started   string `json:"started"`   // time.UnixDate format
+	LocalPort int    `json:"localPort"` // Local outbound UDP port
+}
+
 // CreateStreamRequest ...
 type CreateStreamRequest struct {
 	Stream Stream `json:"stream"`
@@ -61,9 +70,10 @@ type ListStreamsRequest struct {
 	FilterChannel *int `json:"filterChannel,omitempty"`
 }
 
-// ListStreamsResponse ...
+// ListStreamsResponse aggregates all existing streams with
+// relevant metrics.
 type ListStreamsResponse struct {
-	Streams []Stream `json:"streams"`
+	Streams []StreamWithMetrics `json:"streams"`
 }
 
 // ChannelInfo enumerates valid configuration for the channel.

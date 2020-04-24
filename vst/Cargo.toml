@@ -13,5 +13,5 @@ log = "0.4.8"
 glutin = { git = "https://github.com/rust-windowing/glutin" }
 
 [lib]
-name = "basicvst"
+name = "paradise"
 crate-type = ["cdylib"]

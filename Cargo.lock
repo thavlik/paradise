@@ -1004,6 +1004,7 @@ dependencies = [
  "env_logger",
  "flutter-engine",
  "flutter-winit",
+ "glutin",
  "log",
  "vst",
 ]

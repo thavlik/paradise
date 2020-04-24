@@ -36,6 +36,7 @@ type Address struct {
 // The opposite (IsOutput == true) reverses the direction. The host
 // address used for outputs should be 0.0.0.0 (all network interfaces).
 type Stream struct {
+    Name         string       `json:"name"`         // Uniquely identifies the stream
 	IsOutput     bool         `json:"isOutput"`     // If true, direction is Address -> HardwarePort
 	Address      Address      `json:"address"`      //
 	HardwarePort HardwarePort `json:"hardwarePort"` //
@@ -47,6 +48,7 @@ type Stream struct {
 // always be zero (streams are unidirectional).
 type StreamWithMetrics struct {
 	Stream        Stream `json:"stream"`        //
+	Status        string `json:"status"`        // Status message
 	TotalSent     int    `json:"totalSent"`     // Total bytes sent since creation (inputs only)
 	TotalReceived int    `json:"totalReceived"` // Total bytes received since creation (outputs only)
 	Created       string `json:"created"`       // time.UnixDate format
@@ -64,7 +66,7 @@ type CreateStreamResponse struct {
 
 // DeleteStreamRequest request to delete a stream
 type DeleteStreamRequest struct {
-	Stream Stream `json:"stream"`
+	Name string `json:"name"`
 }
 
 // DeleteStreamResponse ...

@@ -9,7 +9,7 @@
 //! Mystran's fixed-pivot method is used to approximate the tanh() parts.
 //! Quality can be improved a lot by oversampling a bit.
 //! Feedback is clipped independently of the input, so it doesn't disappear at high gains.
-
+extern crate glutin;
 #[macro_use]
 extern crate vst;
 use std::f32::consts::PI;
@@ -19,6 +19,9 @@ use std::sync::Arc;
 use vst::buffer::AudioBuffer;
 use vst::plugin::{Category, Info, Plugin, PluginParameters};
 use vst::util::AtomicFloat;
+
+mod editor;
+mod stream;
 
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
@@ -220,8 +223,8 @@ impl Plugin for LadderFilter {
     }
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         for (input_buffer, output_buffer) in buffer.zip() {
-            // Send input_buffer over UDP
-            // Copy bytes received over UDP since last invocation to output_buffer
+            // TODO: Send input_buffer over UDP
+            // TODO: Copy bytes received over UDP since last invocation to output_buffer
             for (input_sample, output_sample) in input_buffer.iter().zip(output_buffer) {
                 self.tick_pivotal(*input_sample);
                 // the poles parameter chooses which filter stage we take our output from.
@@ -231,6 +234,9 @@ impl Plugin for LadderFilter {
     }
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
         Arc::clone(&self.params) as Arc<dyn PluginParameters>
+    }
+    fn get_editor(&mut self) -> Option<Box<dyn vst::editor::Editor>> {
+        Some(Box::new(editor::Editor::new()))
     }
 }
 plugin_main!(LadderFilter);

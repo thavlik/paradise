@@ -593,6 +593,7 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 [[package]]
 name = "glutin"
 version = "0.24.0"
+source = "git+https://github.com/rust-windowing/glutin#33aec609b6da89afc3c59b8b6e294b00c52fc12b"
 dependencies = [
  "android_glue",
  "cgl",
@@ -618,6 +619,7 @@ dependencies = [
 [[package]]
 name = "glutin_egl_sys"
 version = "0.1.4"
+source = "git+https://github.com/rust-windowing/glutin#33aec609b6da89afc3c59b8b6e294b00c52fc12b"
 dependencies = [
  "gl_generator 0.13.1",
  "winapi 0.3.8",
@@ -626,10 +628,12 @@ dependencies = [
 [[package]]
 name = "glutin_emscripten_sys"
 version = "0.1.1"
+source = "git+https://github.com/rust-windowing/glutin#33aec609b6da89afc3c59b8b6e294b00c52fc12b"
 
 [[package]]
 name = "glutin_gles2_sys"
 version = "0.1.4"
+source = "git+https://github.com/rust-windowing/glutin#33aec609b6da89afc3c59b8b6e294b00c52fc12b"
 dependencies = [
  "gl_generator 0.13.1",
  "objc",
@@ -638,6 +642,7 @@ dependencies = [
 [[package]]
 name = "glutin_glx_sys"
 version = "0.1.6"
+source = "git+https://github.com/rust-windowing/glutin#33aec609b6da89afc3c59b8b6e294b00c52fc12b"
 dependencies = [
  "gl_generator 0.13.1",
  "x11-dl",
@@ -646,6 +651,7 @@ dependencies = [
 [[package]]
 name = "glutin_wgl_sys"
 version = "0.1.4"
+source = "git+https://github.com/rust-windowing/glutin#33aec609b6da89afc3c59b8b6e294b00c52fc12b"
 dependencies = [
  "gl_generator 0.13.1",
 ]
@@ -992,6 +998,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "paradise-vst"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "flutter-engine",
+ "flutter-winit",
+ "log",
+ "vst",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1302,9 +1319,9 @@ checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "syn"
-version = "1.0.17"
+version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0df0eb663f387145cab623dea85b09c2c5b4b0aef44e945d928e682fce71bb03"
+checksum = "410a7488c0a728c7ceb4ad59b9567eb4053d02e8cc7f5c0e0eeeb39518369213"
 dependencies = [
  "proc-macro2 1.0.10",
  "quote 1.0.3",
@@ -1427,19 +1444,8 @@ checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "vst"
-version = "0.1.0"
-dependencies = [
- "env_logger",
- "flutter-engine",
- "flutter-winit",
- "glutin",
- "log",
- "vst 0.2.0",
-]
-
-[[package]]
-name = "vst"
 version = "0.2.0"
+source = "git+https://github.com/rustaudio/vst-rs#f943b56abacde2eaf0cc91e07174acbb8a702c24"
 dependencies = [
  "bitflags",
  "libc",

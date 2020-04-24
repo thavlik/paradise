@@ -1,6 +1,6 @@
 use vst::editor::{KeyCode, KnobMode};
-use flutter_winit::FlutterWindow;
-use glutin::window::WindowBuilder;
+//use flutter_winit::FlutterWindow;
+//use glutin::window::WindowBuilder;
 use std::path::{Path, PathBuf};
 
 pub struct Editor {
@@ -43,7 +43,7 @@ impl vst::editor::Editor for Editor {
     /// Return `true` if the window opened successfully, `false` otherwise.
     fn open(&mut self, parent: *mut std::ffi::c_void) -> bool {
         // Open flutter window
-
+        /*
         let assets_dir = std::env::var("FLUTTER_ASSET_DIR").expect("FLUTTER_ASSET_DIR");
 
         let mut args = Vec::with_capacity(3);
@@ -66,8 +66,8 @@ impl vst::editor::Editor for Editor {
         flutter.start_engine().unwrap();
 
         flutter.run();
-
-        true
+        */
+        false
     }
 
     /// Return whether the window is currently open.

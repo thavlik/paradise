@@ -9,7 +9,6 @@
 //! Mystran's fixed-pivot method is used to approximate the tanh() parts.
 //! Quality can be improved a lot by oversampling a bit.
 //! Feedback is clipped independently of the input, so it doesn't disappear at high gains.
-extern crate glutin;
 #[macro_use]
 extern crate vst;
 use std::f32::consts::PI;

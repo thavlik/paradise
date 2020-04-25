@@ -260,6 +260,14 @@ impl Plugin for RemoteAudioEffect {
             return
         }
         let (inputs, mut outputs) = buffer.split();
+        if inputs.len() != self.tx.len() {
+            error!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
+            return;
+        }
+        if outputs.len() != self.rx.len() {
+            error!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
+            return;
+        }
         inputs.into_iter()
             .zip(self.tx.iter())
             .for_each(|(input, tx)| tx.process(input));

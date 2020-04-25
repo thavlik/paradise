@@ -86,7 +86,9 @@ impl RxStream {
     }
 
     pub fn process(&mut self, output_buffer: &mut [f32]) {
-        let mut buf = self.buf[self.cycle()].lock().unwrap();
+        let mut buf = self.buf[self.cycle()]
+            .lock()
+            .unwrap();
         // Take only most recent samples
         let i = buf.len() - output_buffer.len();
         assert_eq!(buf[i..].len(), output_buffer.len());

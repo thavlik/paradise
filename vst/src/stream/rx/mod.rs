@@ -33,8 +33,8 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
     }
 
     /// Receive data over the network. A thread is supposed
-/// to call this repeatedly to ensure the socket is
-/// quickly synchronized with the output buffer.
+    /// to call this repeatedly to ensure the socket is
+    /// quickly synchronized with the output buffer.
     fn receive(&self, receive_buf: &mut [u8]) {
         let (amt, _src) = match self.sock.recv_from(receive_buf) {
             Ok(value) => value,

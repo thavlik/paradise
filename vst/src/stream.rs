@@ -8,7 +8,6 @@ struct Buffer {
     samples: Vec<f32>,
 }
 
-
 impl Buffer {
     fn new() -> Self {
         Self {

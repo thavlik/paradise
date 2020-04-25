@@ -7,7 +7,7 @@ pub trait TxBuffer
     fn new(rt: &tokio::runtime::Runtime) -> Self;
 
     /// Accumulates the data into the send buffer. Called by plugin.
-    fn process(&self, input_buffer: &[f32]);
+    fn accumulate(&self, input_buffer: &[f32]);
 
     /// Flushes the send buffer into `buffer`. Called by network thread.
     fn flush(&self, buffer: &mut [f32]) -> usize;
@@ -17,7 +17,15 @@ pub struct TxStream<B> where B: TxBuffer {
     sock: std::net::UdpSocket,
     dest: std::net::SocketAddr,
     clock: std::time::Instant,
+    stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: B,
+}
+
+impl<B> std::ops::Drop for TxStream<B>
+    where B: TxBuffer {
+    fn drop(&mut self) {
+        self.stop.send(());
+    }
 }
 
 impl<B> TxStream<B> where B: 'static + TxBuffer {
@@ -28,13 +36,15 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
     ) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", outbound_port);
         let sock = std::net::UdpSocket::bind(addr)?;
+        let (s, r) = crossbeam::crossbeam_channel::unbounded();
         let stream = std::sync::Arc::new(Self {
             sock,
             dest,
+            stop: s,
             clock: std::time::Instant::now(),
             buf: B::new(rt),
         });
-        rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
+        rt.spawn(Self::entry(stream.clone(), r));
         Ok(stream)
     }
 
@@ -55,6 +65,10 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
         self.write_message_header(&mut send_buf[..8]);
         let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(send_buf[8..].as_mut_ptr() as _, send_buf[8..].len() / 4) };
         let amt = self.buf.flush(data);
+        if amt == 0 {
+            println!("amt == 0");
+            return Ok(0);
+        }
         let i = 8 + amt * 4;
         self.sock.send_to(&send_buf[..i], self.dest)
     }
@@ -62,21 +76,25 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
 
     pub fn process(&self, input_buffer: &[f32]) {
         // Accumulate the samples in the send buffer
-        self.buf.process(input_buffer)
+        self.buf.accumulate(input_buffer)
     }
 
-    async fn entry(stream: std::sync::Weak<Self>) {
+    async fn entry(stream: std::sync::Arc<Self>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
         const BUFFER_SIZE: usize = 256_000;
-        let mut buf: [u8; BUFFER_SIZE] =  [0; BUFFER_SIZE];
+        let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         loop {
-            match stream.upgrade() {
-                Some(stream) => {
-                    stream.send(&mut buf[..]);
-                },
-                None => {
+            match stop.try_recv() {
+                Ok(_) => {
                     return;
-                },
+                }
+                Err(e) => match e {
+                    crossbeam::channel::TryRecvError::Empty => {},
+                    crossbeam::channel::TryRecvError::Disconnected => {
+                        panic!("stop stream disconnected");
+                    },
+                }
             };
+            stream.send(&mut buf[..]);
             std::thread::yield_now();
         }
     }

@@ -2,8 +2,10 @@
 default-members = [
   "types",
    "vst",
+   "tool",
 ]
 members = [
   "types",
   "vst",
+  "tool",
 ]

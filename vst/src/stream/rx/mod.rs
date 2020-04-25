@@ -2,35 +2,46 @@ use super::*;
 
 pub mod locking;
 
+
 pub trait RxBuffer
     where Self: std::marker::Sync + std::marker::Send {
     fn new(rt: &tokio::runtime::Runtime) -> Self;
 
-    /// Flushes the data in the current write buffer to output_buffer.
-    /// Called by plugin.
-    fn flush(&self, output_buffer: &mut [f32]);
-
     /// Accumulates the data into the current write buffer.
     /// Called by network thread.
     fn accumulate(&self, timestamp: u64, samples: &[f32]);
+
+    /// Flushes the data in the current write buffer to output_buffer.
+    /// Called by plugin.
+    fn flush(&self, output_buffer: &mut [f32]);
 }
 
 pub struct RxStream<B> where B: RxBuffer {
     sock: std::net::UdpSocket,
     clock: std::sync::atomic::AtomicU64,
+    stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: B,
+}
+
+impl<B> std::ops::Drop for RxStream<B>
+    where B: RxBuffer {
+    fn drop(&mut self) {
+        self.stop.send(());
+    }
 }
 
 impl<B> RxStream<B> where B: 'static + RxBuffer {
     pub fn new(port: usize, rt: &tokio::runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
+        let (s, r) = crossbeam::crossbeam_channel::unbounded();
         let stream = std::sync::Arc::new(Self {
             sock,
+            stop: s,
             clock: std::default::Default::default(),
             buf: B::new(rt),
         });
-        rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
+        rt.spawn(Self::entry(stream.clone(), r));
         Ok(stream)
     }
 
@@ -77,18 +88,22 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
         self.buf.flush(output_buffer);
     }
 
-    async fn entry(stream: std::sync::Weak<Self>) {
+    async fn entry(stream: std::sync::Arc<Self>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
         const BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         loop {
-            match stream.upgrade() {
-                Some(stream) => {
-                    stream.receive(&mut buf[..]);
-                },
-                None => {
+            match stop.try_recv() {
+                Ok(_) => {
                     return;
                 }
+                Err(e) => match e {
+                    crossbeam::channel::TryRecvError::Empty => {}
+                    crossbeam::channel::TryRecvError::Disconnected => {
+                        panic!("stop stream disconnected");
+                    }
+                }
             };
+            stream.receive(&mut buf[..]);
             std::thread::yield_now();
         }
     }

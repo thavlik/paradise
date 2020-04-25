@@ -11,6 +11,7 @@ env_logger = "0.7.1"
 #flutter-winit = { path = "../../flutter-rs/flutter-winit" }
 log = "0.4.8"
 log4rs = "0.11.0"
+crossbeam = "0.7.3"
 #glutin = { git = "https://github.com/rust-windowing/glutin" }
 tokio = { version = "0.2.19", features = ["rt-threaded"] }
 

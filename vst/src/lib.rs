@@ -15,6 +15,8 @@ extern crate vst;
 extern crate log;
 #[macro_use]
 extern crate tokio;
+#[macro_use]
+extern crate crossbeam;
 extern crate log4rs;
 
 use std::f32::consts::PI;
@@ -42,6 +44,27 @@ struct RemoteAudioEffect {
 
     // Store a handle to the plugin's parameter object.
     params: Arc<RemoteAudioEffectParameters>,
+
+    running: bool,
+}
+
+impl RemoteAudioEffect {
+    fn ensure_started(&mut self) {
+        if self.running {
+            return;
+        }
+        // inbound:
+        // - 30000/UDP by rx stream
+        // - 30001/UDP by debug microservice
+        // outbound:
+        // - 30001/UDP by tx stream
+        //let rx = stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(30000, &self.rt).unwrap();
+        let addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
+        let tx = stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(addr, 35000, &self.rt).unwrap();
+        //self.rx = vec![rx];
+        self.tx = vec![tx];
+        self.running = true;
+    }
 }
 
 struct RemoteAudioEffectParameters {
@@ -89,12 +112,6 @@ impl Default for RemoteAudioEffectParameters {
             sample_rate: AtomicFloat::new(44100.),
             g: AtomicFloat::new(0.07135868),
         }
-    }
-}
-
-impl RemoteAudioEffect {
-    fn running(&mut self) -> bool {
-        false
     }
 }
 
@@ -178,19 +195,12 @@ impl Default for RemoteAudioEffect {
             .threaded_scheduler()
             .build()
             .unwrap());
-        // inbound:
-        // - 30000/UDP by rx stream
-        // - 30001/UDP by debug microservice
-        // outbound:
-        // - 30001/UDP by tx stream
-        let rx = stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(30000, &rt).unwrap();
-        let addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
-        let tx = stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(addr, 35000, &rt).unwrap();
         RemoteAudioEffect {
             params: Arc::new(RemoteAudioEffectParameters::default()),
-            rx: vec![rx],
-            tx: vec![tx],
+            rx: vec![],
+            tx: vec![],
             rt,
+            running: false,
         }
     }
 }
@@ -215,25 +225,22 @@ impl Plugin for RemoteAudioEffect {
     }
 
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
-        if !self.running() {
-            return;
-        }
+        self.ensure_started();
         let (inputs, mut outputs) = buffer.split();
         if inputs.len() != self.tx.len() {
-            //self.set_error()
-            error!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
-            return;
+            warn!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
+        } else {
+            inputs.into_iter()
+                .zip(self.tx.iter())
+                .for_each(|(input, tx)| tx.process(input));
         }
         if outputs.len() != self.rx.len() {
-            error!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
-            return;
+            warn!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
+        } else {
+            outputs.into_iter()
+                .zip(self.rx.iter())
+                .for_each(|(output, rx)| rx.process(output));
         }
-        inputs.into_iter()
-            .zip(self.tx.iter())
-            .for_each(|(input, tx)| tx.process(input));
-        outputs.into_iter()
-            .zip(self.rx.iter())
-            .for_each(|(output, rx)| rx.process(output));
     }
 
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
@@ -243,7 +250,8 @@ impl Plugin for RemoteAudioEffect {
 
     fn get_editor(&mut self) -> Option<Box<dyn vst::editor::Editor>> {
         info!("get_editor()");
-        Some(Box::new(editor::Editor::new()))
+        //Some(Box::new(editor::Editor::new()))
+        None
     }
 }
 

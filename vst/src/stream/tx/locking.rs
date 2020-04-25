@@ -28,7 +28,7 @@ impl TxBuffer for LockingTxBuffer {
         }
     }
 
-    fn process(&self, input_buffer: &[f32]) {
+    fn accumulate(&self, input_buffer: &[f32]) {
         self.buf[self.current()]
             .lock()
             .unwrap()

@@ -31,10 +31,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   mkdir -p $outdir || true
   rm -rf $outdir/paradise.vst || true
   mv paradise.vst $outdir
+  echo "Successfully built plugin for MacOS"
 elif [[ $WSL_DETECTED == "1" ]]; then
   echo "Packaging Windows plugin..."
   rm $outdir/paradise.dll || true
   cp ../target/$target/paradise.dll $outdir
+  echo "Successfully built plugin for Windows"
 else
   echo "Unknown platform"
   exit 1

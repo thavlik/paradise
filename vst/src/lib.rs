@@ -180,7 +180,8 @@ impl Default for RemoteAudioEffect {
             .unwrap());
         let rx = stream::rx::RxStream::new(4000, &rt).unwrap();
         let rx = vec![rx];
-        let tx = stream::tx::TxStream::new(std::net::SocketAddr(std::net::SocketAddrV4::new("192.168.1.101".into(), 4000)), 4000, &rt).unwrap();
+        let addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 4000));
+        let tx = stream::tx::TxStream::new(addr, 4000, &rt).unwrap();
         let tx = vec![tx];
         RemoteAudioEffect {
             params: Arc::new(RemoteAudioEffectParameters::default()),

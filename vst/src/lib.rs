@@ -87,6 +87,9 @@ impl Default for LadderParameters {
 }
 // member methods for the struct
 impl RemoteAudioEffect {
+    fn running(&mut self) -> bool {
+        false
+    }
     // the state needs to be updated after each process. Found by trapezoidal integration
     fn update_state(&mut self) {
         self.s[0] = 2. * self.vout[0] - self.s[0];
@@ -249,25 +252,22 @@ impl Plugin for RemoteAudioEffect {
         }
     }
 
-    fn ensure_streams(&mut self) -> bool {
-        false
-    }
-
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
-        if !self.ensure_streams() {
+        if !self.running() {
             return
         }
-        let (inputs, outputs) = buffer.split();
+        let (inputs, mut outputs) = buffer.split();
         inputs.into_iter().zip(self.tx.iter_mut())
-            .for_each(|(input, tx)| {});
-
-        outputs.into_iter().zip(self.rx.iter_mut());
-        buffer.zip()
-            .zip(self.streams.iter_mut())
-            .for_each(|((input_buffer, output_buffer), stream)| {
-                stream.lock()
+            .for_each(|(input, tx)| {
+                tx.lock()
                     .unwrap()
-                    .process(input_buffer, output_buffer)
+                    .process(input)
+            });
+        outputs.into_iter().zip(self.rx.iter())
+            .for_each(|(output, rx)| {
+                rx.lock()
+                    .unwrap()
+                    .process(output)
             });
     }
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {

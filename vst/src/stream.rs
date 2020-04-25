@@ -63,20 +63,8 @@ impl RxStream {
         buf.extend_from_slice(data);
     }
 
-    fn cycle(&self) -> usize {
-        let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let wrapped = parity % 2;
-        if parity > 100_000_000 {
-            // Wrap parity back to [0, 1] so there's no risk of overflow.
-            // fetch_add returns the old value, so the current value will
-            // (functionally) be the complement.
-            self.parity.store(1 - wrapped, std::sync::atomic::Ordering::SeqCst);
-        }
-        wrapped
-    }
-
     pub fn process(&self, output_buffer: &mut [f32]) {
-        let mut buf = self.buf[self.cycle()]
+        let mut buf = self.buf[cycle(&self.parity)]
             .lock()
             .unwrap();
         // Take only most recent samples
@@ -151,7 +139,7 @@ impl TxStream {
     /// Send audio over UDP
     fn send(&self) -> std::io::Result<usize> {
         let send_buf = {
-            let mut buf = self.buf[self.cycle()]
+            let mut buf = self.buf[cycle(&self.parity)]
                 .lock()
                 .unwrap();
             if buf.len() == 0 {
@@ -168,21 +156,10 @@ impl TxStream {
         self.sock.send_to(&send_buf[..], self.dest)
     }
 
-    fn cycle(&self) -> usize {
-        let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let wrapped = parity % 2;
-        if parity > 100_000_000 {
-            // Wrap parity back to [0, 1] so there's no risk of overflow.
-            // fetch_add returns the old value, so the current value will
-            // (functionally) be the complement.
-            self.parity.store(1 - wrapped, std::sync::atomic::Ordering::SeqCst);
-        }
-        wrapped
-    }
-
     pub fn process(&self, input_buffer: &[f32]) {
         // Accumulate the samples in the send buffer
-        self.buf[self.cycle()]
+        let parity: usize = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
+        self.buf[parity]
             .lock()
             .unwrap()
             .extend_from_slice(input_buffer);
@@ -201,4 +178,16 @@ impl TxStream {
             std::thread::yield_now();
         }
     }
+}
+
+fn cycle(parity: &std::sync::atomic::AtomicUsize) -> usize {
+    let original: usize = parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    let wrapped = original % 2;
+    if original > 100_000_000 {
+        // Wrap parity back to [0, 1] so there's no risk of overflow.
+        // fetch_add returns the old value, so the current value will
+        // (functionally) be the complement.
+        parity.store(1 - wrapped, std::sync::atomic::Ordering::SeqCst);
+    }
+    wrapped
 }

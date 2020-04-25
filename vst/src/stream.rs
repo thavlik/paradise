@@ -1,13 +1,3 @@
-use tokio::runtime;
-
-pub struct TxStream {
-    sock: std::net::UdpSocket,
-    dest: std::net::SocketAddr,
-    clock: std::time::Instant,
-    parity: std::sync::atomic::AtomicUsize,
-    buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
-}
-
 pub struct RxStream {
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
@@ -16,7 +6,7 @@ pub struct RxStream {
 }
 
 impl RxStream {
-    pub fn new(port: usize, rt: &runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
+    pub fn new(port: usize, rt: &tokio::runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
         let stream = std::sync::Arc::new(Self {
@@ -113,11 +103,19 @@ impl RxStream {
     }
 }
 
+pub struct TxStream {
+    sock: std::net::UdpSocket,
+    dest: std::net::SocketAddr,
+    clock: std::time::Instant,
+    parity: std::sync::atomic::AtomicUsize,
+    buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
+}
+
 impl TxStream {
     pub fn new(
         dest: std::net::SocketAddr,
         outbound_port: u16,
-        rt: &runtime::Runtime,
+        rt: &tokio::runtime::Runtime,
     ) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", outbound_port);
         let sock = std::net::UdpSocket::bind(addr)?;

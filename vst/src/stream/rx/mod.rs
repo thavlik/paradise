@@ -6,10 +6,12 @@ pub trait RxBuffer
     where Self: std::marker::Sync + std::marker::Send {
     fn new(rt: &tokio::runtime::Runtime) -> Self;
 
-    /// Flushes the data in the current write buffer to output_buffer
+    /// Flushes the data in the current write buffer to output_buffer.
+    /// Called by plugin.
     fn flush(&self, output_buffer: &mut [f32]);
 
-    /// Accumulates the data into the current write buffer
+    /// Accumulates the data into the current write buffer.
+    /// Called by network thread.
     fn accumulate(&self, timestamp: u64, samples: &[f32]);
 }
 

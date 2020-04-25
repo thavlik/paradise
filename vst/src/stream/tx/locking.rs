@@ -9,6 +9,12 @@ impl LockingTxBuffer {
     fn current(&self) -> usize {
         self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2
     }
+
+    fn cycle(&self) -> std::sync::MutexGuard<Vec<f32>> {
+        self.buf[cycle(&self.parity)]
+            .lock()
+            .unwrap()
+    }
 }
 
 impl TxBuffer for LockingTxBuffer {
@@ -30,6 +36,13 @@ impl TxBuffer for LockingTxBuffer {
     }
 
     fn flush(&self, buffer: &mut [f32]) -> usize {
-        0
+        let mut buf = self.cycle();
+        let len = buf.len();
+        if buffer.len() < len {
+            panic!("tx buffer overrun");
+        }
+        unsafe { std::ptr::copy_nonoverlapping(buf.as_ptr(), buffer.as_mut_ptr(), len) };
+        buf.clear();
+        len
     }
 }

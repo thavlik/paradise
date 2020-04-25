@@ -6,8 +6,10 @@ pub trait TxBuffer
     where Self: std::marker::Sync + std::marker::Send {
     fn new(rt: &tokio::runtime::Runtime) -> Self;
 
+    /// Accumulates the data into the send buffer. Called by plugin.
     fn process(&self, input_buffer: &[f32]);
 
+    /// Flushes the send buffer into `buffer`. Called by network thread.
     fn flush(&self, buffer: &mut [f32]) -> usize;
 }
 

@@ -259,18 +259,14 @@ impl Plugin for RemoteAudioEffect {
         let (inputs, mut outputs) = buffer.split();
         inputs.into_iter()
             .zip(self.tx.iter_mut())
-            .for_each(|(input, tx)| {
-                tx.lock()
-                    .unwrap()
-                    .process(input)
-            });
+            .for_each(|(input, tx)| tx.lock()
+                .unwrap()
+                .process(input));
         outputs.into_iter()
             .zip(self.rx.iter())
-            .for_each(|(output, rx)| {
-                rx.lock()
-                    .unwrap()
-                    .process(output)
-            });
+            .for_each(|(output, rx)| rx.lock()
+                .unwrap()
+                .process(output));
     }
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
         info!("get_parameter_object()");

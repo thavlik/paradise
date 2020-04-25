@@ -3,13 +3,15 @@ struct InputStream {
     sock: std::net::UdpSocket,
     dest: std::net::SocketAddr,
     offset: std::time::Instant,
+    parity: std::sync::atomic::AtomicUsize,
+    buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
 }
 
 struct OutputStream {
     channel: usize,
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
-    buf: [Box<std::sync::Mutex<Vec<u8>>>; 2],
+    buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
 }
 
 impl OutputStream {
@@ -29,8 +31,8 @@ impl OutputStream {
 
     /// receive data over the network
     fn receive(&mut self) {
-        let parity: usize = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
-        let mut buf = self.buf[parity].lock().unwrap();
+        // TODO: accumulate data into the buffer according to timestamp
+        let mut buf = vec![0; 128];
         let (amt, src) = match self.sock.recv_from(&mut buf[..]) {
             Ok(value) => value,
             Err(e) => {
@@ -54,14 +56,18 @@ impl OutputStream {
         }
         let num_samples = data.len() / 4;
         let data: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
-        // TODO: accumulate data into the buffer according to timestamp
+        // Copy data over into shared buffer
+        let parity: usize = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
+        let mut buf = self.buf[parity].lock().unwrap();
+        buf.extend_from_slice(data);
     }
 
     /// write data to the audio interface
-    fn process(&mut self, buffer: &mut Vec<u8>) {
+    fn process(&self, buffer: &mut Vec<f32>) {
         let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst) % 2;
-        let buf = self.buf[parity].lock().unwrap();
+        let mut buf = self.buf[parity].lock().unwrap();
         buffer.copy_from_slice(&buf[..]);
+        buf.clear();
     }
 }
 
@@ -79,6 +85,14 @@ impl InputStream {
             dest,
             offset: std::time::Instant::now(),
         })
+    }
+
+    fn send(&mut self) {
+        let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst) % 2;
+        let mut buf = self.buf[parity].lock().unwrap();
+        let data: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as _, num_samples) };
+        buf.clear();
+        //self.sock.send_to(, self.dest);
     }
 
     fn process(&mut self, buffer: &mut vst::buffer::AudioBuffer<f32>) {

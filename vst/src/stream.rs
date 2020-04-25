@@ -3,7 +3,7 @@ use tokio::runtime;
 pub struct TxStream {
     sock: std::net::UdpSocket,
     dest: std::net::SocketAddr,
-    offset: std::time::Instant,
+    clock: std::time::Instant,
     parity: std::sync::atomic::AtomicUsize,
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
 }
@@ -136,7 +136,7 @@ impl TxStream {
         let stream = std::sync::Arc::new(Self {
             sock,
             dest,
-            offset: std::time::Instant::now(),
+            clock: std::time::Instant::now(),
             parity: std::default::Default::default(),
             buf: [
                 Box::new(std::sync::Mutex::new(Vec::new())),
@@ -149,7 +149,7 @@ impl TxStream {
 
     /// Send audio over UDP
     fn send(&self) -> std::io::Result<usize> {
-        let timestamp = self.offset.elapsed().as_nanos();
+        let timestamp = self.clock.elapsed().as_nanos();
         let mut send_buf = vec![
             ((timestamp >> 48) & 0xFF) as u8,
             ((timestamp >> 40) & 0xFF) as u8,

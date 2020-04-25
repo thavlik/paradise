@@ -12,6 +12,7 @@
 #[macro_use] extern crate vst;
 #[macro_use] extern crate log;
 extern crate log4rs;
+extern crate tokio;
 use std::f32::consts::PI;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;

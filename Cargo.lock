@@ -11,7 +11,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "log",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "tokio-util 0.2.0",
 ]
 
@@ -115,7 +115,7 @@ dependencies = [
  "copyless",
  "futures-channel",
  "futures-util",
- "tokio 0.2.18",
+ "tokio 0.2.19",
 ]
 
 [[package]]
@@ -1313,7 +1313,7 @@ dependencies = [
  "indexmap",
  "log",
  "slab",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "tokio-util 0.3.1",
 ]
 
@@ -1401,7 +1401,7 @@ dependencies = [
  "net2",
  "pin-project",
  "time",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "tower-service",
  "want",
 ]
@@ -1415,7 +1415,7 @@ dependencies = [
  "bytes 0.5.4",
  "hyper",
  "native-tls",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "tokio-tls",
 ]
 
@@ -1971,7 +1971,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "serde_yaml",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "tokio-core",
  "uuid",
 ]
@@ -1986,6 +1986,7 @@ dependencies = [
  "glutin",
  "log",
  "log4rs",
+ "tokio 0.2.19",
  "vst",
 ]
 
@@ -2306,7 +2307,7 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "time",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "tokio-tls",
  "url",
  "wasm-bindgen",
@@ -2783,9 +2784,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "0.2.18"
+version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34ef16d072d2b6dc8b4a56c70f5c5ced1a37752116f8e7c1e80c659aa7cb6713"
+checksum = "7d9c43f1bb96970e153bcbae39a65e249ccb942bd9d36dbdf086024920417c9c"
 dependencies = [
  "bytes 0.5.4",
  "fnv",
@@ -2967,7 +2968,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bde02a3a5291395f59b06ec6945a3077602fac2b07eeeaf0dee2122f3619828"
 dependencies = [
  "native-tls",
- "tokio 0.2.18",
+ "tokio 0.2.19",
 ]
 
 [[package]]
@@ -3014,7 +3015,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite",
- "tokio 0.2.18",
+ "tokio 0.2.19",
 ]
 
 [[package]]
@@ -3028,7 +3029,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite",
- "tokio 0.2.18",
+ "tokio 0.2.19",
 ]
 
 [[package]]
@@ -3059,7 +3060,7 @@ dependencies = [
  "rand",
  "smallvec 1.4.0",
  "socket2",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "url",
 ]
 
@@ -3078,7 +3079,7 @@ dependencies = [
  "lru-cache",
  "resolv-conf",
  "smallvec 1.4.0",
- "tokio 0.2.18",
+ "tokio 0.2.19",
  "trust-dns-proto",
 ]
 

@@ -1,3 +1,4 @@
+
 pub struct TxStream {
     sock: std::net::UdpSocket,
     dest: std::net::SocketAddr,
@@ -20,6 +21,11 @@ impl RxStream {
     pub fn new(port: usize) -> std::io::Result<Self> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let threaded_rt = tokio::runtime::Builder::new()
+            .threaded_scheduler()
+            .build()
+            .unwrap();
         Ok(Self {
             sock,
             parity: std::default::Default::default(),

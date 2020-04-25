@@ -255,7 +255,6 @@ impl Plugin for RemoteAudioEffect {
             ..Default::default()
         }
     }
-
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         if !self.running() {
             return

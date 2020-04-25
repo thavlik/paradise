@@ -9,10 +9,14 @@
 //! Mystran's fixed-pivot method is used to approximate the tanh() parts.
 //! Quality can be improved a lot by oversampling a bit.
 //! Feedback is clipped independently of the input, so it doesn't disappear at high gains.
-#[macro_use] extern crate vst;
-#[macro_use] extern crate log;
-#[macro_use] extern crate tokio;
+#[macro_use]
+extern crate vst;
+#[macro_use]
+extern crate log;
+#[macro_use]
+extern crate tokio;
 extern crate log4rs;
+
 use std::f32::consts::PI;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -101,15 +105,18 @@ impl RemoteAudioEffectParameters {
         // bilinear transformation for g gives us a very accurate cutoff
         self.g.set((PI * self.cutoff.get() / (self.sample_rate.get())).tan());
     }
+
     // returns the value used to set cutoff. for get_parameter function
     pub fn get_cutoff(&self) -> f32 {
         1. + 0.17012975 * (0.00005 * self.cutoff.get()).ln()
     }
+
     pub fn set_poles(&self, value: f32) {
         self.pole_value.set(value);
         self.poles.store(((value * 3.).round()) as usize, Ordering::Relaxed);
     }
 }
+
 impl PluginParameters for RemoteAudioEffectParameters {
     // get_parameter has to return the value used in set_parameter
     fn get_parameter(&self, index: i32) -> f32 {
@@ -121,6 +128,7 @@ impl PluginParameters for RemoteAudioEffectParameters {
             _ => 0.0,
         }
     }
+
     fn set_parameter(&self, index: i32, value: f32) {
         match index {
             0 => self.set_cutoff(value),
@@ -140,6 +148,7 @@ impl PluginParameters for RemoteAudioEffectParameters {
             _ => "".to_string(),
         }
     }
+
     fn get_parameter_label(&self, index: i32) -> String {
         match index {
             0 => "Hz".to_string(),
@@ -149,6 +158,7 @@ impl PluginParameters for RemoteAudioEffectParameters {
             _ => "".to_string(),
         }
     }
+
     // This is what will display underneath our control.  We can
     // format it into a string that makes the most sense.
     fn get_parameter_text(&self, index: i32) -> String {
@@ -161,6 +171,7 @@ impl PluginParameters for RemoteAudioEffectParameters {
         }
     }
 }
+
 impl Default for RemoteAudioEffect {
     fn default() -> RemoteAudioEffect {
         let rt = std::sync::Arc::new(tokio::runtime::Builder::new()
@@ -175,11 +186,13 @@ impl Default for RemoteAudioEffect {
         }
     }
 }
+
 impl Plugin for RemoteAudioEffect {
     fn set_sample_rate(&mut self, rate: f32) {
         info!("set_sample_rate(rate={})", rate);
         self.params.sample_rate.set(rate);
     }
+
     fn get_info(&self) -> Info {
         info!("get_info()");
         Info {
@@ -192,9 +205,10 @@ impl Plugin for RemoteAudioEffect {
             ..Default::default()
         }
     }
+
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         if !self.running() {
-            return
+            return;
         }
         let (inputs, mut outputs) = buffer.split();
         if inputs.len() != self.tx.len() {
@@ -213,13 +227,16 @@ impl Plugin for RemoteAudioEffect {
             .zip(self.rx.iter())
             .for_each(|(output, rx)| rx.process(output));
     }
+
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
         info!("get_parameter_object()");
         Arc::clone(&self.params) as Arc<dyn PluginParameters>
     }
+
     fn get_editor(&mut self) -> Option<Box<dyn vst::editor::Editor>> {
         info!("get_editor()");
         Some(Box::new(editor::Editor::new()))
     }
 }
+
 plugin_main!(RemoteAudioEffect);

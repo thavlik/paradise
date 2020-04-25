@@ -53,6 +53,7 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             ((hdr[4] as u64) << 16) |
             ((hdr[5] as u64) << 8) |
             ((hdr[6] as u64) << 0);
+        // Don't accumulate samples older than the oldest timestamp observed in the previous flushed
         let clock = self.clock.load(std::sync::atomic::Ordering::SeqCst);
         let delta = timestamp - clock;
         if delta < 0 {

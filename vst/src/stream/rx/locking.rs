@@ -8,6 +8,8 @@ struct Chunk {
 struct LockingRxBufferState {
     chunks: Vec<Chunk>,
     samples: Vec<f32>,
+    discard: u64,
+    oldest: u64,
 }
 
 pub struct LockingRxBuffer {
@@ -37,10 +39,14 @@ impl RxBuffer for LockingRxBuffer {
             parity: std::default::Default::default(),
             state: [
                 std::sync::Mutex::new(LockingRxBufferState {
+                    discard: 0,
+                    oldest: 0,
                     chunks: Vec::new(),
                     samples: Vec::new(),
                 }),
                 std::sync::Mutex::new(LockingRxBufferState {
+                    discard: 0,
+                    oldest: 0,
                     chunks: Vec::new(),
                     samples: Vec::new(),
                 })
@@ -56,10 +62,17 @@ impl RxBuffer for LockingRxBuffer {
         output_buffer.copy_from_slice(&state.samples[i..]);
         state.chunks.clear();
         state.samples.clear();
+        // Discard all future samples older than the oldest sample in this flush.
+        state.discard = state.oldest;
     }
 
     fn accumulate(&self, timestamp: u64, in_samples: &[f32]) {
         let mut state = self.get_state();
+        if timestamp < state.discard {
+            warn!("discarding sample");
+            return;
+        }
+        state.oldest = state.oldest.min(timestamp);
         let mut chunks = std::mem::replace(&mut state.chunks, Vec::new());
         let mut samples = std::mem::replace(&mut state.samples, Vec::new());
         // Determine where the samples belong

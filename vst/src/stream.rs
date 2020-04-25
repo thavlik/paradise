@@ -64,6 +64,7 @@ impl RxStream {
     }
 
     pub fn process(&self, output_buffer: &mut [f32]) {
+        // Swap out the current receive buffer
         let mut buf = self.buf[cycle(&self.parity)]
             .lock()
             .unwrap();
@@ -186,7 +187,10 @@ fn cycle(parity: &std::sync::atomic::AtomicUsize) -> usize {
     if original > 100_000_000 {
         // Wrap parity back to [0, 1] so there's no risk of overflow.
         // fetch_add returns the old value, so the current value will
-        // (functionally) be the complement.
+        // (functionally) be the complement. This is *only* okay
+        // because we know we're the only thread that is writing to
+        // parity. Note that the write is non-transactional and could
+        // otherwise introduce a race condition.
         parity.store(1 - wrapped, std::sync::atomic::Ordering::SeqCst);
     }
     wrapped

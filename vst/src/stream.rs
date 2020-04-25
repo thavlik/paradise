@@ -101,7 +101,7 @@ impl RxStream {
         buf.extend_from_slice(data);
     }
 
-    fn cycle(&mut self) -> usize {
+    fn cycle(&self) -> usize {
         let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let wrapped = parity % 2;
         if parity > 100_000_000 {
@@ -113,7 +113,7 @@ impl RxStream {
         wrapped
     }
 
-    pub fn process(&mut self, output_buffer: &mut [f32]) {
+    pub fn process(&self, output_buffer: &mut [f32]) {
         let mut buf = self.buf[self.cycle()]
             .lock()
             .unwrap();
@@ -185,7 +185,7 @@ impl TxStream {
         wrapped
     }
 
-    pub fn process(&mut self, input_buffer: &[f32]) {
+    pub fn process(&self, input_buffer: &[f32]) {
         // Accumulate the samples in the send buffer
         self.buf[self.cycle()]
             .lock()

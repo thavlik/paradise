@@ -28,10 +28,10 @@ mod stream;
 #[derive(Clone)]
 struct RemoteAudioEffect {
     // Receive streams
-    rx: Vec<std::sync::Arc<std::sync::Mutex<stream::RxStream>>>,
+    rx: Vec<std::sync::Arc<stream::RxStream>>,
 
     // Send streams
-    tx: Vec<std::sync::Arc<std::sync::Mutex<stream::TxStream>>>,
+    tx: Vec<std::sync::Arc<stream::TxStream>>,
 
     // Store a handle to the plugin's parameter object.
     params: Arc<LadderParameters>,
@@ -263,14 +263,10 @@ impl Plugin for RemoteAudioEffect {
         let (inputs, mut outputs) = buffer.split();
         inputs.into_iter()
             .zip(self.tx.iter_mut())
-            .for_each(|(input, tx)| tx.lock()
-                .unwrap()
-                .process(input));
+            .for_each(|(input, tx)| tx.process(input));
         outputs.into_iter()
             .zip(self.rx.iter())
-            .for_each(|(output, rx)| rx.lock()
-                .unwrap()
-                .process(output));
+            .for_each(|(output, rx)| rx.process(output));
     }
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
         info!("get_parameter_object()");

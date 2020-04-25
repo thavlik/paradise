@@ -7,11 +7,11 @@ edition = "2018"
 [dependencies]
 vst = { git = "https://github.com/rustaudio/vst-rs" }
 env_logger = "0.7.1"
-flutter-engine = { path = "../../flutter-rs/flutter-engine" }
-flutter-winit = { path = "../../flutter-rs/flutter-winit" }
+#flutter-engine = { path = "../../flutter-rs/flutter-engine" }
+#flutter-winit = { path = "../../flutter-rs/flutter-winit" }
 log = "0.4.8"
 log4rs = "0.11.0"
-glutin = { git = "https://github.com/rust-windowing/glutin" }
+#glutin = { git = "https://github.com/rust-windowing/glutin" }
 tokio = { version = "0.2.19", features = ["rt-threaded"] }
 
 [lib]

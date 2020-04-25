@@ -1,8 +1,64 @@
+struct Chunk {
+    timestamp: u64,
+    samples: Vec<f32>,
+}
+
+struct Buffer {
+    chunks: Vec<Chunk>,
+    samples: Vec<f32>,
+}
+
+
+impl Buffer {
+    fn new() -> Self {
+        Self {
+            chunks: Vec::new(),
+            samples: Vec::new(),
+        }
+    }
+
+    fn clear(&mut self) {
+        self.chunks.clear();
+        self.samples.clear();
+    }
+
+    fn accumulate(&mut self, timestamp: u64, samples: &[f32]) {
+        // Determine where the samples belong
+        let i = match self.chunks.iter()
+            .enumerate()
+            .rev()
+            .find(|(_, chunk)| timestamp > chunk.timestamp) {
+            Some((i, _)) => i+1,
+            None => 0,
+        };
+        // Insert the samples such that all elements are order
+        // according to timestamp.
+        self.chunks.insert(i, Chunk{
+            timestamp,
+            samples: Vec::from(samples),
+        });
+        if i != self.chunks.len() {
+            // Count the number of samples that are already in order
+            let offset = self.chunks[..i].iter()
+                .fold(0, |n, b| n + b.samples.len());
+            // Truncate the output buffer to that many samples
+            self.samples.resize(offset, 0.0);
+            // Re-extend the output buffer with the newly sorted samples
+            let mut samples = &mut self.samples;
+            self.chunks[i..].iter()
+                .for_each(|b | samples.extend_from_slice(&b.samples[..]));
+        } else {
+            // Simple extension of the output buffer
+            self.samples.extend_from_slice(samples);
+        }
+    }
+}
+
 pub struct RxStream {
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
     clock: std::sync::atomic::AtomicU64,
-    buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
+    buf: [Box<std::sync::Mutex<Buffer>>; 2],
 }
 
 impl RxStream {
@@ -14,8 +70,8 @@ impl RxStream {
             parity: std::default::Default::default(),
             clock: std::default::Default::default(),
             buf: [
-                Box::new(std::sync::Mutex::new(Vec::new())),
-                Box::new(std::sync::Mutex::new(Vec::new()))
+                Box::new(std::sync::Mutex::new(Buffer::new())),
+                Box::new(std::sync::Mutex::new(Buffer::new()))
             ],
         });
         rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
@@ -25,15 +81,15 @@ impl RxStream {
     /// Receive data over the network. A thread is supposed
     /// to call this repeatedly to ensure the socket is
     /// quickly synchronized with the output buffer.
-    fn receive(&self, buf: &mut [u8]) {
-        let (_amt, _src) = match self.sock.recv_from(buf) {
+    fn receive(&self, receive_buf: &mut [u8]) {
+        let (amt, _src) = match self.sock.recv_from(receive_buf) {
             Ok(value) => value,
             Err(e) => {
                 error!("recv_from: {:?}", e);
                 return;
             }
         };
-        let hdr = &buf[..8];
+        let hdr = &receive_buf[..8];
         let timestamp = ((hdr[0] as u64) << 48) |
             ((hdr[1] as u64) << 40) |
             ((hdr[2] as u64) << 32) |
@@ -54,13 +110,13 @@ impl RxStream {
             return;
         }
         let status = hdr[7];
-        let data = &buf[8..];
+        let data = &receive_buf[8..amt-8];
         if data.len() % 4 != 0 {
             panic!("data buffer is not divisible by four")
         }
         let num_samples = data.len() / 4;
-        let data: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
-        buf.extend_from_slice(data);
+        let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
+        buf.accumulate(timestamp, samples);
     }
 
     pub fn process(&self, output_buffer: &mut [f32]) {
@@ -69,9 +125,9 @@ impl RxStream {
             .lock()
             .unwrap();
         // Take only most recent samples
-        let i = buf.len() - output_buffer.len();
-        assert_eq!(buf[i..].len(), output_buffer.len());
-        output_buffer.copy_from_slice(&buf[i..]);
+        let i = buf.samples.len() - output_buffer.len();
+        assert_eq!(buf.samples[i..].len(), output_buffer.len());
+        output_buffer.copy_from_slice(&buf.samples[i..]);
         buf.clear();
     }
 
@@ -194,4 +250,17 @@ fn cycle(parity: &std::sync::atomic::AtomicUsize) -> usize {
         parity.store(1 - wrapped, std::sync::atomic::Ordering::SeqCst);
     }
     wrapped
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_rev() {
+        let v = vec![0, 1, 2];
+        let rev: Vec<_> = v.iter().map(|i| *i).rev().collect();
+        assert_eq!(v[2], rev[0]);
+        assert_eq!(v[1], rev[1]);
+        assert_eq!(v[0], rev[2]);
+    }
+
 }

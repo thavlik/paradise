@@ -137,27 +137,28 @@ impl TxStream {
 
     /// Send audio over UDP
     fn send(&self) -> std::io::Result<usize> {
-        let timestamp = self.clock.elapsed().as_nanos();
-        let mut send_buf = vec![
-            ((timestamp >> 48) & 0xFF) as u8,
-            ((timestamp >> 40) & 0xFF) as u8,
-            ((timestamp >> 32) & 0xFF) as u8,
-            ((timestamp >> 24) & 0xFF) as u8,
-            ((timestamp >> 16) & 0xFF) as u8,
-            ((timestamp >> 8) & 0xFF) as u8,
-            ((timestamp >> 0) & 0xFF) as u8,
-            0, // Reset & Status
-        ];
-        {
+        let send_buf = {
             let mut buf = self.buf[self.cycle()].lock().unwrap();
             if buf.len() == 0 {
                 // Don't send empty messages
                 return Ok(0);
             }
+            let timestamp = self.clock.elapsed().as_nanos();
+            let mut send_buf = vec![
+                ((timestamp >> 48) & 0xFF) as u8,
+                ((timestamp >> 40) & 0xFF) as u8,
+                ((timestamp >> 32) & 0xFF) as u8,
+                ((timestamp >> 24) & 0xFF) as u8,
+                ((timestamp >> 16) & 0xFF) as u8,
+                ((timestamp >> 8) & 0xFF) as u8,
+                ((timestamp >> 0) & 0xFF) as u8,
+                0, // Reset & Status
+            ];
             let data: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as _, buf.len() * 4) };
             send_buf.extend_from_slice(data);
             buf.clear();
-        }
+            send_buf
+        };
         self.sock.send_to(&send_buf[..], self.dest)
     }
 

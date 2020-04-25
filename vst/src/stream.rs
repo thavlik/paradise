@@ -32,9 +32,10 @@ impl RxStream {
         })
     }
 
-    /// receive data over the network
+    /// Receive data over the network. A thread is supposed
+    /// to call this repeatedly to ensure the socket is
+    /// quickly synchronized with the output buffer.
     fn receive(&mut self) {
-        // FIXME receive buffer length
         let buf = &mut self.recv[..];
         let (_amt, _src) = match self.sock.recv_from(buf) {
             Ok(value) => value,
@@ -116,36 +117,31 @@ impl TxStream {
         })
     }
 
+    /// Send audio over UDP. This
     fn send(&mut self) -> std::io::Result<usize> {
-        let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        let wrapped = parity % 2;
-        if parity > 100_000_000 {
-            // Wrap parity back to [0, 1] so there's no risk of overflow.
-            // fetch_add returns the old value, so the current value will
-            // (functionally) be the complement.
-            self.parity.store(1 - wrapped, std::sync::atomic::Ordering::SeqCst);
-        }
-        let mut buf = self.buf[wrapped].lock().unwrap();
-        let data: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as _, buf.len() * 4) };
-        let timestamp = self.offset.elapsed().as_nanos();
-        let mut send_buf = vec![
-            ((timestamp >> 48) & 0xFF) as u8,
-            ((timestamp >> 40) & 0xFF) as u8,
-            ((timestamp >> 32) & 0xFF) as u8,
-            ((timestamp >> 24) & 0xFF) as u8,
-            ((timestamp >> 16) & 0xFF) as u8,
-            ((timestamp >> 8) & 0xFF) as u8,
-            ((timestamp >> 0) & 0xFF) as u8,
-            0, // Reset & Status
-        ];
-        send_buf.extend_from_slice(data);
-        match self.sock.send_to(&send_buf[..], self.dest) {
-            Ok(amt) => {
-                buf.clear();
-                Ok(amt)
-            },
-            Err(e) => Err(e),
-        }
+        let send_buf = {
+            let mut buf = self.buf[self.cycle()].lock().unwrap();
+            if buf.len() == 0 {
+                // No data to send
+                return Ok(0);
+            }
+            let data: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as _, buf.len() * 4) };
+            let timestamp = self.offset.elapsed().as_nanos();
+            let mut send_buf = vec![
+                ((timestamp >> 48) & 0xFF) as u8,
+                ((timestamp >> 40) & 0xFF) as u8,
+                ((timestamp >> 32) & 0xFF) as u8,
+                ((timestamp >> 24) & 0xFF) as u8,
+                ((timestamp >> 16) & 0xFF) as u8,
+                ((timestamp >> 8) & 0xFF) as u8,
+                ((timestamp >> 0) & 0xFF) as u8,
+                0, // Reset & Status
+            ];
+            send_buf.extend_from_slice(data);
+            buf.clear();
+            send_buf
+        };
+        self.sock.send_to(&send_buf[..], self.dest)
     }
 
     fn cycle(&mut self) -> usize {

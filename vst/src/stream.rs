@@ -6,8 +6,10 @@ struct Chunk {
 pub trait Buffer where Self: std::marker::Sync + std::marker::Send {
     fn new(rt: &tokio::runtime::Runtime) -> Self;
 
-    fn cycle(&self, output: &mut [f32]);
+    /// Flushes the data in the current write buffer to output_buffer
+    fn flush(&self, output_buffer: &mut [f32]);
 
+    /// Accumulates the data into the current write buffer
     fn accumulate(&self, timestamp: u64, samples: &[f32]);
 }
 
@@ -33,7 +35,7 @@ pub mod locking {
             }
         }
 
-        fn cycle(&self, output_buffer: &mut [f32]) {
+        fn flush(&self, output_buffer: &mut [f32]) {
             let mut state = self.state.lock().unwrap();
             // Take only most recent samples
             let i = state.samples.len() - output_buffer.len();
@@ -148,7 +150,7 @@ impl<'b, B> RxStream<B> where B: 'b + Buffer, Self: 'b {
 
     pub fn process(&self, output_buffer: &mut [f32]) {
         // Swap out the current receive buffer
-        self.buf[self.cycle()].cycle(output_buffer);
+        self.buf[self.cycle()].flush(output_buffer);
     }
 
     async fn entry(stream: std::sync::Weak<RxStream<B>>) {

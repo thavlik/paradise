@@ -162,6 +162,10 @@ impl TxStream {
         ];
         {
             let mut buf = self.buf[self.cycle()].lock().unwrap();
+            if buf.len() == 0 {
+                // Don't send empty messages
+                return Ok(0);
+            }
             let data: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as _, buf.len() * 4) };
             send_buf.extend_from_slice(data);
             buf.clear();

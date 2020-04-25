@@ -28,7 +28,7 @@ mod stream;
 #[derive(Clone)]
 struct RemoteAudioEffect {
     // Receive streams
-    rx: Vec<std::sync::Arc<stream::RxStream>>,
+    rx: Vec<std::sync::Arc<stream::RxStream<stream::LockingBuffer>>>,
 
     // Send streams
     tx: Vec<std::sync::Arc<stream::TxStream>>,

@@ -3,77 +3,103 @@ struct Chunk {
     samples: Vec<f32>,
 }
 
-struct Buffer {
-    chunks: Vec<Chunk>,
-    samples: Vec<f32>,
+pub trait Buffer where Self: std::marker::Sync + std::marker::Send {
+    fn new(rt: &tokio::runtime::Runtime) -> Self;
+
+    fn cycle(&self, output: &mut [f32]);
+
+    fn accumulate(&self, timestamp: u64, samples: &[f32]);
 }
 
-impl Buffer {
-    fn new() -> Self {
-        Self {
-            chunks: Vec::new(),
-            samples: Vec::new(),
+pub mod locking {
+    use super::*;
+
+    struct LockingBufferState {
+        chunks: Vec<Chunk>,
+        samples: Vec<f32>,
+    }
+
+    pub struct LockingBuffer {
+        state: std::sync::Mutex<LockingBufferState>,
+    }
+
+    impl Buffer for LockingBuffer {
+        fn new(rt: &tokio::runtime::Runtime) -> Self {
+            Self {
+                state: std::sync::Mutex::new(LockingBufferState {
+                    chunks: Vec::new(),
+                    samples: Vec::new(),
+                })
+            }
         }
-    }
 
-    fn clear(&mut self) {
-        self.chunks.clear();
-        self.samples.clear();
-    }
+        fn cycle(&self, output_buffer: &mut [f32]) {
+            let mut state = self.state.lock().unwrap();
+            // Take only most recent samples
+            let i = state.samples.len() - output_buffer.len();
+            assert_eq!(state.samples[i..].len(), output_buffer.len());
+            output_buffer.copy_from_slice(&state.samples[i..]);
+            state.chunks.clear();
+            state.samples.clear();
+        }
 
-    fn accumulate(&mut self, timestamp: u64, samples: &[f32]) {
-        // Determine where the samples belong
-        let i = match self.chunks.iter()
-            .enumerate()
-            .rev()
-            .find(|(_, chunk)| timestamp > chunk.timestamp) {
-            Some((i, _)) => i+1,
-            None => 0,
-        };
-        // Insert the samples such that all elements are order
-        // according to timestamp.
-        self.chunks.insert(i, Chunk{
-            timestamp,
-            samples: Vec::from(samples),
-        });
-        if i != self.chunks.len() {
-            // Count the number of samples that are already in order
-            let offset = self.chunks[..i].iter()
-                .fold(0, |n, b| n + b.samples.len());
-            // Truncate the output buffer to that many samples
-            self.samples.resize(offset, 0.0);
-            // Re-extend the output buffer with the newly sorted samples
-            let mut samples = &mut self.samples;
-            self.chunks[i..].iter()
-                .for_each(|b | samples.extend_from_slice(&b.samples[..]));
-        } else {
-            // Simple extension of the output buffer
-            self.samples.extend_from_slice(samples);
+        fn accumulate(&self, timestamp: u64, in_samples: &[f32]) {
+            let mut state = self.state.lock().unwrap();
+            let mut chunks = std::mem::replace(&mut state.chunks, Vec::new());
+            let mut samples = std::mem::replace(&mut state.samples, Vec::new());
+            // Determine where the samples belong
+            let i = match chunks.iter()
+                .enumerate()
+                .rev()
+                .find(|(_, chunk)| timestamp > chunk.timestamp) {
+                Some((i, _)) => i+1,
+                None => 0,
+            };
+            // Insert the samples such that all elements are order
+            // according to timestamp.
+            chunks.insert(i, Chunk{
+                timestamp,
+                samples: Vec::from(in_samples),
+            });
+            if i != chunks.len() {
+                // Count the number of samples that are already in order
+                let offset = chunks[..i].iter()
+                    .fold(0, |n, b| n + b.samples.len());
+                // Truncate the output buffer to that many samples
+                samples.resize(offset, 0.0);
+                // Re-extend the output buffer with the newly sorted samples
+                chunks[i..].iter()
+                    .for_each(|b | samples.extend_from_slice(&b.samples[..]));
+            } else {
+                // Simple extension of the output buffer
+                samples.extend_from_slice(in_samples);
+            }
+            state.chunks = chunks;
+            state.samples = samples;
         }
     }
 }
 
-pub struct RxStream {
+pub use locking::LockingBuffer;
+
+pub struct RxStream<B> where B: Buffer {
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
     clock: std::sync::atomic::AtomicU64,
-    buf: [Box<std::sync::Mutex<Buffer>>; 2],
+    buf: [B; 2],
 }
 
-impl RxStream {
-    pub fn new(port: usize, rt: &tokio::runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
+impl<'b, B> RxStream<B> where B: 'b + Buffer, Self: 'b {
+    pub fn new(port: usize, rt: &'b tokio::runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
         let stream = std::sync::Arc::new(Self {
             sock,
             parity: std::default::Default::default(),
             clock: std::default::Default::default(),
-            buf: [
-                Box::new(std::sync::Mutex::new(Buffer::new())),
-                Box::new(std::sync::Mutex::new(Buffer::new()))
-            ],
+            buf: [B::new(rt), B::new(rt)],
         });
-        rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
+        //rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
         Ok(stream)
     }
 
@@ -97,9 +123,7 @@ impl RxStream {
             ((hdr[5] as u64) << 8) |
             ((hdr[6] as u64) << 0);
         let parity: usize = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
-        let mut buf = self.buf[parity]
-            .lock()
-            .unwrap();
+        let buf = &self.buf[parity];
         let clock = self.clock.load(std::sync::atomic::Ordering::SeqCst);
         let delta = timestamp - clock;
         if delta < 0 {
@@ -118,19 +142,16 @@ impl RxStream {
         buf.accumulate(timestamp, samples);
     }
 
-    pub fn process(&self, output_buffer: &mut [f32]) {
-        // Swap out the current receive buffer
-        let mut buf = self.buf[cycle(&self.parity)]
-            .lock()
-            .unwrap();
-        // Take only most recent samples
-        let i = buf.samples.len() - output_buffer.len();
-        assert_eq!(buf.samples[i..].len(), output_buffer.len());
-        output_buffer.copy_from_slice(&buf.samples[i..]);
-        buf.clear();
+    fn cycle(&self) -> usize {
+        cycle(&self.parity)
     }
 
-    async fn entry(stream: std::sync::Weak<RxStream>) {
+    pub fn process(&self, output_buffer: &mut [f32]) {
+        // Swap out the current receive buffer
+        self.buf[self.cycle()].cycle(output_buffer);
+    }
+
+    async fn entry(stream: std::sync::Weak<RxStream<B>>) {
         const RECEIVE_BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; RECEIVE_BUFFER_SIZE] =  [0; RECEIVE_BUFFER_SIZE];
         loop {
@@ -212,10 +233,13 @@ impl TxStream {
         self.sock.send_to(&send_buf[..], self.dest)
     }
 
+    fn current(&self) -> usize {
+        self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2
+    }
+
     pub fn process(&self, input_buffer: &[f32]) {
         // Accumulate the samples in the send buffer
-        let parity: usize = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
-        self.buf[parity]
+        self.buf[self.current()]
             .lock()
             .unwrap()
             .extend_from_slice(input_buffer);

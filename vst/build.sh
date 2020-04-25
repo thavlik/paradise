@@ -22,9 +22,12 @@ else
   cargo build --$target
 fi
 
-outdir=../target/$target/plugins
-mkdir -p $outdir
+outdir=$(pwd)
+outdir=$(dirname $outdir)
+outdir=$outdir/target/$target/plugins
 
+mkdir -p $outdir
+vst_search_dir=$outdir
 if [[ "$OSTYPE" == "darwin"* ]]; then
   echo "Packaging MacOS plugin..."
   ./scripts/package_macos.sh paradise ../target/$target/libparadise.dylib
@@ -37,8 +40,10 @@ elif [[ $WSL_DETECTED == "1" ]]; then
   rm $outdir/paradise.dll || true
   cp ../target/$target/paradise.dll $outdir
   echo "Successfully built plugin for Windows"
+  vst_search_dir=$(wslpath -w $vst_search_dir)
 else
   echo "Unknown platform"
   exit 1
 fi
 
+echo "Remember to add $vst_search_dir to your DAW's VST search paths!"

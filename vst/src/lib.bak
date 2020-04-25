@@ -38,7 +38,7 @@ struct RemoteAudioEffect {
     tx: Vec<std::sync::Arc<stream::tx::TxStream<stream::tx::locking::LockingTxBuffer>>>,
 
     // Shared runtime (for threading)
-    rt: std::sync::Arc<tokio::runtime::Runtime>,
+    //rt: std::sync::Arc<tokio::runtime::Runtime>,
 
     // Store a handle to the plugin's parameter object.
     params: Arc<RemoteAudioEffectParameters>,
@@ -79,7 +79,7 @@ fn entrypoint() {
 
 impl Default for RemoteAudioEffectParameters {
     fn default() -> RemoteAudioEffectParameters {
-        //START.call_once(|| entrypoint());
+        START.call_once(|| entrypoint());
         RemoteAudioEffectParameters {
             cutoff: AtomicFloat::new(1000.),
             res: AtomicFloat::new(2.),
@@ -174,23 +174,19 @@ impl PluginParameters for RemoteAudioEffectParameters {
 
 impl Default for RemoteAudioEffect {
     fn default() -> RemoteAudioEffect {
-        let rt = std::sync::Arc::new(tokio::runtime::Builder::new()
-            .threaded_scheduler()
-            .build()
-            .unwrap());
-        // inbound:
-        // - 30000/UDP by rx stream
-        // - 30001/UDP by debug microservice
-        // outbound:
-        // - 30001/UDP by tx stream
-        let rx = stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(30000, &rt).unwrap();
-        let addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
-        let tx = stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(addr, 35000, &rt).unwrap();
+        //let rt = std::sync::Arc::new(tokio::runtime::Builder::new()
+        //    .threaded_scheduler()
+        //    .build()
+        //    .unwrap());
+        //let rx = stream::rx::RxStream::new(4000, &rt).unwrap();
+        //let addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 4000));
+        //let tx = stream::tx::TxStream::new(addr, 4000, &rt).unwrap();
+        let rx = vec![];
+        let tx = vec![];
         RemoteAudioEffect {
             params: Arc::new(RemoteAudioEffectParameters::default()),
-            rx: vec![rx],
-            tx: vec![tx],
-            rt,
+            rx,
+            tx,
         }
     }
 }

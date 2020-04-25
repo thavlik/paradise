@@ -6,11 +6,14 @@ pub struct TxStream {
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
 }
 
+const RECEIVE_BUFFER_SIZE: usize = 256_000;
+
 pub struct RxStream {
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
     clock: std::sync::atomic::AtomicU64,
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
+    recv: [u8; RECEIVE_BUFFER_SIZE],
 }
 
 impl RxStream {
@@ -25,16 +28,18 @@ impl RxStream {
                 Box::new(std::sync::Mutex::new(Vec::new())),
                 Box::new(std::sync::Mutex::new(Vec::new()))
             ],
+            recv: [0; RECEIVE_BUFFER_SIZE],
         })
     }
 
     /// receive data over the network
     fn receive(&mut self) {
-        let mut buf = vec![0; 128];
-        let (_amt, _src) = match self.sock.recv_from(&mut buf[..]) {
+        // FIXME receive buffer length
+        let buf = &mut self.recv[..];
+        let (_amt, _src) = match self.sock.recv_from(buf) {
             Ok(value) => value,
             Err(e) => {
-                error!("recv: {:?}", e);
+                error!("recv_from: {:?}", e);
                 return;
             }
         };
@@ -159,18 +164,5 @@ impl TxStream {
             .lock()
             .unwrap()
             .extend_from_slice(input_buffer);
-    }
-}
-
-pub struct BidirectionalStream {
-    tx: TxStream,
-    rx: RxStream,
-}
-
-
-impl BidirectionalStream {
-    pub fn process(&mut self, input_buffer: &[f32], output_buffer: &mut [f32]) {
-        self.tx.process(input_buffer);
-        self.rx.process(output_buffer);
     }
 }

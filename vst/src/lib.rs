@@ -26,7 +26,10 @@ mod stream;
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
 struct RemoteAudioEffect {
+    // Receive streams
     rx: Vec<std::sync::Arc<std::sync::Mutex<stream::RxStream>>>,
+
+    // Send streams
     tx: Vec<std::sync::Arc<std::sync::Mutex<stream::TxStream>>>,
 
     // Store a handle to the plugin's parameter object.
@@ -188,6 +191,7 @@ impl PluginParameters for LadderParameters {
             0 => self.set_cutoff(value),
             1 => self.res.set(value * 4.),
             2 => self.set_poles(value),
+            _ => "".to_string(),
             3 => self.drive.set(value * 5.),
             _ => (),
         }
@@ -199,7 +203,6 @@ impl PluginParameters for LadderParameters {
             1 => "resonance".to_string(),
             2 => "filter order".to_string(),
             3 => "drive".to_string(),
-            _ => "".to_string(),
         }
     }
     fn get_parameter_label(&self, index: i32) -> String {

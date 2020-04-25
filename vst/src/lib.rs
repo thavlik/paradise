@@ -9,8 +9,9 @@
 //! Mystran's fixed-pivot method is used to approximate the tanh() parts.
 //! Quality can be improved a lot by oversampling a bit.
 //! Feedback is clipped independently of the input, so it doesn't disappear at high gains.
-#[macro_use]
-extern crate vst;
+#[macro_use] extern crate vst;
+#[macro_use] extern crate log;
+extern crate log4rs;
 use std::f32::consts::PI;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -48,8 +49,27 @@ struct LadderParameters {
     // a drive parameter. Just used to increase the volume, which results in heavier distortion
     drive: AtomicFloat,
 }
+
+static START: std::sync::Once = std::sync::Once::new();
+
+fn entrypoint() {
+    env_logger::init();
+    let log_path = "/Users/thomashavlik/Repositories/paradise/vst/log.txt";
+    let log_file = log4rs::append::file::FileAppender::builder()
+        .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new("{l} - {m}\n")))
+        .build(log_path)
+        .unwrap();
+    let config = log4rs::config::Config::builder()
+        .appender(log4rs::config::Appender::builder().build("logfile", Box::new(log_file)))
+        .build(log4rs::config::Root::builder().appender("logfile").build(log::LevelFilter::Info))
+        .unwrap();
+    log4rs::init_config(config).unwrap();
+    info!("Start successfully");
+}
+
 impl Default for LadderParameters {
     fn default() -> LadderParameters {
+        START.call_once(|| entrypoint());
         LadderParameters {
             cutoff: AtomicFloat::new(1000.),
             res: AtomicFloat::new(2.),
@@ -207,9 +227,11 @@ impl Default for LadderFilter {
 }
 impl Plugin for LadderFilter {
     fn set_sample_rate(&mut self, rate: f32) {
+        info!("set_sample_rate(rate={})", rate);
         self.params.sample_rate.set(rate);
     }
     fn get_info(&self) -> Info {
+        info!("get_info()");
         Info {
             name: "LadderFilter".to_string(),
             unique_id: 9263,
@@ -232,9 +254,11 @@ impl Plugin for LadderFilter {
         }
     }
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
+        info!("get_parameter_object()");
         Arc::clone(&self.params) as Arc<dyn PluginParameters>
     }
     fn get_editor(&mut self) -> Option<Box<dyn vst::editor::Editor>> {
+        info!("get_editor()");
         Some(Box::new(editor::Editor::new()))
     }
 }

@@ -42,6 +42,8 @@ impl vst::editor::Editor for Editor {
     ///
     /// Return `true` if the window opened successfully, `false` otherwise.
     fn open(&mut self, parent: *mut std::ffi::c_void) -> bool {
+        info!("open editor");
+
         // Open flutter window
         let assets_dir = std::env::var("FLUTTER_ASSET_DIR").expect("FLUTTER_ASSET_DIR");
 
@@ -66,12 +68,15 @@ impl vst::editor::Editor for Editor {
 
         flutter.run();
 
+        info!("flutter is running");
+
         true
     }
 
     /// Return whether the window is currently open.
     fn is_open(&mut self) -> bool {
-        false
+        info!("is_open");
+        true
     }
 
     /// Set the knob mode for this editor (if supported by host).

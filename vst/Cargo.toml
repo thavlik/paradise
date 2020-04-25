@@ -10,6 +10,7 @@ env_logger = "0.7.1"
 flutter-engine = { path = "../../flutter-rs/flutter-engine" }
 flutter-winit = { path = "../../flutter-rs/flutter-winit" }
 log = "0.4.8"
+log4rs = "0.11.0"
 glutin = { git = "https://github.com/rust-windowing/glutin" }
 
 [lib]

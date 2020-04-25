@@ -25,7 +25,9 @@ mod stream;
 
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
-struct LadderFilter {
+struct RemoteAudioEffect {
+    streams: Option<std::sync::Arc<std::sync::Mutex<stream::BidirectionalStream>>>,
+
     // Store a handle to the plugin's parameter object.
     params: Arc<LadderParameters>,
     // the output of the different filter stages
@@ -34,6 +36,7 @@ struct LadderFilter {
     // In this we find it by trapezoidal integration to avoid the unit delay
     s: [f32; 4],
 }
+
 struct LadderParameters {
     // the "cutoff" parameter. Determines how heavy filtering is
     cutoff: AtomicFloat,
@@ -82,7 +85,7 @@ impl Default for LadderParameters {
     }
 }
 // member methods for the struct
-impl LadderFilter {
+impl RemoteAudioEffect {
     // the state needs to be updated after each process. Found by trapezoidal integration
     fn update_state(&mut self) {
         self.s[0] = 2. * self.vout[0] - self.s[0];
@@ -216,16 +219,17 @@ impl PluginParameters for LadderParameters {
         }
     }
 }
-impl Default for LadderFilter {
-    fn default() -> LadderFilter {
-        LadderFilter {
+impl Default for RemoteAudioEffect {
+    fn default() -> RemoteAudioEffect {
+        RemoteAudioEffect {
             vout: [0f32; 4],
             s: [0f32; 4],
             params: Arc::new(LadderParameters::default()),
+            streams: None,
         }
     }
 }
-impl Plugin for LadderFilter {
+impl Plugin for RemoteAudioEffect {
     fn set_sample_rate(&mut self, rate: f32) {
         info!("set_sample_rate(rate={})", rate);
         self.params.sample_rate.set(rate);
@@ -233,7 +237,7 @@ impl Plugin for LadderFilter {
     fn get_info(&self) -> Info {
         info!("get_info()");
         Info {
-            name: "LadderFilter".to_string(),
+            name: "RemoteAudioEffect".to_string(),
             unique_id: 9263,
             inputs: 1,
             outputs: 1,
@@ -244,13 +248,8 @@ impl Plugin for LadderFilter {
     }
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         for (input_buffer, output_buffer) in buffer.zip() {
-            // TODO: Send input_buffer over UDP
-            // TODO: Copy bytes received over UDP since last invocation to output_buffer
-            for (input_sample, output_sample) in input_buffer.iter().zip(output_buffer) {
-                self.tick_pivotal(*input_sample);
-                // the poles parameter chooses which filter stage we take our output from.
-                *output_sample = self.vout[self.params.poles.load(Ordering::Relaxed)];
-            }
+            // Send input audio over UDP
+            self.streams.clone().unwrap().lock().unwrap().process(input_buffer, output_buffer);
         }
     }
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {
@@ -262,4 +261,4 @@ impl Plugin for LadderFilter {
         Some(Box::new(editor::Editor::new()))
     }
 }
-plugin_main!(LadderFilter);
+plugin_main!(RemoteAudioEffect);

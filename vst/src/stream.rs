@@ -138,7 +138,9 @@ impl TxStream {
     /// Send audio over UDP
     fn send(&self) -> std::io::Result<usize> {
         let send_buf = {
-            let mut buf = self.buf[self.cycle()].lock().unwrap();
+            let mut buf = self.buf[self.cycle()]
+                .lock()
+                .unwrap();
             if buf.len() == 0 {
                 // Don't send empty messages
                 return Ok(0);

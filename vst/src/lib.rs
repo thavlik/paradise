@@ -28,10 +28,10 @@ mod stream;
 #[derive(Clone)]
 struct RemoteAudioEffect {
     // Receive streams
-    rx: Vec<std::sync::Arc<stream::RxStream<stream::LockingBuffer>>>,
+    rx: Vec<std::sync::Arc<stream::rx::RxStream<stream::rx::LockingRxBuffer>>>,
 
     // Send streams
-    tx: Vec<std::sync::Arc<stream::TxStream>>,
+    tx: Vec<std::sync::Arc<stream::tx::TxStream<stream::tx::LockingTxBuffer>>>,
 
     // Store a handle to the plugin's parameter object.
     params: Arc<LadderParameters>,

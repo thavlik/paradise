@@ -3,11 +3,14 @@ set -euo pipefail
 cd $(dirname $0)
 target=release
 cargo build --$target
-./package.sh paradise ../target/$target/libparadise.dylib
-outdir=../target/release/plugins
-mkdir -p $outdir || true
-rm -rf $outdir/paradise.vst || true
-mv paradise.vst $outdir
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  ./package.sh paradise ../target/$target/libparadise.dylib
+  outdir=../target/release/plugins
+  mkdir -p $outdir || true
+  rm -rf $outdir/paradise.vst || true
+  mv paradise.vst $outdir
+fi
 
 #mkdir -p ../target/$target/paradise.vst/Contents/MacOS
 #echo '<?xml version="1.0" encoding="UTF-8"?>

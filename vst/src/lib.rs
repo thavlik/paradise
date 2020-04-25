@@ -250,8 +250,7 @@ impl Plugin for RemoteAudioEffect {
         buffer.zip()
             .zip(self.streams.iter_mut())
             .for_each(|((input_buffer, output_buffer), stream)| {
-                stream.clone()
-                    .lock()
+                stream.lock()
                     .unwrap()
                     .process(input_buffer, output_buffer)
             });

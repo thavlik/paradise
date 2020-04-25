@@ -24,7 +24,7 @@ pub struct TxStream<B> where B: TxBuffer {
 impl<B> std::ops::Drop for TxStream<B>
     where B: TxBuffer {
     fn drop(&mut self) {
-        self.stop.send(());
+        //self.stop.send(());
     }
 }
 
@@ -57,7 +57,7 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
         buf[4] = ((timestamp >> 16) & 0xFF) as u8;
         buf[5] = ((timestamp >> 8) & 0xFF) as u8;
         buf[6] = ((timestamp >> 0) & 0xFF) as u8;
-        buf[7] = 0; // Reset & Status
+        buf[7] = 0; // Status
     }
 
     /// Send audio over UDP
@@ -90,7 +90,8 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
                 Err(e) => match e {
                     crossbeam::channel::TryRecvError::Empty => {},
                     crossbeam::channel::TryRecvError::Disconnected => {
-                        panic!("stop stream disconnected");
+                        // Stop stream send channel was dropped.
+                        return;
                     },
                 }
             };

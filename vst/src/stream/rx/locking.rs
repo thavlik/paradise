@@ -23,12 +23,16 @@ unsafe impl std::marker::Sync for LockingRxBuffer {}
 
 impl LockingRxBuffer {
     fn cycle(&self) -> std::sync::MutexGuard<LockingRxBufferState> {
-        self.state[cycle(&self.parity)].lock().unwrap()
+        self.state[cycle(&self.parity)]
+            .lock()
+            .unwrap()
     }
 
     fn get_state(&self) -> std::sync::MutexGuard<LockingRxBufferState> {
         let parity = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
-        self.state[parity].lock().unwrap()
+        self.state[parity]
+            .lock()
+            .unwrap()
     }
 }
 

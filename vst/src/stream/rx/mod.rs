@@ -26,12 +26,12 @@ pub struct RxStream<B> where B: RxBuffer {
 impl<B> std::ops::Drop for RxStream<B>
     where B: RxBuffer {
     fn drop(&mut self) {
-        self.stop.send(());
+        //self.stop.send(());
     }
 }
 
 impl<B> RxStream<B> where B: 'static + RxBuffer {
-    pub fn new(port: usize, rt: &tokio::runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
+    pub fn new(port: u16, rt: &tokio::runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
         let (s, r) = crossbeam::crossbeam_channel::unbounded();
@@ -99,7 +99,8 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
                 Err(e) => match e {
                     crossbeam::channel::TryRecvError::Empty => {}
                     crossbeam::channel::TryRecvError::Disconnected => {
-                        panic!("stop stream disconnected");
+                        // Stop stream send channel was dropped.
+                        return;
                     }
                 }
             };

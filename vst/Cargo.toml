@@ -14,6 +14,7 @@ log4rs = "0.11.0"
 crossbeam = "0.7.3"
 #glutin = { git = "https://github.com/rust-windowing/glutin" }
 tokio = { version = "0.2.19", features = ["rt-threaded"] }
+lazy_static = "1.4.0"
 
 [lib]
 name = "paradise"

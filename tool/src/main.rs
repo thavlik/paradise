@@ -5,15 +5,24 @@ fn main() {
     let sock = std::net::UdpSocket::bind(&addr).unwrap();
     const BUFFER_SIZE: usize = 256_000;
     let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
+    let clock = std::time::Instant::now();
     loop {
-        let (amt, _src) = match sock.recv_from(&mut buf[..]) {
+        let (amt, src) = match sock.recv_from(&mut buf[..]) {
             Ok(value) => value,
             Err(e) => {
                 println!("recv_from: {:?}", e);
+                std::thread::yield_now();
                 continue
             }
         };
-        println!("received {} bytes: {:?}", amt, &buf[..amt]);
+        match sock.send_to(&buf[..amt], &src) {
+            Ok(_) => println!("{:?}", &buf[..amt]),
+            Err(e) => {
+                println!("send_to: {:?}", e);
+                std::thread::yield_now();
+                return;
+            },
+        }
         std::thread::yield_now();
     }
 }

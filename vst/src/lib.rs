@@ -17,6 +17,8 @@ extern crate log;
 extern crate tokio;
 #[macro_use]
 extern crate crossbeam;
+#[macro_use]
+extern crate lazy_static;
 extern crate log4rs;
 
 use std::f32::consts::PI;
@@ -29,6 +31,7 @@ use vst::util::AtomicFloat;
 
 mod editor;
 mod stream;
+mod runtime;
 
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
@@ -39,31 +42,62 @@ struct RemoteAudioEffect {
     // Send streams
     tx: Vec<std::sync::Arc<stream::tx::TxStream<stream::tx::locking::LockingTxBuffer>>>,
 
-    // Shared runtime (for threading)
-    rt: std::sync::Arc<tokio::runtime::Runtime>,
-
     // Store a handle to the plugin's parameter object.
     params: Arc<RemoteAudioEffectParameters>,
 
-    running: bool,
+    running: std::sync::Arc<std::sync::atomic::AtomicBool>,
+
+    l: std::sync::Arc<std::sync::Mutex<()>>,
 }
 
 impl RemoteAudioEffect {
-    fn ensure_started(&mut self) {
-        if self.running {
-            return;
+    fn ensure_started(&mut self) -> bool {
+        if self.running.load(std::sync::atomic::Ordering::SeqCst) {
+            return true;
+        }
+        let guard = self.l.lock().unwrap();
+        if self.running.load(std::sync::atomic::Ordering::SeqCst) {
+            return true;
         }
         // inbound:
         // - 30000/UDP by rx stream
         // - 30001/UDP by debug microservice
         // outbound:
         // - 30001/UDP by tx stream
-        //let rx = stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(30000, &self.rt).unwrap();
-        let addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
-        let tx = stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(addr, 35000, &self.rt).unwrap();
-        //self.rx = vec![rx];
-        self.tx = vec![tx];
-        self.running = true;
+        let rt = runtime::Runtime::get();
+        if self.rx.len() == 0 {
+            let receive_port = match rt.inbound.reserve() {
+                Ok(port) => port,
+                Err(e) => {
+                    return false;
+                }
+            };
+            let rx = match stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port, &rt.rt) {
+                Ok(rx) => rx,
+                Err(e) => {
+                    return false;
+                },
+            };
+            self.rx = vec![rx];
+        }
+        if self.tx.len() == 0 {
+            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
+            let send_port = match rt.outbound.reserve() {
+                Ok(port) => port,
+                Err(e) => {
+                    return false;
+                }
+            };
+            let tx = match stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(dest_addr, send_port, &rt.rt) {
+                Ok(tx) => tx,
+                Err(e) => {
+                    return false;
+                },
+            };
+            self.tx = vec![tx];
+        }
+        self.running.store(true, std::sync::atomic::Ordering::SeqCst);
+        true
     }
 }
 
@@ -191,16 +225,12 @@ impl PluginParameters for RemoteAudioEffectParameters {
 
 impl Default for RemoteAudioEffect {
     fn default() -> RemoteAudioEffect {
-        let rt = std::sync::Arc::new(tokio::runtime::Builder::new()
-            .threaded_scheduler()
-            .build()
-            .unwrap());
         RemoteAudioEffect {
             params: Arc::new(RemoteAudioEffectParameters::default()),
             rx: vec![],
             tx: vec![],
-            rt,
-            running: false,
+            running: std::sync::Arc::new(std::default::Default::default()),
+            l: std::sync::Arc::new(std::sync::Mutex::new(())),
         }
     }
 }
@@ -225,21 +255,31 @@ impl Plugin for RemoteAudioEffect {
     }
 
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
-        self.ensure_started();
         let (inputs, mut outputs) = buffer.split();
+        if !self.ensure_started() {
+            outputs.into_iter()
+                .for_each(|output| output.iter_mut()
+                    .for_each(|v| *v = 0.0));
+            return;
+        }
+        return;
         if inputs.len() != self.tx.len() {
-            warn!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
+            println!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
         } else {
             inputs.into_iter()
                 .zip(self.tx.iter())
                 .for_each(|(input, tx)| tx.process(input));
         }
         if outputs.len() != self.rx.len() {
-            warn!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
+            println!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
         } else {
             outputs.into_iter()
                 .zip(self.rx.iter())
-                .for_each(|(output, rx)| rx.process(output));
+                .for_each(|(output, rx)| {
+                    output.iter_mut()
+                        .for_each(|v| *v = 0.0);
+                    rx.process(output)
+                });
         }
     }
 

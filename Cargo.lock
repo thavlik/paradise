@@ -1378,6 +1378,7 @@ version = "0.1.0"
 dependencies = [
  "crossbeam",
  "env_logger",
+ "lazy_static",
  "log",
  "log4rs",
  "tokio 0.2.19",

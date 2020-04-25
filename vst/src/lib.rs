@@ -178,10 +178,14 @@ impl Default for RemoteAudioEffect {
             .threaded_scheduler()
             .build()
             .unwrap());
+        let rx = stream::rx::RxStream::new(4000, &rt).unwrap();
+        let rx = vec![rx];
+        let tx = stream::tx::TxStream::new(std::net::SocketAddr(std::net::SocketAddrV4::new("192.168.1.101".into(), 4000)), 4000, &rt).unwrap();
+        let tx = vec![tx];
         RemoteAudioEffect {
             params: Arc::new(RemoteAudioEffectParameters::default()),
-            rx: vec![],
-            tx: vec![],
+            rx,
+            tx,
             rt,
         }
     }

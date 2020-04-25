@@ -33,6 +33,8 @@ struct RemoteAudioEffect {
     // Send streams
     tx: Vec<std::sync::Arc<stream::tx::TxStream<stream::tx::locking::LockingTxBuffer>>>,
 
+    rt: std::sync::Arc<tokio::runtime::Runtime>,
+
     // Store a handle to the plugin's parameter object.
     params: Arc<LadderParameters>,
     // the output of the different filter stages
@@ -229,12 +231,17 @@ impl PluginParameters for LadderParameters {
 }
 impl Default for RemoteAudioEffect {
     fn default() -> RemoteAudioEffect {
+        let rt = std::sync::Arc::new(tokio::runtime::Builder::new()
+            .threaded_scheduler()
+            .build()
+            .unwrap());
         RemoteAudioEffect {
             vout: [0f32; 4],
             s: [0f32; 4],
             params: Arc::new(LadderParameters::default()),
             rx: vec![],
             tx: vec![],
+            rt,
         }
     }
 }
@@ -261,6 +268,7 @@ impl Plugin for RemoteAudioEffect {
         }
         let (inputs, mut outputs) = buffer.split();
         if inputs.len() != self.tx.len() {
+            //self.set_error()
             error!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
             return;
         }

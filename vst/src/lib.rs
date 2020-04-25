@@ -261,7 +261,7 @@ impl Plugin for RemoteAudioEffect {
         }
         let (inputs, mut outputs) = buffer.split();
         inputs.into_iter()
-            .zip(self.tx.iter_mut())
+            .zip(self.tx.iter())
             .for_each(|(input, tx)| tx.process(input));
         outputs.into_iter()
             .zip(self.rx.iter())

@@ -135,6 +135,21 @@ impl TxStream {
         Ok(stream)
     }
 
+    fn write_message_header(&self, buf: &mut Vec<u8>) {
+        let timestamp = self.clock.elapsed().as_nanos();
+        let slice = [
+            ((timestamp >> 48) & 0xFF) as u8,
+            ((timestamp >> 40) & 0xFF) as u8,
+            ((timestamp >> 32) & 0xFF) as u8,
+            ((timestamp >> 24) & 0xFF) as u8,
+            ((timestamp >> 16) & 0xFF) as u8,
+            ((timestamp >> 8) & 0xFF) as u8,
+            ((timestamp >> 0) & 0xFF) as u8,
+            0, // Reset & Status
+        ];
+        buf.extend_from_slice(&slice);
+    }
+
     /// Send audio over UDP
     fn send(&self) -> std::io::Result<usize> {
         let send_buf = {
@@ -145,17 +160,8 @@ impl TxStream {
                 // Don't send empty messages
                 return Ok(0);
             }
-            let timestamp = self.clock.elapsed().as_nanos();
-            let mut send_buf = vec![
-                ((timestamp >> 48) & 0xFF) as u8,
-                ((timestamp >> 40) & 0xFF) as u8,
-                ((timestamp >> 32) & 0xFF) as u8,
-                ((timestamp >> 24) & 0xFF) as u8,
-                ((timestamp >> 16) & 0xFF) as u8,
-                ((timestamp >> 8) & 0xFF) as u8,
-                ((timestamp >> 0) & 0xFF) as u8,
-                0, // Reset & Status
-            ];
+            let mut send_buf = Vec::new();
+            self.write_message_header(&mut send_buf);
             let data: &[u8] = unsafe { std::slice::from_raw_parts(buf.as_ptr() as _, buf.len() * 4) };
             send_buf.extend_from_slice(data);
             buf.clear();

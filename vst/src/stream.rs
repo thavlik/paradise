@@ -14,7 +14,9 @@ async fn tx_entry(stream: std::sync::Weak<TxStream>) {
             Some(stream) => {
                 stream.send();
             },
-            None => (),
+            None => {
+                return;
+            },
         };
         std::thread::yield_now();
     }

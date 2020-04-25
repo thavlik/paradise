@@ -26,7 +26,8 @@ mod stream;
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
 struct RemoteAudioEffect {
-    streams: Vec<std::sync::Arc<std::sync::Mutex<stream::BidirectionalStream>>>,
+    rx: Vec<std::sync::Arc<std::sync::Mutex<stream::RxStream>>>,
+    tx: Vec<std::sync::Arc<std::sync::Mutex<stream::TxStream>>>,
 
     // Store a handle to the plugin's parameter object.
     params: Arc<LadderParameters>,
@@ -225,7 +226,8 @@ impl Default for RemoteAudioEffect {
             vout: [0f32; 4],
             s: [0f32; 4],
             params: Arc::new(LadderParameters::default()),
-            streams: vec![],
+            rx: vec![],
+            tx: vec![],
         }
     }
 }
@@ -246,7 +248,20 @@ impl Plugin for RemoteAudioEffect {
             ..Default::default()
         }
     }
+
+    fn ensure_streams(&mut self) -> bool {
+        false
+    }
+
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
+        if !self.ensure_streams() {
+            return
+        }
+        let (inputs, outputs) = buffer.split();
+        inputs.into_iter().zip(self.tx.iter_mut())
+            .for_each(|(input, tx)| {});
+
+        outputs.into_iter().zip(self.rx.iter_mut());
         buffer.zip()
             .zip(self.streams.iter_mut())
             .for_each(|((input_buffer, output_buffer), stream)| {

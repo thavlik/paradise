@@ -8,41 +8,11 @@ pub struct TxStream {
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
 }
 
-async fn tx_entry(stream: std::sync::Weak<TxStream>) {
-    loop {
-        match stream.upgrade() {
-            Some(stream) => {
-                stream.send();
-            },
-            None => {
-                return;
-            },
-        };
-        std::thread::yield_now();
-    }
-}
-
 pub struct RxStream {
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
     clock: std::sync::atomic::AtomicU64,
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
-}
-
-async fn rx_entry(stream: std::sync::Weak<RxStream>) {
-    const RECEIVE_BUFFER_SIZE: usize = 256_000;
-    let mut buf: [u8; RECEIVE_BUFFER_SIZE] =  [0; RECEIVE_BUFFER_SIZE];
-    loop {
-        match stream.upgrade() {
-            Some(stream) => {
-                stream.receive(&mut buf[..]);
-            },
-            None => {
-                return;
-            }
-        };
-        std::thread::yield_now();
-    }
 }
 
 impl RxStream {
@@ -58,7 +28,7 @@ impl RxStream {
                 Box::new(std::sync::Mutex::new(Vec::new()))
             ],
         });
-        rt.spawn(rx_entry(std::sync::Arc::downgrade(&stream)));
+        rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
         Ok(stream)
     }
 
@@ -125,6 +95,22 @@ impl RxStream {
         output_buffer.copy_from_slice(&buf[i..]);
         buf.clear();
     }
+
+    async fn entry(stream: std::sync::Weak<RxStream>) {
+        const RECEIVE_BUFFER_SIZE: usize = 256_000;
+        let mut buf: [u8; RECEIVE_BUFFER_SIZE] =  [0; RECEIVE_BUFFER_SIZE];
+        loop {
+            match stream.upgrade() {
+                Some(stream) => {
+                    stream.receive(&mut buf[..]);
+                },
+                None => {
+                    return;
+                }
+            };
+            std::thread::yield_now();
+        }
+    }
 }
 
 impl TxStream {
@@ -145,7 +131,7 @@ impl TxStream {
                 Box::new(std::sync::Mutex::new(Vec::new()))
             ],
         });
-        rt.spawn(tx_entry(std::sync::Arc::downgrade(&stream)));
+        rt.spawn(Self::entry(std::sync::Arc::downgrade(&stream)));
         Ok(stream)
     }
 
@@ -193,5 +179,19 @@ impl TxStream {
             .lock()
             .unwrap()
             .extend_from_slice(input_buffer);
+    }
+
+    async fn entry(stream: std::sync::Weak<TxStream>) {
+        loop {
+            match stream.upgrade() {
+                Some(stream) => {
+                    stream.send();
+                },
+                None => {
+                    return;
+                },
+            };
+            std::thread::yield_now();
+        }
     }
 }

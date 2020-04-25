@@ -1,3 +1,4 @@
+use tokio::runtime;
 
 pub struct TxStream {
     sock: std::net::UdpSocket,
@@ -7,26 +8,46 @@ pub struct TxStream {
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
 }
 
-const RECEIVE_BUFFER_SIZE: usize = 256_000;
+async fn tx_entry(stream: std::sync::Weak<TxStream>) {
+    loop {
+        match stream.upgrade() {
+            Some(stream) => {
+                stream.send();
+            },
+            None => (),
+        };
+        std::thread::yield_now();
+    }
+}
 
 pub struct RxStream {
     sock: std::net::UdpSocket,
     parity: std::sync::atomic::AtomicUsize,
     clock: std::sync::atomic::AtomicU64,
     buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
-    recv: [u8; RECEIVE_BUFFER_SIZE],
+}
+
+async fn rx_entry(stream: std::sync::Weak<RxStream>) {
+    const RECEIVE_BUFFER_SIZE: usize = 256_000;
+    let mut buf: [u8; RECEIVE_BUFFER_SIZE] =  [0; RECEIVE_BUFFER_SIZE];
+    loop {
+        match stream.upgrade() {
+            Some(stream) => {
+                stream.receive(&mut buf[..]);
+            },
+            None => {
+                return;
+            }
+        };
+        std::thread::yield_now();
+    }
 }
 
 impl RxStream {
-    pub fn new(port: usize) -> std::io::Result<Self> {
+    pub fn new(port: usize, rt: &runtime::Runtime) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let threaded_rt = tokio::runtime::Builder::new()
-            .threaded_scheduler()
-            .build()
-            .unwrap();
-        Ok(Self {
+        let stream = std::sync::Arc::new(Self {
             sock,
             parity: std::default::Default::default(),
             clock: std::default::Default::default(),
@@ -34,15 +55,15 @@ impl RxStream {
                 Box::new(std::sync::Mutex::new(Vec::new())),
                 Box::new(std::sync::Mutex::new(Vec::new()))
             ],
-            recv: [0; RECEIVE_BUFFER_SIZE],
-        })
+        });
+        rt.spawn(rx_entry(std::sync::Arc::downgrade(&stream)));
+        Ok(stream)
     }
 
     /// Receive data over the network. A thread is supposed
     /// to call this repeatedly to ensure the socket is
     /// quickly synchronized with the output buffer.
-    fn receive(&mut self) {
-        let buf = &mut self.recv[..];
+    fn receive(&self, buf: &mut [u8]) {
         let (_amt, _src) = match self.sock.recv_from(buf) {
             Ok(value) => value,
             Err(e) => {
@@ -108,10 +129,11 @@ impl TxStream {
     pub fn new(
         dest: std::net::SocketAddr,
         outbound_port: u16,
-    ) -> std::io::Result<Self> {
+        rt: &runtime::Runtime,
+    ) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", outbound_port);
         let sock = std::net::UdpSocket::bind(addr)?;
-        Ok(Self {
+        let stream = std::sync::Arc::new(Self {
             sock,
             dest,
             offset: std::time::Instant::now(),
@@ -120,11 +142,13 @@ impl TxStream {
                 Box::new(std::sync::Mutex::new(Vec::new())),
                 Box::new(std::sync::Mutex::new(Vec::new()))
             ],
-        })
+        });
+        rt.spawn(tx_entry(std::sync::Arc::downgrade(&stream)));
+        Ok(stream)
     }
 
-    /// Send audio over UDP. This
-    fn send(&mut self) -> std::io::Result<usize> {
+    /// Send audio over UDP
+    fn send(&self) -> std::io::Result<usize> {
         let timestamp = self.offset.elapsed().as_nanos();
         let mut send_buf = vec![
             ((timestamp >> 48) & 0xFF) as u8,
@@ -145,7 +169,7 @@ impl TxStream {
         self.sock.send_to(&send_buf[..], self.dest)
     }
 
-    fn cycle(&mut self) -> usize {
+    fn cycle(&self) -> usize {
         let parity: usize = self.parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let wrapped = parity % 2;
         if parity > 100_000_000 {

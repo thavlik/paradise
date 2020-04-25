@@ -11,8 +11,8 @@
 //! Feedback is clipped independently of the input, so it doesn't disappear at high gains.
 #[macro_use] extern crate vst;
 #[macro_use] extern crate log;
+#[macro_use] extern crate tokio;
 extern crate log4rs;
-extern crate tokio;
 use std::f32::consts::PI;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;

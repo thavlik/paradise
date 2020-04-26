@@ -1,7 +1,7 @@
 use super::*;
 
 pub mod locking;
-pub mod tcp;
+//pub mod tcp;
 pub mod udp;
 
 pub trait RxBuffer
@@ -18,6 +18,6 @@ pub trait RxBuffer
 }
 
 pub trait RxStream {
-    fn process(&self, output_buffer: &mut [f32]);
+    fn process(&self, output_buffer: &mut [f32]) -> u64;
 }
 

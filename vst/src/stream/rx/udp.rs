@@ -4,7 +4,7 @@ pub struct UdpRxStream<B> where B: RxBuffer {
     clock: std::sync::atomic::AtomicU64,
     stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: std::sync::Arc<B>,
-    sync: crossbeam::crossbeam_channel::Sender<u64>,
+    sync: std::sync::Arc<std::sync::atomic::AtomicU64>,
 }
 
 impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
@@ -13,24 +13,24 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
         let sock = std::net::UdpSocket::bind(&addr)?;
         sock.set_nonblocking(true)?;
         let (s, stop_recv) = crossbeam::crossbeam_channel::unbounded();
-        let (sync_send, sync_recv) = crossbeam::crossbeam_channel::unbounded();
+        let sync = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
         let stream = std::sync::Arc::new(Self {
             stop: s,
             clock: std::default::Default::default(),
             buf: std::sync::Arc::new(B::new()),
-            sync: sync_send,
+            sync: sync.clone(),
         });
         crate::runtime::Runtime::get()
             .rt
             .lock()
             .unwrap()
             .block_on(async {
-                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
+                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync, stop_recv))
             });
         Ok(stream)
     }
 
-    async fn entry(b: std::sync::Arc<B>, sock: std::net::UdpSocket, sync: crossbeam::crossbeam_channel::Receiver<u64>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
+    async fn entry(b: std::sync::Arc<B>, sock: std::net::UdpSocket, sync: std::sync::Arc<std::sync::atomic::AtomicU64>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
         const BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         // TODO: set clock. Right now all samples are accepted.
@@ -39,7 +39,6 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             std::thread::yield_now();
             select! {
                 recv(stop) -> _ => return,
-                recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
@@ -86,8 +85,9 @@ impl<B> std::ops::Drop for UdpRxStream<B>
 }
 
 impl<B> RxStream for UdpRxStream<B> where B: 'static + RxBuffer {
-    fn process(&self, output_buffer: &mut [f32]) {
+    fn process(&self, output_buffer: &mut [f32]) -> u64 {
         // Swap out the current receive buffer
         self.buf.flush(output_buffer);
+        self.sync.load(std::sync::atomic::Ordering::SeqCst)
     }
 }

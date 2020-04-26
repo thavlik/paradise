@@ -52,6 +52,8 @@ struct RemoteAudioEffect {
     // Store a handle to the plugin's parameter object.
     params: Arc<RemoteAudioEffectParameters>,
 
+    latency: std::sync::Arc<std::sync::atomic::AtomicU64>,
+
     running: std::sync::Arc<std::sync::atomic::AtomicBool>,
 
     l: std::sync::Arc<std::sync::Mutex<()>>,
@@ -234,6 +236,7 @@ impl Default for RemoteAudioEffect {
             params: Arc::new(RemoteAudioEffectParameters::default()),
             rx: vec![],
             tx: vec![],
+            latency: std::sync::Arc::new(std::default::Default::default()),
             running: std::sync::Arc::new(std::default::Default::default()),
             l: std::sync::Arc::new(std::sync::Mutex::new(())),
             rt: runtime::Runtime::get(),
@@ -270,22 +273,29 @@ impl Plugin for RemoteAudioEffect {
         }
         if inputs.len() != self.tx.len() {
             //panic!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
-        } else {
-            inputs.into_iter()
-                .zip(self.tx.iter())
-                .for_each(|(input, tx)| tx.process(input));
+            return;
         }
         if outputs.len() != self.rx.len() {
             //panic!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
-        } else {
-            outputs.into_iter()
-                .zip(self.rx.iter())
-                .for_each(|(output, rx)| {
-                    output.iter_mut()
-                        .for_each(|v| *v = 0.0);
-                    rx.process(output)
-                });
+            return;
         }
+        let clock = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos() as u64;
+        inputs.into_iter()
+            .zip(self.tx.iter())
+            .for_each(|(input, tx)| tx.process(input, clock));
+        let latency = self.latency.load(std::sync::atomic::Ordering::SeqCst);
+        if latency > 0 && latency < std::time::Duration::from_millis(10).as_nanos() as u64 {
+            std::thread::sleep(std::time::Duration::from_nanos(latency));
+        }
+        let latency = clock - outputs.into_iter()
+            .zip(self.rx.iter())
+            .map(|(output, rx)| {
+                output.iter_mut()
+                    .for_each(|v| *v = 0.0);
+                rx.process(output)
+            })
+            .fold(0, |p, c| p.max(c));
+        self.latency.store(latency, std::sync::atomic::Ordering::SeqCst);
     }
 
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {

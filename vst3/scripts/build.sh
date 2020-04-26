@@ -24,7 +24,6 @@ if [[ $WSL_DETECTED == "1" ]]; then
 else
   cargo_bin=$(which cargo)
 fi
-
 $cargo_bin build $extra_args
 
 outdir=../../target/$target/plugins/vst3

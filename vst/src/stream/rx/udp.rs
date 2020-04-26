@@ -60,13 +60,14 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             if delta < 0 {
                 // Current timestamp is higher than incoming.
                 // Discard this sample.
-                println!("discarding late sample");
-                return;
+                println!("discarding late sample buffer");
+                continue;
             }
             let status = hdr[7];
             let data = &buf[8..amt - 8];
             if data.len() % 4 != 0 {
-                panic!("data buffer is not divisible by four")
+                println!("data buffer is not divisible by four");
+                continue;
             }
             let num_samples = data.len() / 4;
             let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };

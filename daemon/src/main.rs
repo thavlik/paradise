@@ -7,5 +7,6 @@ fn main() -> Result<(), anyhow::Error> {
 
     match opts.subcmd {
         cmd::SubCommand::Info(args) => cmd::info::main(args),
+        cmd::SubCommand::Daemon(args) => cmd::daemon::main(args),
     }
 }

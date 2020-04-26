@@ -64,8 +64,6 @@ impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
                     },
                 }
             };
-            //std::thread::yield_now();
-            //continue;
             Self::write_message_header(&mut buf[..], &clock);
             let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(buf[8..].as_mut_ptr() as _, buf[8..].len() / 4) };
             let amt = b.flush(data);

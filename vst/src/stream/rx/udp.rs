@@ -40,8 +40,6 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
                 recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
-            std::thread::yield_now();
-            continue;
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => {

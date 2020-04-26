@@ -1,4 +1,3 @@
-
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 const LATENCY_MS: f32 = 0.0 ;//150.0;
@@ -53,12 +52,20 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             println!("    Default input stream config:\n      {:?}", conf);
             // Create tx socket
             //paradise::stream::tx::TxStream::new()
+            let input_data_fn = move |data: &[f32]| {
+            };
+            let input_stream = device.build_input_stream(&conf, input_data_fn, err_fn)?;
         }
         if let Ok(conf) = device.default_output_config() {
             let conf: cpal::StreamConfig = conf.into();
             println!("    Default output stream config:\n      {:?}", conf);
+            let stream = RxStream::new(port).expect("failed to create rx stream");
+            rx.push(stream.clone());
+            let output_data_fn = move |data: &mut [f32]| {
+                paradise::stream::rx::RxStream::process(&*stream, data);
+            };
+            let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
             // Create rx socket
-            rx.push(RxStream::new(port).expect("failed to create rx stream"));
             tokio::task::spawn(async {});
             port += 1;
         }

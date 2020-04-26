@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Make sure we have the arguments we need
 if [[ -z $1 || -z $2 ]]; then

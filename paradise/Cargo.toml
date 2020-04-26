@@ -1,5 +1,5 @@
 [package]
-name = "paradise_vst2"
+name = "paradise-vst"
 version = "0.1.0"
 authors = ["Tom Havlik <keres993@gmail.com>"]
 edition = "2018"
@@ -17,5 +17,5 @@ tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", 
 lazy_static = "1.4.0"
 
 [lib]
-name = "paradise_vst2"
+name = "paradise"
 crate-type = ["cdylib"]

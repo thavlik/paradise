@@ -33,7 +33,7 @@ mkdir -p $outdir
 vst_search_dir=$outdir
 if [[ "$OSTYPE" == "darwin"* ]]; then
   echo "Packaging MacOS VST2 plugin..."
-  ./package_macos.sh paradise ../../target/$target/libparadise_vst2.dylib
+  ./package_macos.sh paradise ../target/$target/libparadise.dylib
   mkdir -p $outdir || true
   rm -rf $outdir/paradise.vst || true
   mv paradise.vst $outdir

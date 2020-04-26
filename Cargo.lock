@@ -1393,7 +1393,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "paradise-vst"
+name = "paradise_tool"
+version = "0.1.0"
+
+[[package]]
+name = "paradise_vst2"
 version = "0.1.0"
 dependencies = [
  "crossbeam",
@@ -1404,10 +1408,6 @@ dependencies = [
  "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
  "vst",
 ]
-
-[[package]]
-name = "paradise_tool"
-version = "0.1.0"
 
 [[package]]
 name = "paradise_vst3"

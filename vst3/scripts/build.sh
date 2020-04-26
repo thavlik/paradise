@@ -33,9 +33,9 @@ mkdir -p $outdir
 vst_search_dir=$outdir
 if [[ "$OSTYPE" == "darwin"* ]]; then
   echo "Packaging MacOS VST3 plugin..."
-  ./osx-bundler.sh paradise ../target/$target/libparadise.dylib
+  ./osx-bundler.sh paradise ../../target/$target/libparadise_vst3.dylib
   mkdir -p $outdir || true
-  rm -rf $outdir/paradise.vst || true
+  rm -rf $outdir/paradise.vst3 || true
   mv paradise.vst3 $outdir
   echo "Successfully VST3 built plugin for MacOS"
 elif [[ $WSL_DETECTED == "1" ]]; then

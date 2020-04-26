@@ -7,10 +7,10 @@ if [[ -z $1 || -z $2 ]]; then
     echo -e "\tCreates a Plugin.vst3 bundle"
 else
     # Make the bundle folder
-    mkdir -p "target/debug/$1.vst3/Contents/MacOS"
+    mkdir -p "$1.vst3/Contents/MacOS"
 
     # Create the PkgInfo
-    echo "BNDL????" > "target/debug/$1.vst3/Contents/PkgInfo"
+    echo "BNDL????" > "$1.vst3/Contents/PkgInfo"
 
     #build the Info.Plist
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -40,10 +40,10 @@ else
     <key>CSResourcesFileMapped</key>
     <string></string>
 </dict>
-</plist>" > "target/debug/$1.vst3/Contents/Info.plist"
+</plist>" > "$1.vst3/Contents/Info.plist"
 
     # move the provided library to the correct location
-    cp "$2" "target/debug/$1.vst3/Contents/MacOS/$1"
+    cp "$2" "$1.vst3/Contents/MacOS/$1"
 
     echo "Created bundle target/debug/$1.vst3"
 fi

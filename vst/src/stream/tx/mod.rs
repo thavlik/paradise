@@ -19,21 +19,35 @@ pub trait TxStream {
     fn process(&self, input_buffer: &[f32]);
 }
 
-pub fn write_message_header(buf: &mut [u8], size: Option<usize>, clock: &std::time::Instant) {
-    let timestamp = clock.elapsed().as_nanos();
+pub fn write_message_header(buf: &mut [u8], size: Option<usize>, timestamp: Option<std::time::Duration>) -> usize {
     let mut offset = 0;
-    match size {
-        Some(size) => {
-
-        },
-        None => {},
-    };
-    buf[offset] = ((timestamp >> 48) & 0xFF) as u8;
-    buf[offset] = ((timestamp >> 40) & 0xFF) as u8;
-    buf[offset] = ((timestamp >> 32) & 0xFF) as u8;
-    buf[offset] = ((timestamp >> 24) & 0xFF) as u8;
-    buf[offset] = ((timestamp >> 16) & 0xFF) as u8;
-    buf[offset] = ((timestamp >> 8) & 0xFF) as u8;
-    buf[offset] = ((timestamp >> 0) & 0xFF) as u8;
-    buf[offset] = 0; // Status
+    if let Some(size) = size {
+        if size > std::usize::MAX {
+            panic!("tx buffer overflow");
+        }
+        buf[offset] = (size >> 8) as u8;
+        offset += 1;
+        buf[offset] = (size >> 0) as u8;
+        offset += 1;
+    }
+    if let Some(timestamp) = timestamp {
+        let timestamp = timestamp.as_nanos();
+        buf[offset] = ((timestamp >> 48) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = ((timestamp >> 40) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = ((timestamp >> 32) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = ((timestamp >> 24) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = ((timestamp >> 16) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = ((timestamp >> 8) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = ((timestamp >> 0) & 0xFF) as u8;
+        offset += 1;
+        buf[offset] = 0; // Status
+        offset += 1;
+    }
+    offset
 }

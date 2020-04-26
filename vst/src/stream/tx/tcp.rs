@@ -51,20 +51,18 @@ impl<B> TcpTxStream<B> where B: 'static + TxBuffer {
                     },
                 }
             };
-            write_message_header(&mut buf[..], Some(0), &clock);
-            let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(buf[8..].as_mut_ptr() as _, buf[8..].len() / 4) };
+            let hdr_len = write_message_header(&mut buf[..], Some(0), Some(clock.elapsed()));
+            let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(buf[hdr_len..].as_mut_ptr() as _, buf[hdr_len..].len() / 4) };
             let amt = b.flush(data);
             if amt == 0 {
                 println!("tx: no bytes to send");
                 continue;
             }
             // Include datagram length in message
-            let i = 8 + amt * 4;
+            let i = hdr_len + amt * 4;
             buf[0] = (i >> 24) as u8;
             buf[1] = (i >> 16) as u8;
-            buf[2] = (i >> 8) as u8;
-            buf[3] = (i >> 0) as u8;
-            match stream.write(&buf[..i+4]) {
+            match stream.write(&buf[..i]) {
                 Ok(_) => {},
                 Err(e) => {
                     println!("tcp stream write: {:?}", e);

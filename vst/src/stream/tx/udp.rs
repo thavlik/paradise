@@ -52,15 +52,22 @@ impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
                     },
                 }
             };
-            write_message_header(&mut buf[..], None, &clock);
-            let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(buf[8..].as_mut_ptr() as _, buf[8..].len() / 4) };
+            let hdr_len = write_message_header(&mut buf[..], None, Some(clock.elapsed()));
+            let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(buf[hdr_len..].as_mut_ptr() as _, buf[hdr_len..].len() / 4) };
             let amt = b.flush(data);
             if amt == 0 {
                 println!("tx: no bytes to send");
                 continue;
             }
-            let i = 8 + amt * 4;
-            sock.send_to(&buf[..i], dest);
+            let i = hdr_len + amt * 4;
+            match sock.send_to(&buf[..i], dest) {
+                Ok(amt) => {
+                    // TODO
+                },
+                Err(e) => {
+                    // TODO
+                },
+            }
         }
     }
 }

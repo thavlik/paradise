@@ -304,6 +304,12 @@ impl Plugin for RemoteAudioEffect {
         //Some(Box::new(editor::Editor::new()))
         None
     }
+
+    fn process_events(&mut self, events: &vst::api::Events) {
+        events.events().for_each(|event| {
+
+        });
+    }
 }
 
 plugin_main!(RemoteAudioEffect);

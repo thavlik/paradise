@@ -688,6 +688,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "flexi_logger"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fdd4de217664c0ebd05d54e722f42c190fdf31c8965a77fcfac9253ff61a0369"
+dependencies = [
+ "chrono",
+ "glob",
+ "log",
+ "regex",
+ "thiserror",
+ "yansi",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -840,6 +854,12 @@ dependencies = [
  "libc",
  "wasi",
 ]
+
+[[package]]
+name = "glob"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "h2"
@@ -1392,6 +1412,13 @@ version = "0.1.0"
 [[package]]
 name = "paradise_vst3"
 version = "0.1.0"
+dependencies = [
+ "flexi_logger",
+ "log",
+ "vst3-com",
+ "vst3-sys",
+ "widestring",
+]
 
 [[package]]
 name = "parking_lot"
@@ -1943,6 +1970,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "thiserror"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54b3d3d2ff68104100ab257bb6bb0cb26c901abe4bd4ba15961f3bf867924012"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca972988113b7715266f91250ddb98070d033c62a011fa0fcc57434a649310dd"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "thread-id"
 version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2436,6 +2483,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "vst3-com"
+version = "0.1.0"
+source = "git+https://github.com/RustAudio/vst3-sys.git#dfe5e173985a9ae390b0d5370d087bcde77ba671"
+dependencies = [
+ "vst3-com-macros",
+]
+
+[[package]]
+name = "vst3-com-macros"
+version = "0.2.0"
+source = "git+https://github.com/RustAudio/vst3-sys.git#dfe5e173985a9ae390b0d5370d087bcde77ba671"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+ "vst3-com-macros-support",
+]
+
+[[package]]
+name = "vst3-com-macros-support"
+version = "0.2.0"
+source = "git+https://github.com/RustAudio/vst3-sys.git#dfe5e173985a9ae390b0d5370d087bcde77ba671"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "vst3-sys"
+version = "0.1.0"
+source = "git+https://github.com/RustAudio/vst3-sys.git#dfe5e173985a9ae390b0d5370d087bcde77ba671"
+dependencies = [
+ "bitflags",
+ "vst3-com",
+]
+
+[[package]]
 name = "want"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2605,3 +2690,9 @@ checksum = "65923dd1784f44da1d2c3dbbc5e822045628c590ba72123e1c73d3c230c4434d"
 dependencies = [
  "linked-hash-map",
 ]
+
+[[package]]
+name = "yansi"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fc79f4a1e39857fc00c3f662cbf2651c771f00e9c15fe2abc341806bd46bd71"

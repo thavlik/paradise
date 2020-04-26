@@ -7,3 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log = "0.4.8"
+flexi_logger = "0.15.2"
+widestring = "0.4.0"
+vst3-sys = { git = "https://github.com/RustAudio/vst3-sys.git" }
+vst3-com = { git = "https://github.com/RustAudio/vst3-sys.git" }

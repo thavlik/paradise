@@ -70,12 +70,9 @@ impl RxBuffer for LockingRxBuffer {
         if num_samples == 0 {
             return;
         }
-        let i = num_samples - output_buffer.len().min(num_samples);
-        samples[i..].iter().enumerate().for_each(|(i, v)| {
-            output_buffer[i] = *v;
-        });
-        //output_buffer.iter_mut().for_each(|v| *v = 0.0);
-        //unsafe { std::ptr::copy_nonoverlapping(samples.as_ptr(), output_buffer.as_mut_ptr(), num_samples) };
+        let n = output_buffer.len().min(num_samples);
+        let i = num_samples - n;
+        unsafe { std::ptr::copy_nonoverlapping(samples[i..].as_ptr(), output_buffer.as_mut_ptr(), n) };
         state.discard = state.oldest;
     }
 
@@ -99,25 +96,5 @@ impl RxBuffer for LockingRxBuffer {
             timestamp,
             samples: Vec::from(in_samples),
         });
-        /*
-        if i == state.chunks.len() {
-            // Simple extension of the output buffer
-            //let mut samples = Vec::new();
-            //state.chunks.iter()
-            //    .for_each(|b| samples.extend_from_slice(&b.samples[..]));
-            //state.samples = samples;
-            //state.samples.extend_from_slice(in_samples);
-            return;
-        }
-        return;
-        // Count the number of samples that are already in order
-        let offset = state.chunks[..i].iter()
-            .fold(0, |n, chunk| n + chunk.samples.len());
-        // Re-extend the output buffer with the newly sorted samples
-        let mut samples = Vec::new();
-        state.chunks.iter()
-            .for_each(|chunk| samples.extend_from_slice(&chunk.samples[..]));
-        state.samples = samples;
-        */
     }
 }

@@ -290,6 +290,7 @@ impl Plugin for RemoteAudioEffect {
             return;
         }
         let clock = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos() as u64;
+        std::thread::sleep(std::time::Duration::from_millis(1));
         inputs.into_iter()
             .zip(self.tx.iter())
             .for_each(|(input, tx)| tx.process(input, clock));

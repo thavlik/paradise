@@ -57,8 +57,8 @@ impl Runtime {
             .unwrap());
         Self {
             rt,
-            inbound: PortPool::new(30000, 34999),
-            outbound: PortPool::new(35000, 39999),
+            inbound: PortPool::new(31000, 3199),
+            outbound: PortPool::new(32000, 32999),
         }
     }
 

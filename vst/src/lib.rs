@@ -62,21 +62,6 @@ impl RemoteAudioEffect {
             return true;
         }
         let rt = runtime::Runtime::get();
-        if self.rx.len() == 0 {
-            let receive_port = match rt.inbound.reserve() {
-                Ok(port) => port,
-                Err(e) => {
-                    return false;
-                }
-            };
-            let rx = match stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port) {
-                Ok(rx) => rx,
-                Err(e) => {
-                    return false;
-                },
-            };
-            self.rx = vec![rx];
-        }
         if self.tx.len() == 0 {
             let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
             let send_port = match rt.outbound.reserve() {
@@ -93,6 +78,21 @@ impl RemoteAudioEffect {
             };
             self.tx = vec![tx];
         }
+        //if self.rx.len() == 0 {
+        //    let receive_port = match rt.inbound.reserve() {
+        //        Ok(port) => port,
+        //        Err(e) => {
+        //            return false;
+        //        }
+        //    };
+        //    let rx = match stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port) {
+        //        Ok(rx) => rx,
+        //        Err(e) => {
+        //            return false;
+        //        },
+        //    };
+        //    self.rx = vec![rx];
+        //}
         self.running.store(true, std::sync::atomic::Ordering::SeqCst);
         true
     }
@@ -260,24 +260,24 @@ impl Plugin for RemoteAudioEffect {
                     .for_each(|v| *v = 0.0));
             return;
         }
-        //if inputs.len() != self.tx.len() {
-        //    //panic!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
-        //} else {
-        //    inputs.into_iter()
-        //        .zip(self.tx.iter())
-        //        .for_each(|(input, tx)| tx.process(input));
-        //}
-        //if outputs.len() != self.rx.len() {
-        //    //panic!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
-        //} else {
-        //    outputs.into_iter()
-        //        .zip(self.rx.iter())
-        //        .for_each(|(output, rx)| {
-        //            output.iter_mut()
-        //                .for_each(|v| *v = 0.0);
-        //            rx.process(output)
-        //        });
-        //}
+        if inputs.len() != self.tx.len() {
+            //panic!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
+        } else {
+            inputs.into_iter()
+                .zip(self.tx.iter())
+                .for_each(|(input, tx)| tx.process(input));
+        }
+        if outputs.len() != self.rx.len() {
+            //panic!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
+        } else {
+            outputs.into_iter()
+                .zip(self.rx.iter())
+                .for_each(|(output, rx)| {
+                    output.iter_mut()
+                        .for_each(|v| *v = 0.0);
+                    rx.process(output)
+                });
+        }
     }
 
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {

@@ -9,6 +9,9 @@ pub struct DaemonArgs {
     /// The audio host used for IO
     #[clap(long = "audio-host")]
     audio_host: Option<String>,
+
+    #[clap(long = "port", short = "p", default_value = "8080")]
+    port: u16,
 }
 
 fn get_host_by_name(name: &str) -> Result<cpal::Host, anyhow::Error> {
@@ -21,6 +24,9 @@ fn get_host_by_name(name: &str) -> Result<cpal::Host, anyhow::Error> {
     Err(anyhow::Error::msg(format!("host \"{}\" not found", name)))
 }
 
+type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
+type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
+
 pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let host = match std::env::var("AUDIO_HOST") {
         Ok(name) => get_host_by_name(&name)?,
@@ -30,31 +36,32 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
         }
     };
     let devices = host.devices()?;
-    tokio::runtime::Builder::new()
-        .threaded_scheduler()
-        .build()
-        .unwrap()
-        .block_on(async {
-            for (device_index, device) in devices.enumerate() {
-                match device.name() {
-                    Ok(name) => {
-                        println!("  {}. \"{}\"", device_index, name);
-                    },
-                    Err(e) => {
-                        println!("  {}. ERROR: {}", device_index, e);
-                        continue;
-                    },
-                }
-                if let Ok(conf) = device.default_input_config() {
-                    let conf: cpal::StreamConfig = conf.into();
-                    println!("    Default input stream config:\n      {:?}", conf);
-                }
-                if let Ok(conf) = device.default_output_config() {
-                    let conf: cpal::StreamConfig = conf.into();
-                    println!("    Default output stream config:\n      {:?}", conf);
-                }
-            }
-        });
+    let mut port = 30005;
+    let mut rx = vec![];
+    for (device_index, device) in devices.enumerate() {
+        match device.name() {
+            Ok(name) => {
+                println!("  {}. \"{}\"", device_index, name);
+            },
+            Err(e) => {
+                println!("  {}. ERROR: {}", device_index, e);
+                continue;
+            },
+        }
+        if let Ok(conf) = device.default_input_config() {
+            let conf: cpal::StreamConfig = conf.into();
+            println!("    Default input stream config:\n      {:?}", conf);
+            // Create tx socket
+            //paradise::stream::tx::TxStream::new()
+        }
+        if let Ok(conf) = device.default_output_config() {
+            let conf: cpal::StreamConfig = conf.into();
+            println!("    Default output stream config:\n      {:?}", conf);
+            // Create rx socket
+            rx.push(RxStream::new(port).expect("failed to create rx stream"));
+            port += 1;
+        }
+    }
 
     let input_device = host
         .default_input_device()

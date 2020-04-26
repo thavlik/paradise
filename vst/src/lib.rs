@@ -283,10 +283,6 @@ impl Plugin for RemoteAudioEffect {
         inputs.into_iter()
             .zip(self.tx.iter())
             .for_each(|(input, tx)| tx.process(input, clock));
-        let latency = self.latency.load(std::sync::atomic::Ordering::SeqCst);
-        if latency > 0 && latency < std::time::Duration::from_millis(10).as_nanos() as u64 {
-            std::thread::sleep(std::time::Duration::from_nanos(latency));
-        }
         let latency = clock - outputs.into_iter()
             .zip(self.rx.iter())
             .map(|(output, rx)| {

@@ -59,6 +59,8 @@ struct RemoteAudioEffect {
     l: std::sync::Arc<std::sync::Mutex<()>>,
 
     rt: std::sync::Arc<runtime::Runtime>,
+
+    host: Option<vst::plugin::HostCallback>,
 }
 
 impl RemoteAudioEffect {
@@ -240,11 +242,19 @@ impl Default for RemoteAudioEffect {
             running: std::sync::Arc::new(std::default::Default::default()),
             l: std::sync::Arc::new(std::sync::Mutex::new(())),
             rt: runtime::Runtime::get(),
+            host: None,
         }
     }
 }
 
 impl Plugin for RemoteAudioEffect {
+    fn new(host: vst::plugin::HostCallback) -> Self {
+        Self {
+            host: Some(host),
+            ..Default::default()
+        }
+    }
+
     fn set_sample_rate(&mut self, rate: f32) {
         info!("set_sample_rate(rate={})", rate);
         self.params.sample_rate.set(rate);
@@ -310,6 +320,55 @@ impl Plugin for RemoteAudioEffect {
 
         });
     }
+}
+
+/// Exports the necessary symbols for the plugin to be used by a VST host.
+///
+/// This macro takes a type which must implement the traits `plugin::Plugin` and
+/// `std::default::Default`.
+#[macro_export]
+macro_rules! my_plugin_main {
+    ($t:ty) => {
+        #[cfg(target_os = "macos")]
+        #[no_mangle]
+        pub extern "system" fn main_macho(callback: $crate::api::HostCallbackProc) {
+            entry(callback)
+        }
+
+        #[cfg(target_os = "windows")]
+        #[allow(non_snake_case)]
+        #[no_mangle]
+        pub extern "system" fn MAIN(callback: $crate::api::HostCallbackProc) {
+            entry(callback)
+        }
+
+        #[allow(non_snake_case)]
+        #[no_mangle]
+        pub extern "C" fn VSTPluginMain(callback: $crate::api::HostCallbackProc) {
+            entry(callback)
+        }
+    };
+}
+
+/// Initializes a VST plugin and returns a raw pointer to an AEffect struct.
+#[doc(hidden)]
+pub fn entry(callback: vst::api::HostCallbackProc) {
+    // Create a Box containing a zeroed AEffect. This is transmuted into a *mut pointer so that it
+    // can be passed into the HostCallback `wrap` method. The AEffect is then updated after the vst
+    // object is created so that the host still contains a raw pointer to the AEffect struct.
+    let effect = unsafe { Box::into_raw(Box::new(std::mem::MaybeUninit::zeroed().assume_init())) };
+
+    let host = vst::plugin::HostCallback::wrap(callback, effect);
+    if host.vst_version() == 0 {
+        // TODO: Better criteria would probably be useful here...
+        return;
+    }
+
+    trace!("Creating VST plugin instance...");
+    let mut plugin = RemoteAudioEffect::new(host);
+    let info = plugin.get_info();
+    let params = plugin.get_parameter_object();
+    let editor = plugin.get_editor();
 }
 
 plugin_main!(RemoteAudioEffect);

@@ -11,6 +11,7 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
     pub fn new(port: u16) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
         let sock = std::net::UdpSocket::bind(&addr)?;
+        sock.set_nonblocking(true)?;
         let (s, stop_recv) = crossbeam::crossbeam_channel::unbounded();
         let (sync_send, sync_recv) = crossbeam::crossbeam_channel::unbounded();
         let stream = std::sync::Arc::new(Self {
@@ -35,6 +36,7 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
         // TODO: set clock. Right now all samples are accepted.
         let mut clock: u64 = 0;
         loop {
+            std::thread::yield_now();
             select! {
                 recv(stop) -> _ => return,
                 recv(sync) -> time => clock = time.unwrap(),
@@ -47,6 +49,7 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
                     continue
                 }
             };
+            continue;
             let hdr = &buf[..8];
             let timestamp = ((hdr[0] as u64) << 48) |
                 ((hdr[1] as u64) << 40) |
@@ -72,7 +75,6 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             let num_samples = data.len() / 4;
             let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
             b.accumulate(timestamp, samples);
-            std::thread::yield_now();
         }
     }
 }

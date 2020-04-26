@@ -51,6 +51,7 @@ impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         let clock = std::time::Instant::now();
         loop {
+            std::thread::yield_now();
             match stop.try_recv() {
                 Ok(_) => {
                     return;
@@ -70,12 +71,10 @@ impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
             let amt = b.flush(data);
             if amt == 0 {
                 println!("tx: no bytes to send");
-                std::thread::yield_now();
                 continue;
             }
             let i = 8 + amt * 4;
             sock.send_to(&buf[..i], dest);
-            std::thread::yield_now();
         }
     }
 }

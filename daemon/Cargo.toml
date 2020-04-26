@@ -10,4 +10,3 @@ edition = "2018"
 cpal = { git = "https://github.com/rustaudio/cpal" }
 anyhow = "1.0.12"
 clap = { git = "https://github.com/clap-rs/clap/" }
-ringbuf = "0.1.6"

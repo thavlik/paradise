@@ -1,6 +1,5 @@
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use ringbuf::RingBuffer;
 
 const LATENCY_MS: f32 = 0.0 ;//150.0;
 

@@ -10,7 +10,8 @@ pub struct DaemonArgs {
     audio_host: Option<String>,
 }
 
-fn get_host_by_name(name: &str, available_hosts: Vec<cpal::HostId>) -> Result<cpal::Host, anyhow::Error> {
+fn get_host_by_name(name: &str) -> Result<cpal::Host, anyhow::Error> {
+    let available_hosts = cpal::available_hosts();
     for host_id in available_hosts {
         if host_id.name() == name {
             return Ok(cpal::host_from_id(host_id)?);
@@ -21,13 +22,7 @@ fn get_host_by_name(name: &str, available_hosts: Vec<cpal::HostId>) -> Result<cp
 
 pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let host = match std::env::var("AUDIO_HOST") {
-        Ok(name) => {
-            let available_hosts = cpal::available_hosts();
-            match get_host_by_name(&name, available_hosts) {
-                Ok(host) => host,
-                Err(e) => return Err(anyhow::Error::msg(format!("host \"{}\" not found", name))),
-            }
-        },
+        Ok(name) => get_host_by_name(&name)?,
         _ => match args.audio_host {
             Some(host) => {
                 cpal::default_host()

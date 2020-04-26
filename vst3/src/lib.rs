@@ -886,7 +886,7 @@ impl IPluginFactory2 for Factory {
                 info.cid = AGainProcessor::CID;
                 info.cardinality = ClassCardinality::kManyInstances as i32;
                 strcpy("Audio Module Class", info.category.as_mut_ptr());
-                strcpy("AGain VST3", info.name.as_mut_ptr());
+                strcpy("Paradise VST3", info.name.as_mut_ptr());
                 info.class_flags = 1;
                 strcpy("Fx", info.subcategories.as_mut_ptr());
                 strcpy("0.1.0", info.version.as_mut_ptr());
@@ -897,7 +897,7 @@ impl IPluginFactory2 for Factory {
                 info.cid = AGainController::CID;
                 info.cardinality = ClassCardinality::kManyInstances as i32;
                 strcpy("Component Controller Class", info.category.as_mut_ptr());
-                strcpy("AGain VST3 Controller", info.name.as_mut_ptr());
+                strcpy("Paradise VST3 Controller", info.name.as_mut_ptr());
                 info.class_flags = 0;
                 strcpy("", info.subcategories.as_mut_ptr());
                 strcpy("0.1.0", info.version.as_mut_ptr());
@@ -938,14 +938,14 @@ impl IPluginFactory for Factory {
                 info.cardinality = ClassCardinality::kManyInstances as i32;
                 info.cid = AGainProcessor::CID;
                 strcpy("Audio Module Class", info.category.as_mut_ptr());
-                strcpy("AGain VST3", info.name.as_mut_ptr());
+                strcpy("Paradise VST3", info.name.as_mut_ptr());
             }
             1 => {
                 let info = &mut *info;
                 info.cardinality = ClassCardinality::kManyInstances as i32;
                 info.cid = AGainController::CID;
                 strcpy("Component Controller Class", info.category.as_mut_ptr());
-                strcpy("AGain VST3 Controller", info.name.as_mut_ptr());
+                strcpy("Paradise VST3 Controller", info.name.as_mut_ptr());
             }
             _ => {
                 info!("Invalid class info ID {}", index);

@@ -22,7 +22,7 @@ else
   cargo build --$target
 fi
 
-outdir=../../target/$target/plugins
+outdir=../../target/$target/plugins/vst2
 
 mkdir -p $outdir
 vst_search_dir=$outdir

@@ -78,6 +78,7 @@ impl RxBuffer for LockingRxBuffer {
             return;
         }
         state.oldest = state.oldest.min(timestamp);
+        return;
         // Determine where the samples belong
         let i = match state.chunks.iter()
             .enumerate()

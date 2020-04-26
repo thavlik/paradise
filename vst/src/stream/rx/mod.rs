@@ -68,8 +68,6 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
                 recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
-            std::thread::yield_now();
-            continue;
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => {
@@ -102,7 +100,6 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
             b.accumulate(timestamp, samples);
             std::thread::yield_now();
-            continue;
         }
     }
 }

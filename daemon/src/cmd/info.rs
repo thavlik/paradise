@@ -32,7 +32,7 @@ pub fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
                     println!("  {}. \"{}\"", device_index, name);
                 },
                 Err(e) => {
-                    println!("Device {}: {:?}", device_index, e);
+                    println!("Device {} error: {:?}", device_index, e);
                     continue;
                 },
             }

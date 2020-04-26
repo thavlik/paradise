@@ -1390,6 +1390,10 @@ name = "paradise_tool"
 version = "0.1.0"
 
 [[package]]
+name = "paradise_vst3"
+version = "0.1.0"
+
+[[package]]
 name = "parking_lot"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

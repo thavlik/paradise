@@ -12,3 +12,7 @@ flexi_logger = "0.15.2"
 widestring = "0.4.0"
 vst3-sys = { git = "https://github.com/RustAudio/vst3-sys.git" }
 vst3-com = { git = "https://github.com/RustAudio/vst3-sys.git" }
+
+[lib]
+name = "paradise_vst3"
+crate-type = ["cdylib"]

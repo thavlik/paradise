@@ -7,7 +7,7 @@ const LATENCY_MS: f32 = 0.0 ;//150.0;
 #[derive(clap::Clap)]
 pub struct DaemonArgs {
     /// The audio host used for IO
-    #[clap(name = "audio-host", short = "a")]
+    #[clap(name = "audio-host")]
     audio_host: Option<String>,
 }
 

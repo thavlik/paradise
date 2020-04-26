@@ -1,23 +1,24 @@
 use super::*;
+use std::io::prelude::*;
 
-pub struct UdpRxStream<B> where B: RxBuffer {
+pub struct TcpRxStream<B> where B: RxBuffer {
     clock: std::sync::atomic::AtomicU64,
     stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: std::sync::Arc<B>,
     sync: crossbeam::crossbeam_channel::Sender<u64>,
 }
 
-impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
+impl<B> TcpRxStream<B> where B: 'static + RxBuffer {
     pub fn new(port: u16) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:{}", port);
-        let sock = std::net::UdpSocket::bind(&addr)?;
-        sock.set_nonblocking(true)?;
-        let (s, stop_recv) = crossbeam::crossbeam_channel::unbounded();
+        let buf  = std::sync::Arc::new(B::new());
+        let (stop_send, stop_recv) = crossbeam::crossbeam_channel::unbounded();
         let (sync_send, sync_recv) = crossbeam::crossbeam_channel::unbounded();
+        let mut listener = std::net::TcpListener::bind(&addr)?;
         let stream = std::sync::Arc::new(Self {
-            stop: s,
+            buf: buf.clone(),
+            stop: stop_send,
             clock: std::default::Default::default(),
-            buf: std::sync::Arc::new(B::new()),
             sync: sync_send,
         });
         crate::runtime::Runtime::get()
@@ -25,16 +26,30 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             .lock()
             .unwrap()
             .block_on(async {
-                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
+                tokio::task::spawn(Self::entry(stream.buf.clone(), listener, sync_recv, stop_recv))
             });
         Ok(stream)
     }
 
-    async fn entry(b: std::sync::Arc<B>, sock: std::net::UdpSocket, sync: crossbeam::crossbeam_channel::Receiver<u64>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
+    async fn entry(b: std::sync::Arc<B>, listener: std::net::TcpListener, sync: crossbeam::crossbeam_channel::Receiver<u64>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
         const BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         // TODO: set clock. Right now all samples are accepted.
         let mut clock: u64 = 0;
+        for stream in listener.incoming() {
+            //let (stop_send, stop_recv) = crossbeam::crossbeam_channel::unbounded();
+            //let (sync_send, sync_recv) = crossbeam::crossbeam_channel::unbounded();
+            match stream {
+                Ok(stream) => {
+                    println!("New connection: {}", stream.peer_addr().unwrap());
+                    //tokio::task::spawn(Self::entry(buf.clone(), stream, sync_recv, stop_recv));
+                }
+                Err(e) => {
+                    println!("Error: {}", e);
+                    /* connection failed */
+                }
+            }
+        }
         loop {
             std::thread::yield_now();
             select! {
@@ -42,7 +57,7 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
                 recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
-            let (amt, _src) = match sock.recv_from(&mut buf[..]) {
+            let amt = match stream.read(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => {
                     println!("recv_from: {:?}", e);
@@ -78,14 +93,14 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
     }
 }
 
-impl<B> std::ops::Drop for UdpRxStream<B>
+impl<B> std::ops::Drop for TcpRxStream<B>
     where B: RxBuffer {
     fn drop(&mut self) {
         self.stop.send(());
     }
 }
 
-impl<B> RxStream for UdpRxStream<B> where B: 'static + RxBuffer {
+impl<B> RxStream for TcpRxStream<B> where B: 'static + RxBuffer {
     fn process(&self, output_buffer: &mut [f32]) {
         // Swap out the current receive buffer
         self.buf.flush(output_buffer);

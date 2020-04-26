@@ -1,6 +1,7 @@
 use super::*;
 
 pub mod locking;
+pub mod tcp;
 pub mod udp;
 
 pub trait RxBuffer
@@ -16,7 +17,7 @@ pub trait RxBuffer
     fn flush(&self, output_buffer: &mut [f32]);
 }
 
-pub trait RxStream<B> where B: RxBuffer {
+pub trait RxStream {
     fn process(&self, output_buffer: &mut [f32]);
 }
 

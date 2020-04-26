@@ -1370,6 +1370,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24c979d3cc222150ef268718f409e4804951f5677ea1e9dc39e1733ad85d9501"
 
 [[package]]
+name = "paradise"
+version = "0.1.0"
+dependencies = [
+ "crossbeam",
+ "env_logger",
+ "lazy_static",
+ "log",
+ "log4rs",
+ "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
+ "vst",
+]
+
+[[package]]
 name = "paradise-types"
 version = "0.1.0"
 dependencies = [
@@ -1405,6 +1418,7 @@ dependencies = [
  "lazy_static",
  "log",
  "log4rs",
+ "paradise",
  "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
  "vst",
 ]

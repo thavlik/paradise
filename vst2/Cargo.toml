@@ -15,6 +15,7 @@ crossbeam = "0.7.3"
 #glutin = { git = "https://github.com/rust-windowing/glutin" }
 tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
 lazy_static = "1.4.0"
+paradise = { path = "../paradise" }
 
 [lib]
 name = "paradise_vst2"

@@ -29,12 +29,8 @@ use vst::buffer::AudioBuffer;
 use vst::plugin::{Category, Info, Plugin, PluginParameters};
 use vst::util::AtomicFloat;
 
-mod editor;
-mod stream;
-mod runtime;
-
-type TxStream = stream::tx::udp::UdpTxStream::<stream::tx::locking::LockingTxBuffer>;
-type RxStream = stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
+type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
 
 //type TxStream = stream::tx::tcp::TcpTxStream::<stream::tx::locking::LockingTxBuffer>;
 //type RxStream = stream::rx::tcp::TcpRxStream::<stream::rx::locking::LockingRxBuffer>;
@@ -44,10 +40,10 @@ type RxStream = stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuf
 #[derive(Clone)]
 struct RemoteAudioEffect {
     // Receive streams
-    rx: Vec<std::sync::Arc<dyn stream::rx::RxStream>>,
+    rx: Vec<std::sync::Arc<dyn paradise::stream::rx::RxStream>>,
 
     // Send streams
-    tx: Vec<std::sync::Arc<dyn stream::tx::TxStream>>,
+    tx: Vec<std::sync::Arc<dyn paradise::stream::tx::TxStream>>,
 
     // Store a handle to the plugin's parameter object.
     params: Arc<RemoteAudioEffectParameters>,
@@ -58,7 +54,7 @@ struct RemoteAudioEffect {
 
     l: std::sync::Arc<std::sync::Mutex<()>>,
 
-    rt: std::sync::Arc<runtime::Runtime>,
+    rt: std::sync::Arc<paradise::runtime::Runtime>,
 
     host: Option<vst::plugin::HostCallback>,
 }
@@ -73,7 +69,7 @@ impl RemoteAudioEffect {
         if self.running.load(std::sync::atomic::Ordering::SeqCst) {
             return true;
         }
-        let rt = runtime::Runtime::get();
+        let rt = paradise::runtime::Runtime::get();
         if self.tx.len() == 0 {
             let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
             let send_port = 0; //match rt.outbound.reserve() {
@@ -241,7 +237,7 @@ impl Default for RemoteAudioEffect {
             latency: std::sync::Arc::new(std::default::Default::default()),
             running: std::sync::Arc::new(std::default::Default::default()),
             l: std::sync::Arc::new(std::sync::Mutex::new(())),
-            rt: runtime::Runtime::get(),
+            rt: paradise::runtime::Runtime::get(),
             host: None,
         }
     }

@@ -1,5 +1,5 @@
 [package]
-name = "paradise-vst"
+name = "paradise"
 version = "0.1.0"
 authors = ["Tom Havlik <keres993@gmail.com>"]
 edition = "2018"
@@ -15,7 +15,3 @@ crossbeam = "0.7.3"
 #glutin = { git = "https://github.com/rust-windowing/glutin" }
 tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
 lazy_static = "1.4.0"
-
-[lib]
-name = "paradise"
-crate-type = ["cdylib"]

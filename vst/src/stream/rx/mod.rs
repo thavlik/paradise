@@ -77,8 +77,6 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
                     continue
                 }
             };
-            tokio::task::yield_now().await;
-            continue;
             let hdr = &buf[..8];
             let timestamp = ((hdr[0] as u64) << 48) |
                 ((hdr[1] as u64) << 40) |
@@ -97,6 +95,8 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             }
             let status = hdr[7];
             let data = &buf[8..amt - 8];
+            tokio::task::yield_now().await;
+            continue;
             if data.len() % 4 != 0 {
                 panic!("data buffer is not divisible by four")
             }

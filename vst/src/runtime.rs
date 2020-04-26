@@ -6,7 +6,7 @@ pub struct PortPool {
 }
 
 pub struct Runtime {
-    pub rt: tokio::runtime::Runtime,
+    pub rt: std::sync::Mutex<tokio::runtime::Runtime>,
     pub outbound: PortPool,
     pub inbound: PortPool,
 }
@@ -51,10 +51,10 @@ impl PortPool {
 
 impl Runtime {
     fn new() -> Self {
-        let rt = tokio::runtime::Builder::new()
+        let rt = std::sync::Mutex::new(tokio::runtime::Builder::new()
             .threaded_scheduler()
             .build()
-            .unwrap();
+            .unwrap());
         Self {
             rt,
             inbound: PortPool::new(30000, 34999),

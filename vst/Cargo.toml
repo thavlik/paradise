@@ -13,7 +13,7 @@ log = "0.4.8"
 log4rs = "0.11.0"
 crossbeam = "0.7.3"
 #glutin = { git = "https://github.com/rust-windowing/glutin" }
-tokio = { version = "0.2.19", features = ["rt-threaded"] }
+tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
 lazy_static = "1.4.0"
 
 [lib]

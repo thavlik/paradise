@@ -11,7 +11,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "log",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-util 0.2.0",
 ]
 
@@ -115,7 +115,7 @@ dependencies = [
  "copyless",
  "futures-channel",
  "futures-util",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -447,7 +447,7 @@ dependencies = [
 [[package]]
 name = "clap"
 version = "3.0.0-beta.1"
-source = "git+https://github.com/clap-rs/clap/#99b1b768c25c1f317174e0b42e6740884c620f44"
+source = "git+https://github.com/clap-rs/clap/#5f72b0b083303f5ac6881c7c33479a3895c8f85f"
 dependencies = [
  "atty",
  "bitflags",
@@ -465,7 +465,7 @@ dependencies = [
 [[package]]
 name = "clap_derive"
 version = "3.0.0-beta.1"
-source = "git+https://github.com/clap-rs/clap/#99b1b768c25c1f317174e0b42e6740884c620f44"
+source = "git+https://github.com/clap-rs/clap/#5f72b0b083303f5ac6881c7c33479a3895c8f85f"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -856,7 +856,7 @@ dependencies = [
  "indexmap",
  "log",
  "slab",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-util 0.3.1",
 ]
 
@@ -944,7 +944,7 @@ dependencies = [
  "net2",
  "pin-project",
  "time",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tower-service",
  "want",
 ]
@@ -958,7 +958,7 @@ dependencies = [
  "bytes 0.5.4",
  "hyper",
  "native-tls",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-tls",
 ]
 
@@ -1367,7 +1367,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "serde_yaml",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-core",
  "uuid",
 ]
@@ -1381,7 +1381,7 @@ dependencies = [
  "lazy_static",
  "log",
  "log4rs",
- "tokio 0.2.19",
+ "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
  "vst",
 ]
 
@@ -1652,7 +1652,7 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "time",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-tls",
  "url",
  "wasm-bindgen",
@@ -2004,6 +2004,16 @@ dependencies = [
 [[package]]
 name = "tokio"
 version = "0.2.19"
+source = "git+https://github.com/tokio-rs/tokio.git#ce9eabfdd12a14efb74f5e6d507f2acbe7a814c9"
+dependencies = [
+ "bytes 0.5.4",
+ "num_cpus",
+ "pin-project-lite",
+]
+
+[[package]]
+name = "tokio"
+version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d9c43f1bb96970e153bcbae39a65e249ccb942bd9d36dbdf086024920417c9c"
 dependencies = [
@@ -2187,7 +2197,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bde02a3a5291395f59b06ec6945a3077602fac2b07eeeaf0dee2122f3619828"
 dependencies = [
  "native-tls",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2234,7 +2244,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2248,7 +2258,7 @@ dependencies = [
  "futures-sink",
  "log",
  "pin-project-lite",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2279,7 +2289,7 @@ dependencies = [
  "rand",
  "smallvec 1.4.0",
  "socket2",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "url",
 ]
 
@@ -2298,7 +2308,7 @@ dependencies = [
  "lru-cache",
  "resolv-conf",
  "smallvec 1.4.0",
- "tokio 0.2.19",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "trust-dns-proto",
 ]
 

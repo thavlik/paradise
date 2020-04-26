@@ -18,7 +18,7 @@ impl LockingTxBuffer {
 }
 
 impl TxBuffer for LockingTxBuffer {
-    fn new(rt: &tokio::runtime::Runtime) -> Self {
+    fn new() -> Self {
         Self {
             parity: std::default::Default::default(),
             buf: [

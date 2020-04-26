@@ -5,7 +5,6 @@ fn main() {
     let sock = std::net::UdpSocket::bind(&addr).unwrap();
     const BUFFER_SIZE: usize = 256_000;
     let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
-    let clock = std::time::Instant::now();
     loop {
         let (amt, src) = match sock.recv_from(&mut buf[..]) {
             Ok(value) => value,

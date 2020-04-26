@@ -72,7 +72,7 @@ impl RemoteAudioEffect {
                     return false;
                 }
             };
-            let rx = match stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port, &rt.rt) {
+            let rx = match stream::rx::RxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port) {
                 Ok(rx) => rx,
                 Err(e) => {
                     return false;
@@ -88,7 +88,7 @@ impl RemoteAudioEffect {
                     return false;
                 }
             };
-            let tx = match stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(dest_addr, send_port, &rt.rt) {
+            let tx = match stream::tx::TxStream::<stream::tx::locking::LockingTxBuffer>::new(dest_addr, send_port) {
                 Ok(tx) => tx,
                 Err(e) => {
                     return false;
@@ -262,25 +262,27 @@ impl Plugin for RemoteAudioEffect {
                     .for_each(|v| *v = 0.0));
             return;
         }
-        return;
         if inputs.len() != self.tx.len() {
-            println!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
+            //println!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
         } else {
             inputs.into_iter()
                 .zip(self.tx.iter())
                 .for_each(|(input, tx)| tx.process(input));
         }
-        if outputs.len() != self.rx.len() {
-            println!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
-        } else {
-            outputs.into_iter()
-                .zip(self.rx.iter())
-                .for_each(|(output, rx)| {
-                    output.iter_mut()
-                        .for_each(|v| *v = 0.0);
-                    rx.process(output)
-                });
-        }
+        outputs.into_iter()
+            .for_each(|output| output.iter_mut()
+                .for_each(|v| *v = 0.0));
+        //if outputs.len() != self.rx.len() {
+        //    //println!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
+        //} else {
+        //    outputs.into_iter()
+        //        .zip(self.rx.iter())
+        //        .for_each(|(output, rx)| {
+        //            output.iter_mut()
+        //                .for_each(|v| *v = 0.0);
+        //            rx.process(output)
+        //        });
+        //}
     }
 
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {

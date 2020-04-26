@@ -38,7 +38,7 @@ impl LockingRxBuffer {
 
 
 impl RxBuffer for LockingRxBuffer {
-    fn new(rt: &tokio::runtime::Runtime) -> Self {
+    fn new() -> Self {
         Self {
             parity: std::default::Default::default(),
             state: [

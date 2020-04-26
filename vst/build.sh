@@ -13,7 +13,7 @@ fi
 if [[ $WSL_DETECTED == "1" ]]; then
   set +e
   win_userprofile="$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)"
-  set -e
+  set -euo pipefail
   win_userprofile=$(wslpath -u "$win_userprofile")
   cargo_bin="$win_userprofile/.cargo/bin/cargo.exe"
   echo "Using cargo.exe at $cargo_bin"

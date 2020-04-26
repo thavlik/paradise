@@ -64,7 +64,7 @@ impl vst::editor::Editor for Editor {
         let flutter = FlutterWindow::new(window, PathBuf::from(assets_dir), args).unwrap();
         let flutter = flutter.with_resource_context().unwrap();
 
-        flutter.start_engine().unwrap();
+        flutter.start_engine()a;
 
         flutter.run();
 

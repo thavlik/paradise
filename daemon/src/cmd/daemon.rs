@@ -62,15 +62,17 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             let stream = RxStream::new(port).expect("failed to create rx stream");
             rx.push(stream.clone());
             let output_data_fn = move |data: &mut [f32]| {
-                paradise::stream::rx::RxStream::process(&*stream, data);
+                let clock = paradise::stream::rx::RxStream::process(&*stream, data);
+                println!("clock: {}", clock);
             };
             let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
+            output_stream.play()?;
             // Create rx socket
-            tokio::task::spawn(async {});
+            //tokio::task::spawn(async {});
             port += 1;
         }
     }
-
+    /*
     let input_device = host
         .default_input_device()
         .expect("failed to get default input device");
@@ -87,12 +89,14 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let input_stream = input_device.build_input_stream(&config, input_data_fn, err_fn)?;
     let output_stream = output_device.build_output_stream(&config, output_data_fn, err_fn)?;
     input_stream.play()?;
-    output_stream.play()?;
-    println!("Playing for 3 seconds... ");
-    std::thread::sleep(std::time::Duration::from_secs(3));
+    */
+    println!("Playing for 10000 seconds... ");
+    std::thread::sleep(std::time::Duration::from_secs(10000));
+    /*
     drop(input_stream);
     drop(output_stream);
     println!("Done!");
+    */
     Ok(())
 }
 

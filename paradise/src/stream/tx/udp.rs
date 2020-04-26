@@ -29,13 +29,13 @@ impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
             clock: status.clone(),
             status: status.clone(),
         });
-        crate::runtime::Runtime::get()
-            .rt
-            .lock()
-            .unwrap()
-            .block_on(async {
-                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, dest, clock, status, r))
-            });
+        //crate::runtime::Runtime::get()
+        //    .rt
+        //    .lock()
+        //    .unwrap()
+        //    .block_on(async {
+        //    });
+        tokio::task::spawn(Self::entry(stream.buf.clone(), sock, dest, clock, status, r));
         Ok(stream)
     }
 

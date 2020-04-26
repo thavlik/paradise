@@ -1,7 +1,7 @@
 use std::io::prelude::*;
 
 fn main_udp() {
-    let port: u16 = 30001;
+    let port: u16 = 30005;
     println!("Listening on {}", port);
     let addr = format!("0.0.0.0:{}", port);
     let sock = std::net::UdpSocket::bind(&addr).unwrap();
@@ -19,11 +19,11 @@ fn main_udp() {
                 println!("recv_from: {:?}", e);
                 std::thread::yield_now();
                 continue
-            }
+            },
         };
         let data = &buf[8..amt];
         let all_zero = data.iter().all(|v| *v == 0);
-        println!("active={}, sending to {:?}", !all_zero, send_addrs);
+        println!("active={} {} => {:?}", !all_zero, &addr, send_addrs);
         send_addrs.iter()
             .for_each(|addr| {
                 match sock.send_to(&buf[..amt], &addr) {

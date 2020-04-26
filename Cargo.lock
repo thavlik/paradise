@@ -1529,6 +1529,8 @@ dependencies = [
  "anyhow",
  "clap",
  "cpal",
+ "paradise",
+ "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
 ]
 
 [[package]]

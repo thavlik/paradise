@@ -3,6 +3,8 @@ set -euo pipefail
 cd $(dirname $0)
 target=${target:-debug}
 
+echo "Building VST3 plugin..."
+
 if grep -qEi "(Microsoft|WSL)" /proc/version &>/dev/null; then
   WSL_DETECTED=1
   echo "WSL detected"
@@ -33,13 +35,13 @@ vst_search_dir=$outdir
 if [[ "$OSTYPE" == "darwin"* ]]; then
   echo "Packaging MacOS VST3 plugin..."
   ./osx-bundler.sh paradise ../../target/$target/libparadise_vst3.dylib
-  mkdir -p $outdir || true
+  mkdir -p $outdir &>/dev/null || true
   rm -rf $outdir/paradise.vst3 || true
   mv paradise.vst3 $outdir
   echo "Successfully VST3 built plugin for MacOS"
 elif [[ $WSL_DETECTED == "1" ]]; then
   echo "Packaging Windows VST3 plugin..."
-  rm $outdir/paradise.vst3 || true
+  rm $outdir/paradise.vst3 &>/dev/null || true
   cp ../../target/$target/paradise_vst3.dll $outdir/paradise.vst3
   echo "Successfully built VST3 plugin for Windows"
   vst_search_dir=$(wslpath -w $vst_search_dir)

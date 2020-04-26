@@ -20,13 +20,13 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             buf: std::sync::Arc::new(B::new()),
             sync: sync.clone(),
         });
-        crate::runtime::Runtime::get()
-            .rt
-            .lock()
-            .unwrap()
-            .block_on(async {
-                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync, stop_recv))
-            });
+        //crate::runtime::Runtime::get()
+        //    .rt
+        //    .lock()
+        //    .unwrap()
+        //    .block_on(async {
+        //    });
+        tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync, stop_recv));
         Ok(stream)
     }
 
@@ -43,9 +43,14 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             }
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
-                Err(e) => {
-                    println!("recv_from: {:?}", e);
-                    continue
+                Err(e) => match e.kind() {
+                    std::io::ErrorKind::WouldBlock => {
+                        continue
+                    },
+                    _ => {
+                        println!("recv_from: {:?}", e);
+                        continue
+                    }
                 }
             };
             let hdr = &buf[..8];

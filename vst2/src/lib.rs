@@ -60,7 +60,6 @@ struct RemoteAudioEffect {
 }
 
 impl RemoteAudioEffect {
-
     fn ensure_started(&mut self) -> bool {
         if self.running.load(std::sync::atomic::Ordering::SeqCst) {
             return true;
@@ -69,37 +68,35 @@ impl RemoteAudioEffect {
         if self.running.load(std::sync::atomic::Ordering::SeqCst) {
             return true;
         }
-        let rt = paradise::runtime::Runtime::get();
+        let rt = &paradise::runtime::Runtime::get().rt;
+
+        rt.lock().unwrap().block_on(async {});
+
         if self.tx.len() == 0 {
-            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
-            let send_port = 0; //match rt.outbound.reserve() {
-            //    Ok(port) => port,
-            //    Err(e) => {
-            //        return false;
-            //    }
-            //};
-            let tx = match TxStream::new(dest_addr) {
-                Ok(tx) => tx,
+            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30005));
+            match rt.lock()
+                .unwrap()
+                .block_on(async {
+                    TxStream::new(dest_addr)
+                }) {
+                Ok(tx) => self.tx = vec![tx],
                 Err(e) => {
                     return false;
-                },
+                }
             };
-            self.tx = vec![tx];
         }
         if self.rx.len() == 0 {
-            let receive_port = 30000; //match rt.inbound.reserve() {
-            //    Ok(port) => port,
-            //    Err(e) => {
-            //        return false;
-            //    }
-            //};
-            let rx = match RxStream::new(receive_port) {
-                Ok(rx) => rx,
+            let receive_port = 30000;
+            match rt.lock()
+                .unwrap()
+                .block_on(async {
+                    RxStream::new(receive_port)
+                }) {
+                Ok(rx) => self.rx = vec![rx],
                 Err(e) => {
                     return false;
-                },
+                }
             };
-            self.rx = vec![rx];
         }
         self.running.store(true, std::sync::atomic::Ordering::SeqCst);
         true
@@ -120,23 +117,6 @@ struct RemoteAudioEffectParameters {
     pole_value: AtomicFloat,
     // a drive parameter. Just used to increase the volume, which results in heavier distortion
     drive: AtomicFloat,
-}
-
-static START: std::sync::Once = std::sync::Once::new();
-
-fn entrypoint() {
-    env_logger::init();
-    let log_path = "/Users/thomashavlik/Repositories/paradise/vst/log.txt";
-    let log_file = log4rs::append::file::FileAppender::builder()
-        .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new("{l} - {m}\n")))
-        .build(log_path)
-        .unwrap();
-    let config = log4rs::config::Config::builder()
-        .appender(log4rs::config::Appender::builder().build("logfile", Box::new(log_file)))
-        .build(log4rs::config::Root::builder().appender("logfile").build(log::LevelFilter::Info))
-        .unwrap();
-    log4rs::init_config(config).unwrap();
-    info!("Start successfully");
 }
 
 impl Default for RemoteAudioEffectParameters {
@@ -314,9 +294,7 @@ impl Plugin for RemoteAudioEffect {
     }
 
     fn process_events(&mut self, events: &vst::api::Events) {
-        events.events().for_each(|event| {
-
-        });
+        events.events().for_each(|event| {});
     }
 }
 
@@ -346,27 +324,6 @@ macro_rules! my_plugin_main {
             entry(callback)
         }
     };
-}
-
-/// Initializes a VST plugin and returns a raw pointer to an AEffect struct.
-#[doc(hidden)]
-pub fn entry(callback: vst::api::HostCallbackProc) {
-    // Create a Box containing a zeroed AEffect. This is transmuted into a *mut pointer so that it
-    // can be passed into the HostCallback `wrap` method. The AEffect is then updated after the vst
-    // object is created so that the host still contains a raw pointer to the AEffect struct.
-    let effect = unsafe { Box::into_raw(Box::new(std::mem::MaybeUninit::zeroed().assume_init())) };
-
-    let host = vst::plugin::HostCallback::wrap(callback, effect);
-    if host.vst_version() == 0 {
-        // TODO: Better criteria would probably be useful here...
-        return;
-    }
-
-    trace!("Creating VST plugin instance...");
-    let mut plugin = RemoteAudioEffect::new(host);
-    let info = plugin.get_info();
-    let params = plugin.get_parameter_object();
-    let editor = plugin.get_editor();
 }
 
 plugin_main!(RemoteAudioEffect);

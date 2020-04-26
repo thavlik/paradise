@@ -3,6 +3,8 @@ set -euo pipefail
 cd $(dirname $0)
 target=${target:-debug}
 
+echo "Building VST2 plugin..."
+
 if grep -qEi "(Microsoft|WSL)" /proc/version &>/dev/null; then
   WSL_DETECTED=1
   echo "WSL detected"
@@ -34,13 +36,13 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   echo "Packaging MacOS VST2 plugin..."
   ./package_macos.sh paradise ../../target/$target/libparadise_vst2.dylib
   mkdir -p $outdir || true
-  rm -rf $outdir/paradise.vst || true
+  rm -rf $outdir/paradise.vst &>/dev/null || true
   mv paradise.vst $outdir
   echo "Successfully built VST2 plugin for MacOS"
 elif [[ $WSL_DETECTED == "1" ]]; then
   echo "Packaging Windows VST2 plugin..."
-  rm $outdir/paradise.dll || true
-  cp ../../target/$target/paradise.dll $outdir
+  rm $outdir/paradise.dll &>/dev/null || true
+  cp ../../target/$target/paradise_vst2.dll $outdir/paradise.dll
   echo "Successfully built VST2 plugin for Windows"
   vst_search_dir=$(wslpath -w $vst_search_dir)
 else

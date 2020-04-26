@@ -10,7 +10,6 @@ pub fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
     println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
     let available_hosts = cpal::available_hosts();
     println!("Available hosts:\n  {:?}", available_hosts);
-
     for host_id in available_hosts {
         println!("{}", host_id.name());
         let host = cpal::host_from_id(host_id)?;

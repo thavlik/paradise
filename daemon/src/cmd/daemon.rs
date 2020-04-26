@@ -29,11 +29,32 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             None => cpal::default_host(),
         }
     };
-    let rt = std::sync::Mutex::new(tokio::runtime::Builder::new()
+    let devices = host.devices()?;
+    let mut rt = tokio::runtime::Builder::new()
         .threaded_scheduler()
         .build()
-        .unwrap());
-    rt.block_on(|| {});
+        .unwrap();
+    rt.block_on(async {
+        for (device_index, device) in devices.enumerate() {
+            match device.name() {
+                Ok(name) => {
+                    println!("  {}. \"{}\"", device_index, name);
+                },
+                Err(e) => {
+                    println!("  {}. ERROR: {}", device_index, e);
+                    continue;
+                },
+            }
+            if let Ok(conf) = device.default_input_config() {
+                let conf: cpal::StreamConfig = conf.into();
+                println!("    Default input stream config:\n      {:?}", conf);
+            }
+            if let Ok(conf) = device.default_output_config() {
+                let conf: cpal::StreamConfig = conf.into();
+                println!("    Default output stream config:\n      {:?}", conf);
+            }
+        }
+    });
 
     let input_device = host
         .default_input_device()
@@ -45,10 +66,8 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     println!("Using default output device: \"{}\"", output_device.name()?);
     let config: cpal::StreamConfig = input_device.default_input_config()?.into();
     let input_data_fn = move |data: &[f32]| {
-        println!("input len: {}", data.len());
     };
     let output_data_fn = move |data: &mut [f32]| {
-        println!("output len: {}", data.len());
     };
     let input_stream = input_device.build_input_stream(&config, input_data_fn, err_fn)?;
     let output_stream = output_device.build_output_stream(&config, output_data_fn, err_fn)?;

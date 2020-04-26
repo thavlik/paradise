@@ -6,25 +6,34 @@ const LATENCY_MS: f32 = 0.0 ;//150.0;
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
 pub struct DaemonArgs {
+    #[clap(name = "audio-host", short = "a")]
+    audio_host: Option<String>,
+}
+
+fn get_host_by_name(name: &str, available_hosts: Vec<cpal::HostId>) -> Result<cpal::Host, anyhow::Error> {
+    for host_id in available_hosts {
+        if host_id.name() == name {
+            return Ok(cpal::host_from_id(host_id)?);
+        }
+    }
+    Err(anyhow::Error::msg(format!("host \"{}\" not found", name)))
 }
 
 pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let host = match std::env::var("AUDIO_HOST") {
         Ok(name) => {
             let available_hosts = cpal::available_hosts();
-            let mut host = None;
-            for host_id in available_hosts {
-                if host_id.name() == name {
-                    host = Some(cpal::host_from_id(host_id)?);
-                    break;
-                }
+            match get_host_by_name(&name, available_hosts) {
+                Ok(host) => host,
+                Err(e) => return Err(anyhow::Error::msg(format!("host \"{}\" not found", name))),
             }
-            if host.is_none() {
-                return Err(anyhow::Error::msg("foo"))
-            }
-            host.unwrap()
         },
-        _ => cpal::default_host(),
+        _ => match args.audio_host {
+            Some(host) => {
+                cpal::default_host()
+            },
+            None => cpal::default_host(),
+        }
     };
     let input_device = host
         .default_input_device()

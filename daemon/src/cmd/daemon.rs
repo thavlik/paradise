@@ -1,77 +1,62 @@
-use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
 pub struct DaemonArgs {
 }
 
-
 pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
+    let host = cpal::default_host();
+    let device = host
+        .default_output_device()
+        .expect("failed to find a default output device");
+    let config = device.default_output_config()?;
 
-    println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
-    let available_hosts = cpal::available_hosts();
-    println!("Available hosts:\n  {:?}", available_hosts);
-
-    for host_id in available_hosts {
-        println!("{}", host_id.name());
-        let host = cpal::host_from_id(host_id)?;
-        let default_in = host.default_input_device().map(|e| e.name().unwrap());
-        let default_out = host.default_output_device().map(|e| e.name().unwrap());
-        println!("  Default Input Device:\n    {:?}", default_in);
-        println!("  Default Output Device:\n    {:?}", default_out);
-
-        let devices = host.devices()?;
-        println!("  Devices: ");
-        for (device_index, device) in devices.enumerate() {
-            println!("  {}. \"{}\"", device_index + 1, device.name()?);
-
-            // Input configs
-            if let Ok(conf) = device.default_input_config() {
-                println!("    Default input stream config:\n      {:?}", conf);
-            }
-            let mut input_configs = match device.supported_input_configs() {
-                Ok(f) => f.peekable(),
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    continue;
-                }
-            };
-            if input_configs.peek().is_some() {
-                println!("    All supported input stream configs:");
-                for (config_index, config) in input_configs.enumerate() {
-                    println!(
-                        "      {}.{}. {:?}",
-                        device_index + 1,
-                        config_index + 1,
-                        config
-                    );
-                }
-            }
-
-            // Output configs
-            if let Ok(conf) = device.default_output_config() {
-                println!("    Default output stream config:\n      {:?}", conf);
-            }
-            let mut output_configs = match device.supported_output_configs() {
-                Ok(f) => f.peekable(),
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    continue;
-                }
-            };
-            if output_configs.peek().is_some() {
-                println!("    All supported output stream configs:");
-                for (config_index, config) in output_configs.enumerate() {
-                    println!(
-                        "      {}.{}. {:?}",
-                        device_index + 1,
-                        config_index + 1,
-                        config
-                    );
-                }
-            }
-        }
+    match config.sample_format() {
+        cpal::SampleFormat::F32 => run::<f32>(&device, &config.into())?,
+        cpal::SampleFormat::I16 => run::<i16>(&device, &config.into())?,
+        cpal::SampleFormat::U16 => run::<u16>(&device, &config.into())?,
     }
 
     Ok(())
+}
+
+fn run<T>(device: &cpal::Device, config: &cpal::StreamConfig) -> Result<(), anyhow::Error>
+    where
+        T: cpal::Sample,
+{
+    let sample_rate = config.sample_rate.0 as f32;
+    let channels = config.channels as usize;
+
+    // Produce a sinusoid of maximum amplitude.
+    let mut sample_clock = 0f32;
+    let mut next_value = move || {
+        sample_clock = (sample_clock + 1.0) % sample_rate;
+        (sample_clock * 440.0 * 2.0 * 3.141592 / sample_rate).sin()
+    };
+
+    let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
+
+    let stream = device.build_output_stream(
+        config,
+        move |data: &mut [T]| write_data(data, channels, &mut next_value),
+        err_fn,
+    )?;
+    stream.play()?;
+
+    std::thread::sleep(std::time::Duration::from_millis(5000));
+
+    Ok(())
+}
+
+fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
+    where
+        T: cpal::Sample,
+{
+    for frame in output.chunks_mut(channels) {
+        let value: T = cpal::Sample::from::<f32>(&next_sample());
+        for sample in frame.iter_mut() {
+            *sample = value;
+        }
+    }
 }

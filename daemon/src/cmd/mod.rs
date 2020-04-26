@@ -10,7 +10,7 @@ pub enum SubCommand {
     Info(info::InfoArgs),
 
     /// Runs the daemon
-    #[clap(name = "info")]
+    #[clap(name = "daemon")]
     Daemon(daemon::DaemonArgs),
 }
 

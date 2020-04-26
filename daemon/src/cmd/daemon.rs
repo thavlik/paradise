@@ -29,6 +29,12 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             None => cpal::default_host(),
         }
     };
+    let rt = std::sync::Mutex::new(tokio::runtime::Builder::new()
+        .threaded_scheduler()
+        .build()
+        .unwrap());
+    rt.block_on(|| {});
+
     let input_device = host
         .default_input_device()
         .expect("failed to get default input device");

@@ -33,7 +33,12 @@ mod editor;
 mod stream;
 mod runtime;
 
-type TxStream = stream::tx::udp::UdpTxStream::<stream::tx::locking::LockingTxBuffer>;
+//type TxStream = stream::tx::udp::UdpTxStream::<stream::tx::locking::LockingTxBuffer>;
+//type RxStream = stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>;
+
+type TxStream = stream::tx::tcp::TcpTxStream::<stream::tx::locking::LockingTxBuffer>;
+type RxStream = stream::rx::tcp::TcpRxStream::<stream::rx::locking::LockingRxBuffer>;
+
 
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
@@ -73,7 +78,7 @@ impl RemoteAudioEffect {
             //        return false;
             //    }
             //};
-            let tx = match TxStream::new(dest_addr, send_port) {
+            let tx = match TxStream::new(dest_addr) {
                 Ok(tx) => tx,
                 Err(e) => {
                     return false;
@@ -88,7 +93,7 @@ impl RemoteAudioEffect {
             //        return false;
             //    }
             //};
-            let rx = match stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port) {
+            let rx = match RxStream::new(receive_port) {
                 Ok(rx) => rx,
                 Err(e) => {
                     return false;

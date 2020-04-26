@@ -27,7 +27,7 @@ impl<B> TcpTxStream<B> where B: 'static + TxBuffer {
             .lock()
             .unwrap()
             .block_on(async {
-                tokio::task::spawn(Self::entry(s.buf.clone(), addr, stop_recv))
+                //tokio::task::spawn(Self::entry(s.buf.clone(), addr, stop_recv))
             });
         Ok(s)
     }

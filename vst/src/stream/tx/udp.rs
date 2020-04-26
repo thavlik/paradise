@@ -15,9 +15,8 @@ impl<B> std::ops::Drop for UdpTxStream<B>
 impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
     pub fn new(
         dest: std::net::SocketAddr,
-        outbound_port: u16,
     ) -> std::io::Result<std::sync::Arc<Self>> {
-        let addr = format!("0.0.0.0:{}", outbound_port);
+        let addr = format!("0.0.0.0:0"); // double check me
         let sock = std::net::UdpSocket::bind(addr)?;
         let (s, r) = crossbeam::crossbeam_channel::unbounded();
         let stream = std::sync::Arc::new(Self {

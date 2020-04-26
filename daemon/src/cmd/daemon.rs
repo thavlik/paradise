@@ -9,8 +9,23 @@ pub struct DaemonArgs {
 }
 
 pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
-    let host = cpal::default_host();
-    // Default devices.
+    let host = match std::env::var("AUDIO_HOST") {
+        Ok(name) => {
+            let available_hosts = cpal::available_hosts();
+            let mut host = None;
+            for host_id in available_hosts {
+                if host_id.name() == name {
+                    host = Some(cpal::host_from_id(host_id)?);
+                    break;
+                }
+            }
+            if host.is_none() {
+                return Err(anyhow::Error::msg("foo"))
+            }
+            host.unwrap()
+        },
+        _ => cpal::default_host(),
+    };
     let input_device = host
         .default_input_device()
         .expect("failed to get default input device");

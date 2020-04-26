@@ -48,6 +48,8 @@ struct RemoteAudioEffect {
     running: std::sync::Arc<std::sync::atomic::AtomicBool>,
 
     l: std::sync::Arc<std::sync::Mutex<()>>,
+
+    rt: std::sync::Arc<runtime::Runtime>,
 }
 
 impl RemoteAudioEffect {
@@ -226,6 +228,7 @@ impl Default for RemoteAudioEffect {
             tx: vec![],
             running: std::sync::Arc::new(std::default::Default::default()),
             l: std::sync::Arc::new(std::sync::Mutex::new(())),
+            rt: runtime::Runtime::get(),
         }
     }
 }

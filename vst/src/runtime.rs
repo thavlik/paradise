@@ -12,7 +12,7 @@ pub struct Runtime {
 }
 
 lazy_static! {
-    static ref _RT: std::sync::Mutex<Option<std::sync::Arc<Runtime>>> = std::sync::Mutex::new(None);
+    static ref _RT: std::sync::Mutex<Option<std::sync::Weak<Runtime>>> = std::sync::Mutex::new(None);
 }
 
 
@@ -67,14 +67,16 @@ impl Runtime {
             let mut guard = _RT.lock().unwrap();
             match &*guard {
                 Some(runtime) => {
-                    runtime.clone()
+                    match runtime.upgrade() {
+                        Some(runtime) => return runtime.clone(),
+                        None => {}
+                    }
                 },
-                None => {
-                    let v = std::sync::Arc::new(Runtime::new());
-                    *guard = Some(v.clone());
-                    v
-                },
-            }
+                None => {},
+            };
+            let v = std::sync::Arc::new(Runtime::new());
+            *guard = Some(std::sync::Arc::downgrade(&v));
+            v
         }
     }
 }

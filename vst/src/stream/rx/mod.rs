@@ -47,7 +47,7 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             .lock()
             .unwrap()
             .block_on(async {
-                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
+                //tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
             });
         Ok(stream)
     }

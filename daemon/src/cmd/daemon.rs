@@ -59,6 +59,7 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             println!("    Default output stream config:\n      {:?}", conf);
             // Create rx socket
             rx.push(RxStream::new(port).expect("failed to create rx stream"));
+            tokio::task::spawn(async {});
             port += 1;
         }
     }

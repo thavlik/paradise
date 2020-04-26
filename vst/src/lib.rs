@@ -33,11 +33,11 @@ mod editor;
 mod stream;
 mod runtime;
 
-//type TxStream = stream::tx::udp::UdpTxStream::<stream::tx::locking::LockingTxBuffer>;
-//type RxStream = stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>;
+type TxStream = stream::tx::udp::UdpTxStream::<stream::tx::locking::LockingTxBuffer>;
+type RxStream = stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>;
 
-type TxStream = stream::tx::tcp::TcpTxStream::<stream::tx::locking::LockingTxBuffer>;
-type RxStream = stream::rx::tcp::TcpRxStream::<stream::rx::locking::LockingRxBuffer>;
+//type TxStream = stream::tx::tcp::TcpTxStream::<stream::tx::locking::LockingTxBuffer>;
+//type RxStream = stream::rx::tcp::TcpRxStream::<stream::rx::locking::LockingRxBuffer>;
 
 
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts

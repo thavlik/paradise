@@ -90,6 +90,6 @@ fn main_tcp() {
 }
 
 fn main() {
-    main_tcp()
+    main_udp()
 }
 

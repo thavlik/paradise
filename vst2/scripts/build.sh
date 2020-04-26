@@ -10,6 +10,11 @@ else
   WSL_DETECTED=0
 fi
 
+extra_args=""
+if [ $target == "release" ]; then
+  extra_args="--$target"
+fi
+
 if [[ $WSL_DETECTED == "1" ]]; then
   set +e
   win_userprofile="$(cmd.exe /c "<nul set /p=%UserProfile%" 2>/dev/null)"
@@ -17,9 +22,9 @@ if [[ $WSL_DETECTED == "1" ]]; then
   win_userprofile=$(wslpath -u "$win_userprofile")
   cargo_bin="$win_userprofile/.cargo/bin/cargo.exe"
   echo "Using cargo.exe at $cargo_bin"
-  $cargo_bin build --$target
+  $cargo_bin build $extra_args
 else
-  cargo build --$target
+  cargo build $extra_args
 fi
 
 outdir=../../target/$target/plugins/vst2
@@ -44,4 +49,4 @@ else
   exit 1
 fi
 
-echo "Remember to add $vst_search_dir to your VST search paths!"
+echo "Remember to add $vst_search_dir to your VST2 search paths!"

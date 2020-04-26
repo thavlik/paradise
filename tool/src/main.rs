@@ -15,7 +15,7 @@ fn main() {
             }
         };
         match sock.send_to(&buf[..amt], &src) {
-            Ok(_) => println!("{:?}", &buf[..amt]),
+            Ok(_) => println!("{:?}", &buf[8..amt]),
             Err(e) => {
                 println!("send_to: {:?}", e);
                 std::thread::yield_now();

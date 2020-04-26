@@ -37,13 +37,12 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
             stop: s,
             buf: std::sync::Arc::new(B::new()),
         });
-        let buf = stream.buf.clone();
         crate::runtime::Runtime::get()
             .rt
             .lock()
             .unwrap()
             .block_on(async {
-            tokio::task::spawn(Self::entry(buf, sock, dest, r))
+            tokio::task::spawn(Self::entry(stream.buf.clone(), sock, dest, r))
         });
         Ok(stream)
     }
@@ -103,12 +102,12 @@ impl<B> TxStream<B> where B: 'static + TxBuffer {
             let amt = b.flush(data);
             if amt == 0 {
                 println!("tx: no bytes to send");
-                tokio::task::yield_now().await;
+                std::thread::yield_now();
                 continue;
             }
             let i = 8 + amt * 4;
             sock.send_to(&buf[..i], dest);
-            tokio::task::yield_now().await;
+            std::thread::yield_now();
         }
     }
 }

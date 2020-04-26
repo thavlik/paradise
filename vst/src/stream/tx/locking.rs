@@ -2,7 +2,7 @@ use super::*;
 
 pub struct LockingTxBuffer {
     parity: std::sync::atomic::AtomicUsize,
-    buf: [Box<std::sync::Mutex<Vec<f32>>>; 2],
+    buf: [std::sync::Mutex<Vec<f32>>; 2],
 }
 
 impl LockingTxBuffer {
@@ -22,8 +22,8 @@ impl TxBuffer for LockingTxBuffer {
         Self {
             parity: std::default::Default::default(),
             buf: [
-                Box::new(std::sync::Mutex::new(Vec::new())),
-                Box::new(std::sync::Mutex::new(Vec::new())),
+                std::sync::Mutex::new(Vec::new()),
+                std::sync::Mutex::new(Vec::new()),
             ],
         }
     }
@@ -38,10 +38,15 @@ impl TxBuffer for LockingTxBuffer {
     fn flush(&self, buffer: &mut [f32]) -> usize {
         let mut buf = self.cycle();
         let len = buf.len();
+        if len == 0 {
+            return 0;
+        }
         if buffer.len() < len {
             panic!("tx buffer overrun");
         }
-        unsafe { std::ptr::copy_nonoverlapping(buf.as_ptr(), buffer.as_mut_ptr(), len) };
+        let buffer = &mut buffer[..len];
+        let buffer = buffer.as_mut_ptr();
+        unsafe { std::ptr::copy_nonoverlapping(buf.as_ptr(), buffer, len) };
         buf.clear();
         len
     }

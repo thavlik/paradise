@@ -42,14 +42,13 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             buf: std::sync::Arc::new(B::new()),
             sync: sync_send,
         });
-        let buf = stream.buf.clone();
         crate::runtime::Runtime::get()
             .rt
             .lock()
             .unwrap()
             .block_on(async {
-            tokio::task::spawn(Self::entry(buf, sock, sync_recv, stop_recv))
-        });
+                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
+            });
         Ok(stream)
     }
 
@@ -71,22 +70,11 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
                 recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
-            match stop.try_recv() {
-                Ok(_) => {
-                    return;
-                }
-                Err(e) => match e {
-                    crossbeam::channel::TryRecvError::Empty => {}
-                    crossbeam::channel::TryRecvError::Disconnected => {
-                        // Stop stream send channel was dropped.
-                        return;
-                    }
-                }
-            };
+            return;
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => {
-                    error!("recv_from: {:?}", e);
+                    println!("recv_from: {:?}", e);
                     continue
                 }
             };
@@ -116,6 +104,7 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             b.accumulate(timestamp, samples);
             //stream.receive(&sock, &mut buf[..]);
             tokio::task::yield_now().await;
+            break;
         }
     }
 }

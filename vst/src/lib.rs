@@ -59,11 +59,6 @@ impl RemoteAudioEffect {
         if self.running.load(std::sync::atomic::Ordering::SeqCst) {
             return true;
         }
-        // inbound:
-        // - 30000/UDP by rx stream
-        // - 30001/UDP by debug microservice
-        // outbound:
-        // - 30001/UDP by tx stream
         let rt = runtime::Runtime::get();
         if self.rx.len() == 0 {
             let receive_port = match rt.inbound.reserve() {
@@ -263,7 +258,7 @@ impl Plugin for RemoteAudioEffect {
             return;
         }
         if inputs.len() != self.tx.len() {
-            //println!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
+            panic!("num inputs ({}) does not match num tx streams ({})", inputs.len(), self.tx.len());
         } else {
             inputs.into_iter()
                 .zip(self.tx.iter())

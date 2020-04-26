@@ -70,7 +70,8 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
                 recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
-            return;
+            tokio::task::yield_now().await;
+            continue;
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => {

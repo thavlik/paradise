@@ -64,12 +64,12 @@ impl RemoteAudioEffect {
         let rt = runtime::Runtime::get();
         if self.tx.len() == 0 {
             let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
-            let send_port = match rt.outbound.reserve() {
-                Ok(port) => port,
-                Err(e) => {
-                    return false;
-                }
-            };
+            let send_port = 0; //match rt.outbound.reserve() {
+            //    Ok(port) => port,
+            //    Err(e) => {
+            //        return false;
+            //    }
+            //};
             let tx = match stream::tx::udp::UdpTxStream::<stream::tx::locking::LockingTxBuffer>::new(dest_addr, send_port) {
                 Ok(tx) => tx,
                 Err(e) => {

@@ -95,13 +95,13 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             }
             let status = hdr[7];
             let data = &buf[8..amt - 8];
-            tokio::task::yield_now().await;
-            continue;
             if data.len() % 4 != 0 {
                 panic!("data buffer is not divisible by four")
             }
             let num_samples = data.len() / 4;
             let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
+            tokio::task::yield_now().await;
+            continue;
             b.accumulate(timestamp, samples);
             //stream.receive(&sock, &mut buf[..]);
             tokio::task::yield_now().await;

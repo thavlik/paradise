@@ -267,20 +267,17 @@ impl Plugin for RemoteAudioEffect {
                 .zip(self.tx.iter())
                 .for_each(|(input, tx)| tx.process(input));
         }
-        outputs.into_iter()
-            .for_each(|output| output.iter_mut()
-                .for_each(|v| *v = 0.0));
-        //if outputs.len() != self.rx.len() {
-        //    //println!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
-        //} else {
-        //    outputs.into_iter()
-        //        .zip(self.rx.iter())
-        //        .for_each(|(output, rx)| {
-        //            output.iter_mut()
-        //                .for_each(|v| *v = 0.0);
-        //            rx.process(output)
-        //        });
-        //}
+        if outputs.len() != self.rx.len() {
+            panic!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
+        } else {
+            outputs.into_iter()
+                .zip(self.rx.iter())
+                .for_each(|(output, rx)| {
+                    output.iter_mut()
+                        .for_each(|v| *v = 0.0);
+                    rx.process(output)
+                });
+        }
     }
 
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {

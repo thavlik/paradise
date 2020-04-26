@@ -46,4 +46,4 @@ else
   exit 1
 fi
 
-echo "Remember to add $vst_search_dir to your DAW's VST search paths!"
+echo "Remember to add $vst_search_dir to your VST search paths!"

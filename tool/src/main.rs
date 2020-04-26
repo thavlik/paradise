@@ -5,6 +5,11 @@ fn main() {
     let sock = std::net::UdpSocket::bind(&addr).unwrap();
     const BUFFER_SIZE: usize = 256_000;
     let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
+
+    let send_addrs: Vec<_> = (30000..30015).map(|port| {
+        std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), port))
+    }).collect();
+
     loop {
         let (amt, src) = match sock.recv_from(&mut buf[..]) {
             Ok(value) => value,
@@ -14,14 +19,19 @@ fn main() {
                 continue
             }
         };
-        match sock.send_to(&buf[..amt], &src) {
-            Ok(_) => println!("{:?}", &buf[8..amt]),
-            Err(e) => {
-                println!("send_to: {:?}", e);
-                std::thread::yield_now();
-                return;
-            },
-        }
+        let data = &buf[8..amt];
+        let all_zero = data.iter().all(|v| *v == 0);
+        println!("active={}, sending to {} ports", !all_zero, send_addrs.len());
+        send_addrs.iter()
+            .for_each(|addr| {
+                match sock.send_to(&buf[..amt], &addr) {
+                    Ok(_) => return,
+                    Err(e) => {
+                        println!("send_to {:?}: {:?}", addr, e);
+                        return;
+                    },
+                }
+            });
         std::thread::yield_now();
     }
 }

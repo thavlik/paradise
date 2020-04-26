@@ -60,53 +60,51 @@ impl RxBuffer for LockingRxBuffer {
 
     fn flush(&self, output_buffer: &mut [f32]) {
         let mut state = self.cycle();
-        // Take only most recent samples
-        let i = state.samples.len() - output_buffer.len();
-        assert_eq!(state.samples[i..].len(), output_buffer.len());
+        let num_samples = state.samples.len();
+        if num_samples == 0 {
+            return;
+        }
+        let i = num_samples - output_buffer.len().min(num_samples);
         output_buffer.copy_from_slice(&state.samples[i..]);
         state.chunks.clear();
         state.samples.clear();
-        // Discard all future samples older than the oldest sample in this flush.
         state.discard = state.oldest;
     }
 
     fn accumulate(&self, timestamp: u64, in_samples: &[f32]) {
         let mut state = self.get_state();
         if timestamp < state.discard {
-            warn!("discarding sample");
+            println!("discarding sample");
             return;
         }
         state.oldest = state.oldest.min(timestamp);
-        let mut chunks = std::mem::replace(&mut state.chunks, Vec::new());
-        let mut samples = std::mem::replace(&mut state.samples, Vec::new());
         // Determine where the samples belong
-        let i = match chunks.iter()
+        let i = match state.chunks.iter()
             .enumerate()
-            .rev()
-            .find(|(_, chunk)| timestamp > chunk.timestamp) {
-            Some((i, _)) => i + 1,
-            None => 0,
+            .find(|(_, chunk)| chunk.timestamp > timestamp) {
+            Some((i, _)) => i,
+            None => state.chunks.len(),
         };
         // Insert the samples such that all elements are order
         // according to timestamp.
-        chunks.insert(i, Chunk {
+        state.chunks.insert(i, Chunk {
             timestamp,
             samples: Vec::from(in_samples),
         });
-        if i != chunks.len() {
-            // Count the number of samples that are already in order
-            let offset = chunks[..i].iter()
-                .fold(0, |n, b| n + b.samples.len());
-            // Truncate the output buffer to that many samples
-            samples.resize(offset, 0.0);
-            // Re-extend the output buffer with the newly sorted samples
-            chunks[i..].iter()
-                .for_each(|b| samples.extend_from_slice(&b.samples[..]));
-        } else {
+        if i == state.chunks.len() {
             // Simple extension of the output buffer
-            samples.extend_from_slice(in_samples);
+            state.samples.extend_from_slice(in_samples);
+            return;
         }
-        state.chunks = chunks;
+        // Count the number of samples that are already in order
+        let offset = state.chunks[..i].iter()
+            .fold(0, |n, b| n + b.samples.len());
+        // Truncate the output buffer to that many samples
+        state.samples.resize(offset, 0.0);
+        // Re-extend the output buffer with the newly sorted samples
+        let mut samples = std::mem::replace(&mut state.samples, Vec::new());
+        state.chunks[i..].iter()
+            .for_each(|b| samples.extend_from_slice(&b.samples[..]));
         state.samples = samples;
     }
 }

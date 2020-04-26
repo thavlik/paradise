@@ -47,7 +47,7 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             .lock()
             .unwrap()
             .block_on(async {
-                //tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
+                tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync_recv, stop_recv))
             });
         Ok(stream)
     }
@@ -60,8 +60,6 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
     async fn entry(b: std::sync::Arc<B>, sock: std::net::UdpSocket, sync: crossbeam::crossbeam_channel::Receiver<u64>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
         const BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
-        // Retain a strong reference to the runtime so it doesn't
-        let _rt = crate::runtime::Runtime::get();
         // TODO: set clock. Right now all samples are accepted.
         let mut clock: u64 = 0;
         loop {
@@ -70,6 +68,8 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
                 recv(sync) -> time => clock = time.unwrap(),
                 default => {},
             }
+            std::thread::yield_now();
+            continue;
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => {
@@ -90,7 +90,7 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             if delta < 0 {
                 // Current timestamp is higher than incoming.
                 // Discard this sample.
-                warn!("discarding late sample");
+                println!("discarding late sample");
                 return;
             }
             let status = hdr[7];
@@ -100,12 +100,9 @@ impl<B> RxStream<B> where B: 'static + RxBuffer {
             }
             let num_samples = data.len() / 4;
             let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
-            tokio::task::yield_now().await;
-            continue;
             b.accumulate(timestamp, samples);
-            //stream.receive(&sock, &mut buf[..]);
-            tokio::task::yield_now().await;
-            break;
+            std::thread::yield_now();
+            continue;
         }
     }
 }

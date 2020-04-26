@@ -78,21 +78,21 @@ impl RemoteAudioEffect {
             };
             self.tx = vec![tx];
         }
-        //if self.rx.len() == 0 {
-        //    let receive_port = match rt.inbound.reserve() {
-        //        Ok(port) => port,
-        //        Err(e) => {
-        //            return false;
-        //        }
-        //    };
-        //    let rx = match stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port) {
-        //        Ok(rx) => rx,
-        //        Err(e) => {
-        //            return false;
-        //        },
-        //    };
-        //    self.rx = vec![rx];
-        //}
+        if self.rx.len() == 0 {
+            let receive_port = 30000; //match rt.inbound.reserve() {
+            //    Ok(port) => port,
+            //    Err(e) => {
+            //        return false;
+            //    }
+            //};
+            let rx = match stream::rx::udp::UdpRxStream::<stream::rx::locking::LockingRxBuffer>::new(receive_port) {
+                Ok(rx) => rx,
+                Err(e) => {
+                    return false;
+                },
+            };
+            self.rx = vec![rx];
+        }
         self.running.store(true, std::sync::atomic::Ordering::SeqCst);
         true
     }

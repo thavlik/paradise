@@ -19,3 +19,4 @@ pub trait RxBuffer
 pub trait RxStream<B> where B: RxBuffer {
     fn process(&self, output_buffer: &mut [f32]);
 }
+

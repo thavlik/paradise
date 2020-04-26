@@ -21,7 +21,7 @@ fn main() {
         };
         let data = &buf[8..amt];
         let all_zero = data.iter().all(|v| *v == 0);
-        println!("active={}, sending to {} ports", !all_zero, send_addrs.len());
+        println!("active={}, sending to ports {:?}", !all_zero, send_addrs);
         send_addrs.iter()
             .for_each(|addr| {
                 match sock.send_to(&buf[..amt], &addr) {

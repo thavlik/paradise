@@ -95,11 +95,11 @@ impl RxBuffer for LockingRxBuffer {
         };
         // Insert the samples such that all elements are order
         // according to timestamp.
-        let chunk = Chunk {
+        state.chunks.insert(i, Chunk {
             timestamp,
             samples: Vec::from(in_samples),
-        };
-        state.chunks.insert(i, chunk);
+        });
+        /*
         if i == state.chunks.len() {
             // Simple extension of the output buffer
             //let mut samples = Vec::new();
@@ -118,5 +118,6 @@ impl RxBuffer for LockingRxBuffer {
         state.chunks.iter()
             .for_each(|chunk| samples.extend_from_slice(&chunk.samples[..]));
         state.samples = samples;
+        */
     }
 }

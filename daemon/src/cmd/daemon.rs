@@ -30,31 +30,31 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
         }
     };
     let devices = host.devices()?;
-    let mut rt = tokio::runtime::Builder::new()
+    tokio::runtime::Builder::new()
         .threaded_scheduler()
         .build()
-        .unwrap();
-    rt.block_on(async {
-        for (device_index, device) in devices.enumerate() {
-            match device.name() {
-                Ok(name) => {
-                    println!("  {}. \"{}\"", device_index, name);
-                },
-                Err(e) => {
-                    println!("  {}. ERROR: {}", device_index, e);
-                    continue;
-                },
+        .unwrap()
+        .block_on(async {
+            for (device_index, device) in devices.enumerate() {
+                match device.name() {
+                    Ok(name) => {
+                        println!("  {}. \"{}\"", device_index, name);
+                    },
+                    Err(e) => {
+                        println!("  {}. ERROR: {}", device_index, e);
+                        continue;
+                    },
+                }
+                if let Ok(conf) = device.default_input_config() {
+                    let conf: cpal::StreamConfig = conf.into();
+                    println!("    Default input stream config:\n      {:?}", conf);
+                }
+                if let Ok(conf) = device.default_output_config() {
+                    let conf: cpal::StreamConfig = conf.into();
+                    println!("    Default output stream config:\n      {:?}", conf);
+                }
             }
-            if let Ok(conf) = device.default_input_config() {
-                let conf: cpal::StreamConfig = conf.into();
-                println!("    Default input stream config:\n      {:?}", conf);
-            }
-            if let Ok(conf) = device.default_output_config() {
-                let conf: cpal::StreamConfig = conf.into();
-                println!("    Default output stream config:\n      {:?}", conf);
-            }
-        }
-    });
+        });
 
     let input_device = host
         .default_input_device()

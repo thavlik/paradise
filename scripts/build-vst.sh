@@ -1,4 +1,6 @@
 #!/bin/bash
+## NOTE: if on Windows, run this script in WSL. It'll use cargo.exe
+##
 set -euo pipefail
 cd $(dirname $0)
 target=${target:-debug}

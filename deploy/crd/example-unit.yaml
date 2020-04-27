@@ -43,6 +43,6 @@ status:
   phase: Pending
 
   # The claim will automatically transition into
-  # Expired by this date if it is still in the
-  # Active phase.
+  # the Expired phase by this date if it is still
+  # in the Active phase.
   expiration: "2020-04-24T18:54:38Z"

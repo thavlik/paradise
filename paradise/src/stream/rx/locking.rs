@@ -6,8 +6,7 @@ struct Chunk {
 }
 
 struct LockingRxBufferState {
-    chunks: Vec<Chunk>,
-    samples: Vec<f32>,
+    pub chunks: Vec<Chunk>,
     discard: u64,
     oldest: u64,
 }
@@ -23,9 +22,10 @@ unsafe impl std::marker::Sync for LockingRxBuffer {}
 
 impl LockingRxBuffer {
     fn cycle(&self) -> std::sync::MutexGuard<LockingRxBufferState> {
-        self.state[cycle(&self.parity)]
-            .lock()
-            .unwrap()
+        //self.state[cycle(&self.parity)]
+        //    .lock()
+        //    .unwrap()
+        self.get_state()
     }
 
     fn get_state(&self) -> std::sync::MutexGuard<LockingRxBufferState> {
@@ -45,14 +45,18 @@ impl RxBuffer for LockingRxBuffer {
                 std::sync::Mutex::new(LockingRxBufferState {
                     discard: 0,
                     oldest: 0,
-                    chunks: Vec::new(),
-                    samples: Vec::new(),
+                    chunks: vec![Chunk{
+                        timestamp: 0,
+                        samples: vec![0.0; 4*192000],
+                    }],
                 }),
                 std::sync::Mutex::new(LockingRxBufferState {
                     discard: 0,
                     oldest: 0,
-                    chunks: Vec::new(),
-                    samples: Vec::new(),
+                    chunks: vec![Chunk{
+                        timestamp: 0,
+                        samples: vec![0.0; 4*192000],
+                    }],
                 })
             ],
         }

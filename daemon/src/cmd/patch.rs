@@ -11,9 +11,10 @@ pub struct PatchArgs {
     #[clap(long = "device", short = "d")]
     device: Option<String>,
 
-    /// Source UDP port
-    #[clap(long = "port", short = "p")]
-    port: u16,
+    /// Source network interface, e.g. 0.0.0.0:30000
+    /// for all interfaces port 30000
+    #[clap(long = "source", short = "s")]
+    source: String,
 }
 
 type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
@@ -72,8 +73,8 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
         },
     };
 
-    println!("listening on {}", args.port);
-    let stream = RxStream::new(args.port)?;
+    let stream = RxStream::new(args.source.parse()?)?;
+    println!("listening on {}", args.source);
 
     let conf = device.default_output_config().unwrap();
     let conf: cpal::StreamConfig = conf.into();

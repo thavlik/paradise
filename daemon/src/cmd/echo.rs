@@ -8,7 +8,7 @@ type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::l
 pub struct EchoArgs {
     /// Source UDP port
     #[clap(long = "source", short = "s")]
-    source: u16,
+    source: String,
 
     /// Source UDP port
     #[clap(long = "dest", short = "d")]
@@ -16,9 +16,9 @@ pub struct EchoArgs {
 }
 
 pub async fn main(args: EchoArgs) -> Result<(), anyhow::Error> {
-    let rx = RxStream::new(args.source)?;
+    let rx = RxStream::new(args.source.parse()?)?;
     let tx = TxStream::new(args.dest.parse()?)?;
-    println!("0.0.0.0:{} -> {}", args.source, args.dest);
+    println!("{} -> {}", args.source, args.dest);
     loop {
         std::thread::yield_now();
     }

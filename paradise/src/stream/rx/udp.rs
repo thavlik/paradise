@@ -8,8 +8,7 @@ pub struct UdpRxStream<B> where B: RxBuffer {
 }
 
 impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
-    pub fn new(port: u16) -> std::io::Result<std::sync::Arc<Self>> {
-        let addr = format!("0.0.0.0:{}", port);
+    pub fn new(addr: std::net::SocketAddr) -> std::io::Result<std::sync::Arc<Self>> {
         let sock = std::net::UdpSocket::bind(&addr)?;
         sock.set_nonblocking(true)?;
         let (s, stop_recv) = crossbeam::crossbeam_channel::unbounded();

@@ -25,7 +25,7 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     };
     let devices = host.devices()?;
     let mut port = 30005;
-    let mut rx = vec![];
+    //let mut rx = vec![];
     for (device_index, device) in devices.enumerate() {
         if device_index != 4 {
             continue;
@@ -50,6 +50,7 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
         }
         if let Ok(conf) = device.default_output_config() {
             let conf: cpal::StreamConfig = conf.into();
+            /*
             //println!("    Default output stream config:\n      {:?}", conf);
             println!("    0.0.0.0:{} -> ANALOG SIGNAL", port);
             println!("");
@@ -66,6 +67,7 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
             output_stream.play()?;
             rx.push((stream.clone(), output_stream));
+            */
             port += 1;
         }
     }

@@ -46,13 +46,12 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
             host
         },
     };
-
     let device = match args.device {
         Some(name) => {
             match name.parse::<usize>() {
                 Ok(index) => {
                     if index >= host.devices()?.count() {
-                       return Err(anyhow::Error::msg(format!("device index out of range")));
+                       return Err(anyhow::Error::msg(format!("device index out of range (tip: run info)")));
                     }
                     match host.devices()?
                         .skip(index)
@@ -61,7 +60,7 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
                             println!("found device {}. \"{}\"", &name, device.name().unwrap_or(String::from("NULL")));
                             device
                         },
-                        None => return Err(anyhow::Error::msg(format!("device at index \"{}\" not found", &name))),
+                        None => return Err(anyhow::Error::msg(format!("device at index \"{}\" not found (tip: run info)", &name))),
                     }
                 },
                 _ => match host.devices()?

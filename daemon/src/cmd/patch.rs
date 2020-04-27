@@ -90,7 +90,7 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
 
     output_stream.play()?;
 
-    println!("{} -> {}", args.source, device.name().unwrap_or(String::from("NULL")));
+    println!("{} -> \"{}\"", args.source, device.name().unwrap_or(String::from("NULL")));
 
     loop {
         std::thread::yield_now();

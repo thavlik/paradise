@@ -1,6 +1,7 @@
 [workspace]
 default-members = [
   "types",
+  "controller",
   "daemon",
   "paradise",
    "vst2",
@@ -9,6 +10,7 @@ default-members = [
 ]
 members = [
   "types",
+  "controller",
   "daemon",
   "paradise",
   "vst2",

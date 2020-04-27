@@ -48,6 +48,12 @@ status:
   # the Expired phase by this date if it is still
   # in the Active phase.
   expiration: "2020-04-24T18:54:38Z"
+
+  # Physical patchbay, for analog signal routing.
+  # All units must be connected to a patchbay for audio
+  # signal routing. This one is MIDI programmable:
+  # https://www.anatal.io/
+  patchbay: pb0
 ---
 # All of this is in the analog world
 apiVersion: app.paradise.dev/v1alpha1
@@ -118,7 +124,3 @@ status:
         host: example.com
         port: 30000
 
-  # Physical patchbay, for analog signal routing.
-  # All units in a Console must be on the same patchbay.
-  # This one is MIDI programmable https://www.anatal.io/
-  patchbay: pb0

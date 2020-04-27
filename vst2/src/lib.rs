@@ -90,7 +90,10 @@ impl RemoteAudioEffect {
             match rt.lock()
                 .unwrap()
                 .block_on(async {
-                    RxStream::new(format!("0.0.0.0:{}", receive_port).parse().unwrap())
+                    let addr = format!("0.0.0.0:{}", receive_port)
+                        .parse()
+                        .unwrap();
+                    RxStream::new(addr)
                 }) {
                 Ok(rx) => self.rx = vec![rx],
                 Err(e) => {

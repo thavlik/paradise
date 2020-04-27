@@ -76,7 +76,7 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
         },
     };
     println!("listening on {}", args.port);
-    let stream = RxStream::new(args.port).expect("failed to create rx stream");
+    let stream = RxStream::new(args.port)?;
 
     println!("shutting down");
     Ok(())

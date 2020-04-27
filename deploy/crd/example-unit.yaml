@@ -5,7 +5,7 @@ metadata:
 spec:
   # The unit is physically connected to some patchbay.
   # A pod responsible for routing the signal from the
-  # cloud to the patchbay uses a nodeSelected with
+  # cloud to the patchbay uses a nodeSelector with
   # this value to ensure it is scheduled somewhere
   # it can be accessed.
   patchbay: pb0

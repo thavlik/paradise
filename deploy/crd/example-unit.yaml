@@ -4,6 +4,12 @@ metadata:
   name: neve511
 spec:
   manufacturer: "Rupert Neve Designs, LLC."
+
+  # The number of input signals. Defaults to 1.
+  inputs: 1
+
+  # The number of output signals. Defaults to 1.
+  outputs: 1
 status:
   # If the unit is claimed, the status object will be
   # updated with details about its current ownership.
@@ -23,11 +29,11 @@ metadata:
   # be annotated with information about end user ownership.
     paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
 spec:
+  # The name of the owning Console resource
+  console: test-console
+
   # The name of the AudioUnit resource
   unit: neve511
-
-  # Optional explicit expiration
-  expiration: "2020-04-24T18:54:38Z"
 status:
   # Pending
   # Active
@@ -42,20 +48,24 @@ status:
   # the Expired phase by this date if it is still
   # in the Active phase.
   expiration: "2020-04-24T18:54:38Z"
-
-  # The unit is physically connected to some patchbay.
-  # A pod responsible for routing the signal from the
-  # cloud to the patchbay uses a nodeSelector with
-  # this value to ensure it is scheduled somewhere
-  # it can be accessed.
-  patchbay: pb0
 ---
 # All of this is in the analog world
 apiVersion: app.paradise.dev/v1alpha1
-kind: SignalChain
+kind: Console
 metadata:
-  name: test-signal-chain
+  name: test-console
 spec:
+  # Create ingress for the first input of
+  # the preamp module.
+  inputs: ["preamp.0"]
+
+  # Patch the first output of our eq module
+  # into a remote address.
+  outputs:
+    - source: eq.0
+      dest: 297.281.23.1:35000
+
+  # Define a boutique analog chain.
   units:
     - name: preamp
       unit: neve511
@@ -76,6 +86,9 @@ status:
 
   # A list of claims is maintained reflecting the
   # physical hardware are associated with each unit.
+  # Note that individual claims may be in error
+  # states, and that information is propagated to
+  # the Console's status.phase.
   claims:
     - name: preamp
       claim: neve511-claim-0
@@ -84,3 +97,17 @@ status:
     - name: eq
       claim: ssl611eq-claim-0
 
+  # Enumerate private and public network resources
+  # for console IO.
+  ingress:
+    - name: preamp.0
+      private:
+        host: test-console-preamp.default.svc.cluster.local
+        port: 20248
+      public:
+        host: example.com
+        port: 30000
+
+  # Physical patchbay, for analog signal routing.
+  # All units in a Console must be on the same patchbay.
+  patchbay: pb0

@@ -12,6 +12,7 @@ fn main() {
             match opts.subcmd {
                 cmd::SubCommand::Info(args) => cmd::info::main(args),
                 cmd::SubCommand::Daemon(args) => cmd::daemon::main(args).await,
+                cmd::SubCommand::Patch(args) => cmd::patch::main(args).await,
             };
         });
 }

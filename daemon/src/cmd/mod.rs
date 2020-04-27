@@ -2,6 +2,7 @@ use clap::Clap;
 
 pub mod info;
 pub mod daemon;
+pub mod patch;
 
 #[derive(Clap)]
 pub enum SubCommand {
@@ -12,6 +13,10 @@ pub enum SubCommand {
     /// Runs the daemon
     #[clap(name = "daemon")]
     Daemon(daemon::DaemonArgs),
+
+    /// Patch mode
+    #[clap(name = "patch")]
+    Patch(patch::PatchArgs),
 }
 
 /// Bare metal daemon for Paradise audio engine

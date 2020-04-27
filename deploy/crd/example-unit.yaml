@@ -54,18 +54,28 @@ apiVersion: app.paradise.dev/v1alpha1
 kind: Console
 metadata:
   name: test-console
+  annotations:
+    # For management and billing purposes, the claim can
+    # be annotated with information about end user ownership.
+    paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
 spec:
   # Create ingress for the first input of
   # the preamp module.
   inputs: ["preamp.0"]
 
-  # Patch the first output of our eq module
-  # into a remote address.
+  # Patch the first output of our eq module into a
+  # remote address. As long as the user is okay with
+  # a round trip to the backend in order to compare
+  # e.g. wet vs bypass, we only need a single output
+  # stream and the source is mutated as needed.
   outputs:
     - source: eq.0
       dest: 297.281.23.1:35000
 
-  # Define a boutique analog chain.
+  # Define a boutique analog chain. This is a simple
+  # one, but you should be able to do more complicated
+  # setups like compressor sidechaining and use of
+  # analog summing mixers with huge IO.
   units:
     - name: preamp
       unit: neve511
@@ -110,4 +120,5 @@ status:
 
   # Physical patchbay, for analog signal routing.
   # All units in a Console must be on the same patchbay.
+  # This one is MIDI programmable https://www.anatal.io/
   patchbay: pb0

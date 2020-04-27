@@ -74,7 +74,6 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
     };
 
     let stream = RxStream::new(args.source.parse()?)?;
-    println!("listening on {}", args.source);
 
     let conf = device.default_output_config().unwrap();
     let conf: cpal::StreamConfig = conf.into();
@@ -90,6 +89,8 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
     let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
 
     output_stream.play()?;
+
+    println!("{} -> {}", args.source, device.name().unwrap_or(String::from("NULL")));
 
     loop {
         std::thread::yield_now();

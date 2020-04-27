@@ -10,8 +10,8 @@ spec:
   # it can be accessed.
   patchbay: pb0
 status:
-  # If the unit is claimed, the status object will
-  # update with details about its current ownership.
+  # If the unit is claimed, the status object will be
+  # updated with details about its current ownership.
   # There could be multiple AudioUnitClaims attempting
   # to lay ownership to this resource, but only one
   # of them (shown here) will be the true owner.

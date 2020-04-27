@@ -75,8 +75,28 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
             None => return Err(anyhow::Error::msg(format!("default output device not available"))),
         },
     };
+
     println!("listening on {}", args.port);
     let stream = RxStream::new(args.port)?;
+
+    let conf = device.default_output_config().unwrap();
+    let conf: cpal::StreamConfig = conf.into();
+    let s = stream.clone();
+    let output_data_fn = move |data: &mut [f32]| {
+        unsafe {
+            // If we don't zero the buffer, it'll stay at a fixed
+            // tone when the stream stops.
+            std::ptr::write_bytes(data.as_mut_ptr(), 0, data.len());
+        }
+        let clock = paradise::stream::rx::RxStream::process(&*s, data);
+    };
+    let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
+
+    output_stream.play()?;
+
+    loop {
+        std::thread::yield_now();
+    }
 
     println!("shutting down");
     Ok(())

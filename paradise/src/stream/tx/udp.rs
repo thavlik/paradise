@@ -56,7 +56,6 @@ impl<B> UdpTxStream<B> where B: 'static + TxBuffer {
             let data: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(buf[hdr_len..].as_mut_ptr() as _, buf[hdr_len..].len() / 4) };
             let amt = b.flush(data);
             if amt == 0 {
-                println!("tx: no bytes to send");
                 continue;
             }
             let i = hdr_len + amt * 4;

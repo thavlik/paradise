@@ -3,6 +3,7 @@ use clap::Clap;
 pub mod info;
 pub mod daemon;
 pub mod patch;
+pub mod echo;
 
 #[derive(Clap)]
 pub enum SubCommand {
@@ -13,6 +14,10 @@ pub enum SubCommand {
     /// Runs the daemon
     #[clap(name = "daemon")]
     Daemon(daemon::DaemonArgs),
+
+    /// Proxies a local port to a destination address
+    #[clap(name = "echo")]
+    Echo(echo::EchoArgs),
 
     /// Patch mode
     #[clap(name = "patch")]

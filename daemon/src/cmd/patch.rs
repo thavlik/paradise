@@ -1,8 +1,4 @@
-
-
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-
-const LATENCY_MS: f32 = 0.0 ;//150.0;
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]

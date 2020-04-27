@@ -24,4 +24,25 @@ kind: AudioUnitClaim
 metadata:
   name: neve511-test-claim
 spec:
+  # The name of the AudioUnit resource
   unit: neve511-test
+
+  # Account name (e.g. for billing purposes)
+  account: my-test-account
+
+  # Optional explicit expiration
+  expiration: "2020-04-24T18:54:38Z"
+status:
+  # Pending
+  # Active
+  # Terminated
+  # Expired
+  # ErrMaxUnitsExceeded
+  # ErrUnauthorized
+  # ErrNoMoreUnits
+  phase: Pending
+
+  # The claim will automatically transition into
+  # Expired by this date if it is still in the
+  # Active phase.
+  expiration: "2020-04-24T18:54:38Z"

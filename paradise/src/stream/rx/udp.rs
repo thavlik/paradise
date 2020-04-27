@@ -47,7 +47,6 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
                     }
                 }
             };
-            println!("received {} bytes", amt);
             let hdr = &buf[..8];
             let timestamp = ((hdr[0] as u64) << 48) |
                 ((hdr[1] as u64) << 40) |

@@ -67,9 +67,12 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             let stream = RxStream::new(port).expect("failed to create rx stream");
             let s = stream.clone();
             let output_data_fn = move |data: &mut [f32]| {
-                //println!("process");
+                unsafe {
+                    // If we don't zero the buffer, it'll stay at a fixed
+                    // tone when the stream stops.
+                    std::ptr::write_bytes(data.as_mut_ptr(), 0, data.len());
+                }
                 let clock = paradise::stream::rx::RxStream::process(&*s, data);
-                //println!("clock: {}", clock);
             };
             let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
             output_stream.play()?;

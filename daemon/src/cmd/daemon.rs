@@ -17,9 +17,9 @@ pub struct DaemonArgs {
 
 pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let host = match std::env::var("AUDIO_HOST") {
-        Ok(name) => get_host_by_name(&name)?,
+        Ok(name) => crate::util::get_host_by_name(&name)?,
         _ => match args.audio_host {
-            Some(name) => get_host_by_name(&name)?,
+            Some(name) => crate::util::get_host_by_name(&name)?,
             None => cpal::default_host(),
         }
     };

@@ -20,23 +20,13 @@ pub struct PatchArgs {
     port: u16,
 }
 
-fn get_host_by_name(name: &str) -> Result<cpal::Host, anyhow::Error> {
-    let available_hosts = cpal::available_hosts();
-    for host_id in available_hosts {
-        if host_id.name() == name {
-            return Ok(cpal::host_from_id(host_id)?);
-        }
-    }
-    Err(anyhow::Error::msg(format!("host \"{}\" not found", name)))
-}
-
 type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
 type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
 
 pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
     let host = match args.host {
         Some(name) => {
-            let host = get_host_by_name(&name)?;
+            let host = crate::util::get_host_by_name(&name)?;
             println!("found host \"{}\"", &name);
             host
         },
@@ -86,7 +76,7 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
         },
     };
     println!("listening on {}", args.port);
-    let stream = RxStream::new(port).expect("failed to create rx stream");
+    let stream = RxStream::new(args.port).expect("failed to create rx stream");
 
     println!("shutting down");
     Ok(())

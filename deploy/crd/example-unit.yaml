@@ -1,14 +1,9 @@
 apiVersion: app.paradise.dev/v1alpha1
 kind: AudioUnit
 metadata:
-  name: neve511-test
+  name: neve511
 spec:
-  # The unit is physically connected to some patchbay.
-  # A pod responsible for routing the signal from the
-  # cloud to the patchbay uses a nodeSelector with
-  # this value to ensure it is scheduled somewhere
-  # it can be accessed.
-  patchbay: pb0
+  manufacturer: "Rupert Neve Designs, LLC."
 status:
   # If the unit is claimed, the status object will be
   # updated with details about its current ownership.
@@ -22,13 +17,14 @@ status:
 apiVersion: app.paradise.dev/v1alpha1
 kind: AudioUnitClaim
 metadata:
-  name: neve511-test-claim
+  name: neve511-claim-0
+  annotations:
+  # For management and billing purposes, the claim can
+  # be annotated with information about end user ownership.
+    paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
 spec:
   # The name of the AudioUnit resource
-  unit: neve511-test
-
-  # Account name (e.g. for billing purposes)
-  account: my-test-account
+  unit: neve511
 
   # Optional explicit expiration
   expiration: "2020-04-24T18:54:38Z"
@@ -46,3 +42,45 @@ status:
   # the Expired phase by this date if it is still
   # in the Active phase.
   expiration: "2020-04-24T18:54:38Z"
+
+  # The unit is physically connected to some patchbay.
+  # A pod responsible for routing the signal from the
+  # cloud to the patchbay uses a nodeSelector with
+  # this value to ensure it is scheduled somewhere
+  # it can be accessed.
+  patchbay: pb0
+---
+# All of this is in the analog world
+apiVersion: app.paradise.dev/v1alpha1
+kind: SignalChain
+metadata:
+  name: test-signal-chain
+spec:
+  units:
+    - name: preamp
+      unit: neve511
+    - name: compressor
+      unit: artprovlaii
+      inputs:
+        - preamp.0
+    - name: eq
+      unit: ssl611eq
+      inputs:
+        - compressor.0
+status:
+  # Pending
+  # Active
+  # ErrUnitFailure
+  # ErrBadRouting
+  phase: Pending
+
+  # A list of claims is maintained reflecting the
+  # physical hardware are associated with each unit.
+  claims:
+    - name: preamp
+      claim: neve511-claim-0
+    - name: compressor
+      claim: artprovlaii-claim-0
+    - name: eq
+      claim: ssl611eq-claim-0
+

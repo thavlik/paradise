@@ -60,20 +60,37 @@ impl RxBuffer for LockingRxBuffer {
 
     fn flush(&self, output_buffer: &mut [f32]) {
         let mut state = self.cycle();
-        let samples = state.chunks.iter()
-            .fold(Vec::new(), |mut p, chunk| {
-                p.extend_from_slice(&chunk.samples[..]);
-                p
-            });
-        state.chunks.clear();
-        let num_samples = samples.len();
-        if num_samples == 0 {
-            return;
+        let mut written: usize = 0;
+        let mut consumed = 0;
+        for chunk in state.chunks.iter_mut() {
+            let remaining = output_buffer.len() - written;
+            if remaining <= 0 {
+                // No need to process additional samples
+                break;
+            }
+            let amt = remaining.min(chunk.samples.len());
+            unsafe {
+                std::ptr::copy_nonoverlapping(chunk.samples[..amt].as_ptr(), output_buffer[written..written+amt].as_mut_ptr(), amt);
+            }
+            written += amt;
+            if chunk.samples.len() == amt {
+                // This entire chunk has been consumed
+                consumed += 1;
+            } else {
+                // Part of the chunk has been consumed
+                chunk.samples.drain(..amt);
+            }
         }
-        let n = output_buffer.len().min(num_samples);
-        let i = num_samples - n;
-        unsafe { std::ptr::copy_nonoverlapping(samples[i..].as_ptr(), output_buffer.as_mut_ptr(), n) };
-        state.discard = state.oldest;
+        state.chunks.drain(..consumed);
+        //let num_samples = samples.len();
+        //if num_samples == 0 {
+        //    return;
+        //}
+        //let n = output_buffer.len().min(num_samples);
+        //let i = num_samples - n;
+        //unsafe { std::ptr::copy_nonoverlapping(samples[i..].as_ptr(), output_buffer.as_mut_ptr(), n) };
+        //state.discard = state.oldest;
+        //state.chunks.drain(..);
     }
 
     fn accumulate(&self, timestamp: u64, in_samples: &[f32]) {

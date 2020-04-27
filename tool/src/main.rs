@@ -1,14 +1,14 @@
 use std::io::prelude::*;
 
 fn main_udp() {
-    let port: u16 = 30005;
+    let port: u16 = 30001;
     println!("Listening on {}", port);
     let addr = format!("0.0.0.0:{}", port);
     let sock = std::net::UdpSocket::bind(&addr).unwrap();
     const BUFFER_SIZE: usize = 256_000;
     let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
 
-    let send_addrs: Vec<_> = (30000..30001).map(|port| {
+    let send_addrs: Vec<_> = (30005..30006).map(|port| {
         std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), port))
     }).collect();
 
@@ -23,7 +23,7 @@ fn main_udp() {
         };
         let data = &buf[8..amt];
         let all_zero = data.iter().all(|v| *v == 0);
-        println!("active={} {} => {:?}", !all_zero, &addr, send_addrs);
+        //println!("active={} {} => {:?}", !all_zero, &addr, send_addrs);
         send_addrs.iter()
             .for_each(|addr| {
                 match sock.send_to(&buf[..amt], &addr) {

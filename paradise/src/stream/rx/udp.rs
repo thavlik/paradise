@@ -20,12 +20,6 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             buf: std::sync::Arc::new(B::new()),
             sync: sync.clone(),
         });
-        //crate::runtime::Runtime::get()
-        //    .rt
-        //    .lock()
-        //    .unwrap()
-        //    .block_on(async {
-        //    });
         tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync, stop_recv));
         Ok(stream)
     }
@@ -53,6 +47,7 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
                     }
                 }
             };
+            println!("received {} bytes", amt);
             let hdr = &buf[..8];
             let timestamp = ((hdr[0] as u64) << 48) |
                 ((hdr[1] as u64) << 40) |

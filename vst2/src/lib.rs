@@ -73,7 +73,7 @@ impl RemoteAudioEffect {
         rt.lock().unwrap().block_on(async {});
 
         if self.tx.len() == 0 {
-            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30005));
+            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
             match rt.lock()
                 .unwrap()
                 .block_on(async {

@@ -22,13 +22,7 @@ impl<B> TcpTxStream<B> where B: 'static + TxBuffer {
             stop,
             buf: std::sync::Arc::new(B::new()),
         });
-        crate::runtime::Runtime::get()
-            .rt
-            .lock()
-            .unwrap()
-            .block_on(async {
-                //tokio::task::spawn(Self::entry(s.buf.clone(), addr, stop_recv))
-            });
+        tokio::task::spawn(Self::entry(s.buf.clone(), addr, stop_recv));
         Ok(s)
     }
 

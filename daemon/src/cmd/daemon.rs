@@ -26,7 +26,7 @@ fn get_host_by_name(name: &str) -> Result<cpal::Host, anyhow::Error> {
 type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
 type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
 
-pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
+pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let host = match std::env::var("AUDIO_HOST") {
         Ok(name) => get_host_by_name(&name)?,
         _ => match args.audio_host {
@@ -38,6 +38,9 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     let mut port = 30005;
     let mut rx = vec![];
     for (device_index, device) in devices.enumerate() {
+        if device_index != 4 {
+            continue;
+        }
         match device.name() {
             Ok(name) => {
                 println!("  {}. \"{}\"", device_index, name);
@@ -49,7 +52,7 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
         }
         if let Ok(conf) = device.default_input_config() {
             let conf: cpal::StreamConfig = conf.into();
-            println!("    Default input stream config:\n      {:?}", conf);
+            //println!("    Default input stream config:\n      {:?}", conf);
             // Create tx socket
             //paradise::stream::tx::TxStream::new()
             let input_data_fn = move |data: &[f32]| {
@@ -58,17 +61,19 @@ pub fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
         }
         if let Ok(conf) = device.default_output_config() {
             let conf: cpal::StreamConfig = conf.into();
-            println!("    Default output stream config:\n      {:?}", conf);
+            //println!("    Default output stream config:\n      {:?}", conf);
+            println!("    0.0.0.0:{} -> ANALOG SIGNAL", port);
+            println!("");
             let stream = RxStream::new(port).expect("failed to create rx stream");
-            rx.push(stream.clone());
+            let s = stream.clone();
             let output_data_fn = move |data: &mut [f32]| {
-                let clock = paradise::stream::rx::RxStream::process(&*stream, data);
-                println!("clock: {}", clock);
+                //println!("process");
+                let clock = paradise::stream::rx::RxStream::process(&*s, data);
+                //println!("clock: {}", clock);
             };
             let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
             output_stream.play()?;
-            // Create rx socket
-            //tokio::task::spawn(async {});
+            rx.push((stream.clone(), output_stream));
             port += 1;
         }
     }

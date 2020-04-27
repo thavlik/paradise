@@ -51,6 +51,9 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
         Some(name) => {
             match name.parse::<usize>() {
                 Ok(index) => {
+                    if index >= host.devices()?.count() {
+                       return Err(anyhow::Error::msg(format!("device index out of range")));
+                    }
                     match host.devices()?
                         .skip(index)
                         .next() {

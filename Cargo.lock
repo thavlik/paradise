@@ -1577,6 +1577,7 @@ name = "paradise_operator"
 version = "0.1.0"
 dependencies = [
  "pathfinding",
+ "uuid",
 ]
 
 [[package]]

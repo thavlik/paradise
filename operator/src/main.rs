@@ -1,4 +1,5 @@
 use pathfinding::prelude::{astar};
+use std::ops::Deref;
 use std::sync::{
     Arc,
     Mutex,
@@ -12,6 +13,7 @@ use node::{
     Node,
     NodeKind,
     IO,
+    IOHandle,
     AudioUnit,
 };
 
@@ -37,10 +39,10 @@ mod test {
         let mut patchbay_io = (0..NUM_PATCHBAYS)
             .map(|i| (
                 (0..NUM_CHANNELS)
-                    .map(|j| Rc::new(RefCell::new(IO::new(j as u8, false, None))))
+                    .map(|j| IOHandle::new(IO::new(j as u8, false, None)))
                     .collect::<Vec<_>>(),
                 (0..NUM_CHANNELS)
-                    .map(|j| Rc::new(RefCell::new(IO::new(j as u8, true, None))))
+                    .map(|j| IOHandle::new(IO::new(j as u8, true, None)))
                     .collect::<Vec<_>>(),
             ))
             .collect::<Vec<_>>();
@@ -53,16 +55,16 @@ mod test {
             a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
                 .for_each(|(output, input)| {
-                    output.borrow_mut()
-                        .input
-                        .replace(input.clone());
+                    //output.borrow_mut()
+                    //    .input
+                    //    .replace(input.clone());
                 });
             a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
                 .for_each(|(input, output)| {
-                    output.borrow_mut()
-                        .input
-                        .replace(input.clone());
+                    //output.borrow_mut()
+                    //    .input
+                    //    .replace(input.clone());
                 });
         }
 
@@ -83,16 +85,16 @@ mod test {
                 iface.inputs.iter_mut()
                     .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                     .for_each(|(input, output)| {
-                        output.borrow_mut()
-                            .input
-                            .replace(input.clone());
+                        //output.borrow_mut()
+                        //    .input
+                        //    .replace(input.clone());
                     });
                 iface.outputs.iter_mut()
                     .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                     .for_each(|(output, input)| {
-                        output.borrow_mut()
-                            .input
-                            .replace(input.clone());
+                        //output.borrow_mut()
+                        //    .input
+                        //    .replace(input.clone());
                     });
             });
 
@@ -110,13 +112,15 @@ mod test {
                 //    .input
                 //    .replace(reserve_on_patchbay(&mut patchbays));
             });
-
-        //astar(
-        //    &ifaces[0].outputs[0],
-        //    |io| node.successors(),
-        //    |io| 0,
-        //    |io| io.borrow() == channel_strips[0][0].inputs[0].borrow(),
-        //);
+        astar(
+            &ifaces[0].outputs[0],
+            |io| io.deref().borrow().successors(),
+            |io| 0,
+            |io| {
+                //io == *channel_strips[0][0].inputs[0]
+                false
+            },
+        );
     }
 }
 

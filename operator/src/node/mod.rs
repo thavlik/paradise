@@ -21,27 +21,27 @@ pub enum NodeKind {
 
 pub struct Node {
     pub kind: NodeKind,
-    pub inputs: Vec<Rc<RefCell<IO>>>,
-    pub outputs: Vec<Rc<RefCell<IO>>>,
+    pub inputs: Vec<IOHandle>,
+    pub outputs: Vec<IOHandle>,
 }
 
 impl Node {
     pub fn new(kind: NodeKind, num_channels: u8) -> Self {
         Self::make(
             kind,
-            (0..num_channels).map(|i| Rc::new(RefCell::new(IO::new(
+            (0..num_channels).map(|i| IOHandle::new(IO::new(
                 i,
                 false,
                 None,
-            )))).collect(),
-            (0..num_channels).map(|i| Rc::new(RefCell::new(IO::new(
+            ))).collect(),
+            (0..num_channels).map(|i| IOHandle::new(IO::new(
                 i,
                 true,
                 None,
-            )))).collect())
+            ))).collect())
     }
 
-    pub fn make(kind: NodeKind, inputs: Vec<Rc<RefCell<IO>>>, outputs: Vec<Rc<RefCell<IO>>>) -> Self {
+    pub fn make(kind: NodeKind, inputs: Vec<IOHandle>, outputs: Vec<IOHandle>) -> Self {
         Self {
             kind,
             inputs,
@@ -49,15 +49,49 @@ impl Node {
         }
     }
 
-    pub fn successors(&self) -> Vec<(Rc<RefCell<IO>>, u32)> {
-        vec![]
-    }
 }
 
 pub struct IO {
     pub channel: u8,
     pub is_output: bool,
     pub input: Option<Rc<RefCell<IO>>>,
+}
+
+#[derive(Clone)]
+pub struct IOHandle(Rc<RefCell<IO>>);
+
+impl IOHandle {
+    pub fn new(io: IO) -> Self {
+        Self(Rc::new(RefCell::new(io)))
+    }
+}
+
+impl std::ops::Deref for IOHandle {
+    type Target = Rc<RefCell<IO>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+//impl std::ops::DerefMut for IOHandle {
+//    fn deref(&mut self) -> &mut IO {
+//        &mut self.0
+//    }
+//}
+
+impl PartialEq for IOHandle {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self as _, other as _)
+    }
+}
+
+impl Eq for IOHandle {}
+
+impl std::hash::Hash for IOHandle {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        (self as *const _ as u64).hash(state);
+    }
 }
 
 impl IO {
@@ -71,5 +105,9 @@ impl IO {
             is_output,
             input,
         }
+    }
+
+    pub fn successors(&self) -> Vec<(IOHandle, u32)> {
+        vec![]
     }
 }

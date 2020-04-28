@@ -1,5 +1,6 @@
 use std::sync::{Arc, Weak, RwLock};
 
+#[derive(Debug)]
 pub struct AudioUnit {
     class_name: String,
 }
@@ -12,12 +13,14 @@ impl AudioUnit {
     }
 }
 
+#[derive(Debug)]
 pub enum NodeKind {
     Interface,
     Patchbay,
     Unit(AudioUnit),
 }
 
+#[derive(Debug)]
 pub struct Node {
     pub kind: NodeKind,
     pub inputs: Vec<IOHandle>,
@@ -61,6 +64,7 @@ impl Node {
     }
 }
 
+#[derive(Debug)]
 pub struct IO {
     pub channel: u8,
     pub is_output: bool,
@@ -68,7 +72,7 @@ pub struct IO {
     pub node: Weak<RwLock<Node>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IOHandle(Arc<RwLock<IO>>);
 
 impl IOHandle {
@@ -79,7 +83,7 @@ impl IOHandle {
 
 impl PartialEq for IOHandle {
     fn eq(&self, other: &Self) -> bool {
-        std::ptr::eq(self as _, other as _)
+        Arc::ptr_eq(&self.0, &other.0)
     }
 }
 
@@ -95,7 +99,7 @@ impl std::ops::Deref for IOHandle {
 
 impl std::hash::Hash for IOHandle {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        (self as *const _ as u64).hash(state);
+        (&self.0.read().unwrap() as *const _ as u64).hash(state);
     }
 }
 

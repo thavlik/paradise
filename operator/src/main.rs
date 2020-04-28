@@ -33,10 +33,10 @@ mod test {
     #[test]
     fn advanced_routing() {
         const NUM_PATCHBAYS: usize = 3;
-        const NUM_CHANNELS: usize = 64;
-        const NUM_INTERCONNECT_CHANNELS: usize = 16;
-        const NUM_UNITS: usize = 4;
-        const NUM_CHANNEL_STRIPS: usize = 256;
+        const NUM_CHANNELS: usize = 32;
+        const NUM_INTERCONNECT_CHANNELS: usize = 4;
+        //const NUM_UNITS: usize = 4;
+        //const NUM_CHANNEL_STRIPS: usize = 256;
 
         let mut patchbays: Vec<NodeHandle> = (0..NUM_PATCHBAYS)
             .map(|_| Arc::new(RwLock::new(Node::make(NodeKind::Patchbay, vec![], vec![]))))
@@ -106,8 +106,11 @@ mod test {
 
          */
 
+        assert!(patchbays[0].read().unwrap().inputs[0] == patchbays[0].read().unwrap().inputs[0]);
+        assert!(patchbays[0].read().unwrap().inputs[0].clone() == patchbays[0].read().unwrap().inputs[0]);
+        assert!(patchbays[0].read().unwrap().inputs[0] != patchbays[0].read().unwrap().inputs[1]);
         assert!(astar(
-            &patchbays[0].read().unwrap().outputs[0],
+            &patchbays[0].read().unwrap().inputs[0],
             |io| io.deref().read().unwrap().successors(),
             |io| 0,
             |io| *io == patchbays.last().unwrap().read().unwrap().inputs[0],

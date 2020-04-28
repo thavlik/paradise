@@ -1,11 +1,11 @@
-use pathfinding::prelude::{absdiff, astar};
+use pathfinding::prelude::{astar};
 use std::sync::{
     Arc,
     Mutex,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
-
+use uuid::Uuid;
 mod node;
 
 use node::{
@@ -48,7 +48,7 @@ mod test {
         // Connect the first handful of channels to the next
         // patchbay. The first unit has unused input channels
         // and the last has as many unused outputs.
-        for i in 0..patchbay_io.len()-1 {
+        for i in 0..patchbay_io.len() - 1 {
             let (a, b) = patchbay_io[i..i + 2].split_at_mut(1);
             a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
@@ -68,8 +68,8 @@ mod test {
 
         // Create some patchbays from the inputs/outputs
         let mut patchbays: Vec<_> = patchbay_io
-            .iter()
-            .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs.clone(), outputs.clone()))
+            .into_iter()
+            .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs, outputs))
             .collect();
 
         let mut ifaces: Vec<_> = (0..2)
@@ -96,22 +96,29 @@ mod test {
                     });
             });
 
-        //preamp.inputs[0].borrow_mut().input = Some(pb.outputs.last().unwrap().clone());
-        //pb.inputs.last().unwrap().borrow_mut().input = Some(eq.outputs[0].clone());
         // Build the channel strips, patch them into the last
         // channel of each
         let mut channel_strips = (0..NUM_CHANNEL_STRIPS)
-            .map(|_| {
-                let mut preamp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 1);
-                let mut comp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("dbx560a"))), 1);
-                let mut eq = Node::new(NodeKind::Unit(AudioUnit::new(String::from("ssl611eq"))), 1);
-                comp.inputs[0].borrow_mut().input = Some(preamp.outputs[0].clone());
-                eq.inputs[0].borrow_mut().input = Some(comp.outputs[0].clone());
-                (preamp, comp, eq)
-            })
+            .map(|_| ["neve511", "dbx560a", "ssl611eq"]
+                .iter()
+                .map(|name| Node::new(NodeKind::Unit(AudioUnit::new(String::from(*name))), 1))
+                .collect::<Vec<_>>())
             .collect::<Vec<_>>();
         channel_strips.iter_mut()
-            .for_each(|(preamp, _, eq)| {
+            .for_each(|v| {
+                //preamp.inputs[0].borrow_mut()
+                //    .input
+                //    .replace(reserve_on_patchbay(&mut patchbays));
             });
+
+        //astar(
+        //    &ifaces[0].outputs[0],
+        //    |io| node.successors(),
+        //    |io| 0,
+        //    |io| io.borrow() == channel_strips[0][0].inputs[0].borrow(),
+        //);
     }
+}
+
+fn reserve_on_patchbay(patchbays: &mut Vec<Node>) { //-> (Rc<RefCell<IO>>, Rc<RefCell<IO>>) {
 }

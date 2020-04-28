@@ -48,6 +48,10 @@ impl Node {
             outputs,
         }
     }
+
+    pub fn successors(&self) -> Vec<(Rc<RefCell<IO>>, u32)> {
+        vec![]
+    }
 }
 
 pub struct IO {

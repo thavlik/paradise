@@ -22,11 +22,11 @@ use node::{
 fn main() {
     let mut iface = Interface::new(8);
 
-    const NUM_CHANNELS: u8 = 128;
-    const NUM_INTERCONNECT_CHANNELS: u8 = 32;
+    const NUM_CHANNELS: usize = 128;
+    const NUM_INTERCONNECT_CHANNELS: usize = 32;
 
     let mut patchbays: Vec<_> = (0..8)
-        .map(|i| Patchbay::new(NUM_CHANNELS))
+        .map(|i| Patchbay::new(NUM_CHANNELS as u8))
         .collect();
 
     let mut ifaces: Vec<_> = (0..1)
@@ -49,13 +49,13 @@ fn main() {
         .enumerate()
         .for_each(|(i, (iface, pb))| {
             iface.inputs.iter_mut()
-                .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS as usize + i..].iter_mut())
+                .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                 .for_each(|(input, output)| {
                     input.set_other(Some(IO::PatchbayIO(output.clone())));
                     output.set_other(Some(IO::InterfaceIO(input.clone())));
                 });
             iface.outputs.iter_mut()
-                .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS as usize + i..].iter_mut())
+                .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                 .for_each(|(output, input)| {
                     input.set_other(Some(IO::InterfaceIO(output.clone())));
                     output.set_other(Some(IO::PatchbayIO(input.clone())));

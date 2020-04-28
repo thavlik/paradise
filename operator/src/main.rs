@@ -9,14 +9,6 @@ mod node;
 use node::{
     Node,
     IO,
-    interface::{
-        Interface,
-        InterfaceIO,
-    },
-    patchbay::{
-        Patchbay,
-        PatchbayIO,
-    },
 };
 
 fn main() {
@@ -32,32 +24,65 @@ mod test {
 
     #[test]
     fn foo() {
-        let mut iface = Interface::new(8);
-
+        const NUM_PATCHBAYS: usize = 6;
         const NUM_CHANNELS: usize = 128;
         const NUM_INTERCONNECT_CHANNELS: usize = 32;
         const NUM_UNITS: usize = 4;
 
-        // Create some patchbays
-        let mut patchbays: Vec<_> = (0..8)
-            .map(|i| Patchbay::new(NUM_CHANNELS as u8))
+        let mut patchbay_io: Vec<_> = (0..NUM_PATCHBAYS)
+            .map(|i| (
+                (0..NUM_CHANNELS).map(|j| Box::new(IO::new(j as u8, false, None))).collect::<Vec<_>>(),
+                (0..NUM_CHANNELS).map(|j| Box::new(IO::new(j as u8, true, None))).collect::<Vec<_>>(),
+            ))
             .collect();
+
+        // Connect the first handful of channels to the next
+        // patchbay. The first unit has unused input channels
+        // and the last has as many unused outputs.
+        for i in 0..patchbay_io.len()-1 {
+            let (a, b) = patchbay_io[i..i + 2].split_at_mut(1);
+            a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                .for_each(|(output, input)| {
+                    output.other = Some(input.clone());
+                    input.other = Some(output.clone());
+                });
+            a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                .for_each(|(input, output)| {
+                    input.other = Some(output.clone());
+                    output.other = Some(input.clone());
+                });
+        }
+
+        // Create some patchbays from the inputs/outputs
+        let patchbays: Vec<_> = patchbay_io
+            .into_iter()
+            .map(|(inputs, outputs)| Node::make(inputs, outputs))
+            .collect();
+
+        /*
+        let mut iface = Interface::new(8);
+
+
+
+
+
+
 
         // Create some audio interfaces
         let mut ifaces: Vec<_> = (0..1)
             .map(|i| Interface::new(8))
             .collect();
 
-        // Connect the first handful of channels to the next
-        // patchbay. The first unit has unused input channels
-        // and the last has as many unused outputs.
+
         for i in 0..patchbays.len()-1 {
             let (a, b) = patchbays[i..i+2].split_at_mut(1);
             a[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
                 .for_each(|(output, input)| {
-                    input.set_other(Some(IO::PatchbayIO(output.clone())));
-                    output.set_other(Some(IO::PatchbayIO(input.clone())));
+                    //input.other = Some(IO::PatchbayIO(output.clone()));
+                    //output.set_other(Some(IO::PatchbayIO(input.clone())));
                 });
         }
 
@@ -70,14 +95,14 @@ mod test {
                 iface.inputs.iter_mut()
                     .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                     .for_each(|(input, output)| {
-                        input.set_other(Some(IO::PatchbayIO(output.clone())));
-                        output.set_other(Some(IO::InterfaceIO(input.clone())));
+                        //input.set_other(Some(IO::PatchbayIO(output.clone())));
+                        //output.set_other(Some(IO::InterfaceIO(input.clone())));
                     });
                 iface.outputs.iter_mut()
                     .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                     .for_each(|(output, input)| {
-                        input.set_other(Some(IO::InterfaceIO(output.clone())));
-                        output.set_other(Some(IO::PatchbayIO(input.clone())));
+                        //input.set_other(Some(IO::InterfaceIO(output.clone())));
+                        //output.set_other(Some(IO::PatchbayIO(input.clone())));
                     });
             });
 
@@ -85,5 +110,6 @@ mod test {
         let units: Vec<_> = (0..NUM_UNITS).map(|i| {
             0
         }).collect();
+         */
     }
 }

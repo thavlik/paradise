@@ -29,8 +29,8 @@ use vst::buffer::AudioBuffer;
 use vst::plugin::{Category, Info, Plugin, PluginParameters};
 use vst::util::AtomicFloat;
 
-type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
-type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
+type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
 
 //type TxStream = stream::tx::tcp::TcpTxStream::<stream::tx::locking::LockingTxBuffer>;
 //type RxStream = stream::rx::tcp::TcpRxStream::<stream::rx::locking::LockingRxBuffer>;
@@ -40,10 +40,10 @@ type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::l
 #[derive(Clone)]
 struct RemoteAudioEffect {
     // Receive streams
-    rx: Vec<std::sync::Arc<dyn paradise::stream::rx::RxStream>>,
+    rx: Vec<std::sync::Arc<dyn paradise_core::stream::rx::RxStream>>,
 
     // Send streams
-    tx: Vec<std::sync::Arc<dyn paradise::stream::tx::TxStream>>,
+    tx: Vec<std::sync::Arc<dyn paradise_core::stream::tx::TxStream>>,
 
     // Store a handle to the plugin's parameter object.
     params: Arc<RemoteAudioEffectParameters>,

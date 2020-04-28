@@ -1,18 +1,18 @@
 [workspace]
 default-members = [
   "types",
+  "core",
   "operator",
   "daemon",
-  "paradise",
    "vst2",
    "vst3",
    "tool",
 ]
 members = [
   "types",
+  "core",
   "operator",
   "daemon",
-  "paradise",
   "vst2",
   "vst3",
   "tool",

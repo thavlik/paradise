@@ -1,7 +1,7 @@
 use clap::Clap;
 
-type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
-type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
+type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
 
 mod cmd;
 mod util;

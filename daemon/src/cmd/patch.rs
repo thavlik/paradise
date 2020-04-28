@@ -17,8 +17,8 @@ pub struct PatchArgs {
     source: String,
 }
 
-type TxStream = paradise::stream::tx::udp::UdpTxStream::<paradise::stream::tx::locking::LockingTxBuffer>;
-type RxStream = paradise::stream::rx::udp::UdpRxStream::<paradise::stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
+type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
 
 pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
     let host = match args.host {
@@ -84,7 +84,7 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
             // tone when the stream stops.
             std::ptr::write_bytes(data.as_mut_ptr(), 0, data.len());
         }
-        let clock = paradise::stream::rx::RxStream::process(&*s, data);
+        let clock = paradise_core::stream::rx::RxStream::process(&*s, data);
     };
     let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
 

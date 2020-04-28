@@ -8,6 +8,7 @@ mod node;
 
 use node::{
     Node,
+    NodeKind,
     IO,
 };
 
@@ -50,19 +51,19 @@ mod test {
             a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
                 .for_each(|(input, output)| {
-                    input.other = Some(output.clone());
                     output.other = Some(input.clone());
+                    input.other = Some(output.clone());
                 });
         }
 
         // Create some patchbays from the inputs/outputs
-        let patchbays: Vec<_> = patchbay_io
+        let mut patchbays: Vec<_> = patchbay_io
             .into_iter()
-            .map(|(inputs, outputs)| Node::make(inputs, outputs))
+            .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs, outputs))
             .collect();
 
         let mut ifaces: Vec<_> = (0..1)
-            .map(|i| Node::new(8))
+            .map(|i| Node::new(NodeKind::Interface, 8))
             .collect();
 
         ifaces.iter_mut()
@@ -72,58 +73,14 @@ mod test {
                 iface.inputs.iter_mut()
                     .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                     .for_each(|(input, output)| {
-                        //input.set_other(Some(IO::PatchbayIO(output.clone())));
-                        //output.set_other(Some(IO::InterfaceIO(input.clone())));
+                        input.other = Some(output.clone());
+                        output.other = Some(input.clone());
                     });
                 iface.outputs.iter_mut()
                     .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
                     .for_each(|(output, input)| {
-                        //input.set_other(Some(IO::InterfaceIO(output.clone())));
-                        //output.set_other(Some(IO::PatchbayIO(input.clone())));
-                    });
-            });
-        /*
-        let mut iface = Interface::new(8);
-
-
-
-
-
-
-
-        // Create some audio interfaces
-        let mut ifaces: Vec<_> = (0..1)
-            .map(|i| Interface::new(8))
-            .collect();
-
-
-        for i in 0..patchbays.len()-1 {
-            let (a, b) = patchbays[i..i+2].split_at_mut(1);
-            a[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
-                .zip(b[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(output, input)| {
-                    //input.other = Some(IO::PatchbayIO(output.clone()));
-                    //output.set_other(Some(IO::PatchbayIO(input.clone())));
-                });
-        }
-
-        // Connect all of the channels of the audio interfaces
-        // to the next available range of channels on each PB.
-        ifaces.iter_mut()
-            .zip(patchbays.iter_mut())
-            .enumerate()
-            .for_each(|(i, (iface, pb))| {
-                iface.inputs.iter_mut()
-                    .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(input, output)| {
-                        //input.set_other(Some(IO::PatchbayIO(output.clone())));
-                        //output.set_other(Some(IO::InterfaceIO(input.clone())));
-                    });
-                iface.outputs.iter_mut()
-                    .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(output, input)| {
-                        //input.set_other(Some(IO::InterfaceIO(output.clone())));
-                        //output.set_other(Some(IO::PatchbayIO(input.clone())));
+                        output.other = Some(input.clone());
+                        input.other = Some(output.clone());
                     });
             });
 
@@ -131,6 +88,5 @@ mod test {
         let units: Vec<_> = (0..NUM_UNITS).map(|i| {
             0
         }).collect();
-         */
     }
 }

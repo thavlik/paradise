@@ -12,4 +12,4 @@ anyhow = "1.0.12"
 env_logger = "0.7.1"
 clap = { git = "https://github.com/clap-rs/clap/" }
 tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
-paradise = { path = "../paradise" }
+paradise_core = { path = "../core" }

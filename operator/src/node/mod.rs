@@ -1,11 +1,19 @@
+pub enum NodeKind {
+    Interface,
+    Patchbay,
+    Unit(String), // Audio unit class name
+}
+
 pub struct Node {
+    pub kind: NodeKind,
     pub inputs: Vec<Box<IO>>,
     pub outputs: Vec<Box<IO>>,
 }
 
 impl Node {
-    pub fn new(num_channels: u8) -> Self {
+    pub fn new(kind: NodeKind, num_channels: u8) -> Self {
         Self::make(
+            kind,
             (0..num_channels).map(|i| Box::new(IO::new(
                 i,
                 false,
@@ -18,8 +26,9 @@ impl Node {
             ))).collect())
     }
 
-    pub fn make(inputs: Vec<Box<IO>>, outputs: Vec<Box<IO>>) -> Self {
+    pub fn make(kind: NodeKind, inputs: Vec<Box<IO>>, outputs: Vec<Box<IO>>) -> Self {
         Self {
+            kind,
             inputs,
             outputs,
         }

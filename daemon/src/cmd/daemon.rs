@@ -43,7 +43,7 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             let conf: cpal::StreamConfig = conf.into();
             //println!("    Default input stream config:\n      {:?}", conf);
             // Create tx socket
-            //paradise::stream::tx::TxStream::new()
+            //paradise_core::stream::tx::TxStream::new()
             let input_data_fn = move |data: &[f32]| {
             };
             let input_stream = device.build_input_stream(&conf, input_data_fn, err_fn)?;
@@ -62,7 +62,7 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
                     // tone when the stream stops.
                     std::ptr::write_bytes(data.as_mut_ptr(), 0, data.len());
                 }
-                let clock = paradise::stream::rx::RxStream::process(&*s, data);
+                let clock = paradise_core::stream::rx::RxStream::process(&*s, data);
             };
             let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
             output_stream.play()?;

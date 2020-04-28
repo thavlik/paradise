@@ -116,9 +116,7 @@ mod test {
             &ifaces[0].outputs[0],
             |io| io.deref().borrow().successors(),
             |io| 0,
-            |io| {
-                io == *channel_strips[0][0].inputs[0]
-            },
+            |io| *io == channel_strips[0][0].inputs[0],
         );
     }
 }

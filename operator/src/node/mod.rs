@@ -54,7 +54,7 @@ impl Node {
 pub struct IO {
     pub channel: u8,
     pub is_output: bool,
-    pub input: Option<Rc<RefCell<IO>>>,
+    pub input: Option<IOHandle>,
 }
 
 #[derive(Clone)]
@@ -98,7 +98,7 @@ impl IO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        input: Option<Rc<RefCell<IO>>>,
+        input: Option<IOHandle>,
     ) -> Self {
         Self {
             channel,

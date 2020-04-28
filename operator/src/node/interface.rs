@@ -8,7 +8,7 @@ use super::IO;
 
 pub struct InterfaceIO {
     pub channel: u8,
-    pub other: Mutex<Option<IO>>,
+    pub other: Option<IO>,
     pub is_output: bool,
 }
 
@@ -16,17 +16,13 @@ impl InterfaceIO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        other: Mutex<Option<IO>>,
+        other: Option<IO>,
     ) -> Self {
         Self {
             channel,
             is_output,
             other,
         }
-    }
-
-    pub fn set_other(&self, other: Option<IO>) {
-        *self.other.lock().unwrap() = other;
     }
 }
 

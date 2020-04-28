@@ -9,24 +9,20 @@ use super::IO;
 pub struct PatchbayIO {
     pub channel: u8,
     pub is_output: bool,
-    pub other: Mutex<Option<IO>>,
+    pub other: Option<IO>,
 }
 
 impl PatchbayIO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        other: Mutex<Option<IO>>,
+        other: Option<IO>,
     ) -> Self {
         Self {
             channel,
             is_output,
             other,
         }
-    }
-
-    pub fn set_other(&self, other: Option<IO>) {
-        *self.other.lock().unwrap() = other;
     }
 }
 

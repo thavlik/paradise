@@ -8,6 +8,8 @@ pub enum Node {
     Patchbay(Arc<patchbay::Patchbay>),
 }
 
+
+#[derive(Clone)]
 pub enum IO {
     InterfaceIO(Arc<interface::InterfaceIO>),
     PatchbayIO(Arc<patchbay::PatchbayIO>),

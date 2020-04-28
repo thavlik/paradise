@@ -3,18 +3,19 @@ use std::sync::{
     Arc,
     atomic::AtomicBool,
 };
+use super::IO;
 
 pub struct PatchbayIO {
     pub channel: u8,
     pub is_output: bool,
-    pub other: Option<super::IO>,
+    pub other: Option<IO>,
 }
 
 impl PatchbayIO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        other: Option<super::IO>,
+        other: Option<IO>,
     ) -> Self {
         Self {
             channel,
@@ -31,17 +32,25 @@ pub struct Patchbay {
 }
 
 impl Patchbay {
-    pub fn new(num_channels: u8) -> Self {
+    pub fn new(num_channels: u8, input_conn: Vec<(u8, IO)>, output_conn: Vec<(u8, IO)>) -> Self {
         Self::make(
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 false,
-                None,
+                match input_conn.iter()
+                    .find(|(ch, _)| *ch == i) {
+                    Some((_, v)) => Some(v.clone()),
+                    None => None,
+                },
             ))).collect(),
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 true,
-                None,
+                match output_conn.iter()
+                    .find(|(ch, _)| *ch == i) {
+                    Some((_, v)) => Some(v.clone()),
+                    None => None,
+                },
             ))).collect())
     }
 

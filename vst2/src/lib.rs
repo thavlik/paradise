@@ -54,7 +54,7 @@ struct RemoteAudioEffect {
 
     l: std::sync::Arc<std::sync::Mutex<()>>,
 
-    rt: std::sync::Arc<paradise::runtime::Runtime>,
+    rt: std::sync::Arc<paradise_core::runtime::Runtime>,
 
     host: Option<vst::plugin::HostCallback>,
 }
@@ -68,7 +68,7 @@ impl RemoteAudioEffect {
         if self.running.load(std::sync::atomic::Ordering::SeqCst) {
             return true;
         }
-        let rt = &paradise::runtime::Runtime::get().rt;
+        let rt = &paradise_core::runtime::Runtime::get().rt;
 
         rt.lock().unwrap().block_on(async {});
 
@@ -220,7 +220,7 @@ impl Default for RemoteAudioEffect {
             latency: std::sync::Arc::new(std::default::Default::default()),
             running: std::sync::Arc::new(std::default::Default::default()),
             l: std::sync::Arc::new(std::sync::Mutex::new(())),
-            rt: paradise::runtime::Runtime::get(),
+            rt: paradise_core::runtime::Runtime::get(),
             host: None,
         }
     }

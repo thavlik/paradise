@@ -28,7 +28,7 @@ impl Address {
     pub fn new() -> Self {
         Address {
             host: String::new(),
-            port: 0,
+            port: std::default::Default::default(),
         }
     }
 
@@ -56,8 +56,8 @@ pub struct HardwarePort {
 impl HardwarePort {
     pub fn new() -> Self {
         HardwarePort {
-            channel: 0,
-            sample_rate: 0,
+            channel: std::default::Default::default(),
+            sample_rate: std::default::Default::default(),
             sample_format: String::new(),
         }
     }
@@ -288,7 +288,7 @@ pub struct ChannelInfo {
 impl ChannelInfo {
     pub fn new() -> Self {
         ChannelInfo {
-            sample_rates: 0,
+            sample_rates: std::default::Default::default(),
             desc: String::new(),
         }
     }
@@ -413,8 +413,8 @@ impl StreamWithMetrics {
         StreamWithMetrics {
             stream: Default::default(),
             status: String::new(),
-            total_sent: 0,
-            total_received: 0,
+            total_sent: std::default::Default::default(),
+            total_received: std::default::Default::default(),
             created: String::new(),
         }
     }

@@ -74,12 +74,6 @@ impl std::ops::Deref for IOHandle {
     }
 }
 
-//impl std::ops::DerefMut for IOHandle {
-//    fn deref(&mut self) -> &mut IO {
-//        &mut self.0
-//    }
-//}
-
 impl PartialEq for IOHandle {
     fn eq(&self, other: &Self) -> bool {
         std::ptr::eq(self as _, other as _)

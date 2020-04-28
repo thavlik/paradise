@@ -68,8 +68,8 @@ mod test {
 
         // Create some patchbays from the inputs/outputs
         let mut patchbays: Vec<_> = patchbay_io
-            .into_iter()
-            .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs, outputs))
+            .iter()
+            .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs.clone(), outputs.clone()))
             .collect();
 
         let mut ifaces: Vec<_> = (0..2)
@@ -96,17 +96,17 @@ mod test {
                     });
             });
 
-        // Build the channel strips.
+        //preamp.inputs[0].borrow_mut().input = Some(pb.outputs.last().unwrap().clone());
+        //pb.inputs.last().unwrap().borrow_mut().input = Some(eq.outputs[0].clone());
+        // Build the channel strips, patch them into the last
+        // channel of each
         let mut channel_strips = (0..NUM_CHANNEL_STRIPS)
-            .zip(patchbays.iter_mut().rev())
-            .map(|(i, pb)| {
+            .map(|_| {
                 let mut preamp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 1);
                 let mut comp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("dbx560a"))), 1);
                 let mut eq = Node::new(NodeKind::Unit(AudioUnit::new(String::from("ssl611eq"))), 1);
-                preamp.inputs[0].borrow_mut().input = Some(pb.outputs.last().unwrap().clone());
                 comp.inputs[0].borrow_mut().input = Some(preamp.outputs[0].clone());
                 eq.inputs[0].borrow_mut().input = Some(comp.outputs[0].clone());
-                pb.inputs.last().unwrap().borrow_mut().input = Some(eq.outputs[0].clone());
                 (preamp, comp, eq)
             })
             .collect::<Vec<_>>();

@@ -27,30 +27,22 @@ impl PatchbayIO {
 
 
 pub struct Patchbay {
-    inputs: Vec<Arc<PatchbayIO>>,
-    outputs: Vec<Arc<PatchbayIO>>,
+   pub inputs: Vec<Arc<PatchbayIO>>,
+   pub outputs: Vec<Arc<PatchbayIO>>,
 }
 
 impl Patchbay {
-    pub fn new(num_channels: u8, input_conn: Vec<(u8, IO)>, output_conn: Vec<(u8, IO)>) -> Self {
+    pub fn new(num_channels: u8) -> Self {
         Self::make(
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 false,
-                match input_conn.iter()
-                    .find(|(ch, _)| *ch == i) {
-                    Some((_, v)) => Some(v.clone()),
-                    None => None,
-                },
+                None,
             ))).collect(),
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 true,
-                match output_conn.iter()
-                    .find(|(ch, _)| *ch == i) {
-                    Some((_, v)) => Some(v.clone()),
-                    None => None,
-                },
+                None,
             ))).collect())
     }
 

@@ -91,7 +91,7 @@ mod test {
             .zip(compressors.iter_mut())
             .zip(equalizers.iter_mut())
             .for_each(|((preamp, comp), eq)| {
-
+                comp.outputs[0].input = Some(preamp.clone());
             });
     }
 }

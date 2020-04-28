@@ -1,13 +1,11 @@
-pub type ClassId = u64;
-
 pub struct AudioUnit {
-    class_id: ClassId,
+    class_name: String,
 }
 
 impl AudioUnit {
-    pub fn new(class_id: ClassId) -> Self {
+    pub fn new(class_name: String) -> Self {
         Self {
-            class_id
+            class_name
         }
     }
 }

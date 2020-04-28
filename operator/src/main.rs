@@ -11,7 +11,6 @@ use node::{
     NodeKind,
     IO,
     AudioUnit,
-    ClassId,
 };
 
 fn main() {
@@ -80,7 +79,7 @@ mod test {
 
         // Add some audio units to the last patchbay
         let mut units: Vec<_> = (0..2)
-            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(0)), 8))
+            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 8))
             .collect();
     }
 }

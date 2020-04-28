@@ -29,16 +29,8 @@ pub struct Interface {
 }
 
 impl Interface {
-    pub fn new(inputs: Vec<Arc<InterfaceIO>>,
-               outputs: Vec<Arc<InterfaceIO>>) -> Self {
-        Self {
-            inputs,
-            outputs,
-        }
-    }
-
-    pub fn new_from_num_channels(num_channels: u8) -> Self {
-        Interface::new(
+    pub fn new(num_channels: u8) -> Self {
+        Self::make(
             (0..num_channels).map(|i| Arc::new(InterfaceIO::new(
                 i,
                 false,
@@ -49,5 +41,13 @@ impl Interface {
                 true,
                 None,
             ))).collect())
+    }
+
+    pub fn make(inputs: Vec<Arc<InterfaceIO>>,
+               outputs: Vec<Arc<InterfaceIO>>) -> Self {
+        Self {
+            inputs,
+            outputs,
+        }
     }
 }

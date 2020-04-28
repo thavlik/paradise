@@ -31,16 +31,8 @@ pub struct Patchbay {
 }
 
 impl Patchbay {
-    pub fn new(inputs: Vec<Arc<PatchbayIO>>,
-               outputs: Vec<Arc<PatchbayIO>>) -> Self {
-        Self {
-            inputs,
-            outputs,
-        }
-    }
-
-    pub fn new_from_num_channels(num_channels: u8) -> Self {
-        Patchbay::new(
+    pub fn new(num_channels: u8) -> Self {
+        Self::make(
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 false,
@@ -51,5 +43,13 @@ impl Patchbay {
                 true,
                 None,
             ))).collect())
+    }
+
+    pub fn make(inputs: Vec<Arc<PatchbayIO>>,
+               outputs: Vec<Arc<PatchbayIO>>) -> Self {
+        Self {
+            inputs,
+            outputs,
+        }
     }
 }

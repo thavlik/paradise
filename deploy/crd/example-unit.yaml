@@ -88,7 +88,9 @@ status:
   # in the Active phase.
   expiration: "2020-04-24T18:54:38Z"
 ---
-# This patch utilizes analog-to-digital conversion
+# This patch utilizes analog-to-digital conversion.
+# It is created on a cluster and causes network/hardware
+# resources to be appropriately reconciled by the backend.
 apiVersion: app.paradise.dev/v1alpha1
 kind: Patch
 metadata:
@@ -106,7 +108,11 @@ status:
   # ErrUnableToReconcile
   phase: Active
 ---
-# This patch utilizes digital-to-analog conversion
+# This patch utilizes digital-to-analog conversion.
+# It is anticipated that any patch involving a digital
+# signal will have a low infrastructure footprint due
+# to thorough distribution of audio interfaces across
+# the cluster of patchbays.
 apiVersion: app.paradise.dev/v1alpha1
 kind: Patch
 metadata:
@@ -122,8 +128,12 @@ spec:
     unitClaim:
       name: my-neve511-input
       channel: 0
+status:
+  phase: Active
 ---
-# This patch is 100% analog
+# This patch is 100% analog. It is still possible that
+# users request impossible situations due to inefficient
+# analog routing.
 apiVersion: app.paradise.dev/v1alpha1
 kind: Patch
 metadata:
@@ -139,6 +149,8 @@ spec:
     unitClaim:
       name: my-comp-claim
       channel: 0
+status:
+  phase: Active
 ---
 # This patch is 100% analog
 apiVersion: app.paradise.dev/v1alpha1
@@ -154,3 +166,5 @@ spec:
     unitClaim:
       name: my-ssl611eq-output
       channel: 0
+status:
+  phase: Active

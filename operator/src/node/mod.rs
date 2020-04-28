@@ -34,20 +34,20 @@ impl Node {
             outputs: Vec::new(),
         }));
         inst.write().unwrap().inputs = (0..num_channels)
-            .map(|i| IOHandle::new(IO::new(
+            .map(|i| IO::new(
                 i,
                 false,
                 None,
                 Arc::downgrade(&inst),
-            )))
+            ))
             .collect();
         inst.write().unwrap().outputs = (0..num_channels)
-            .map(|i| IOHandle::new(IO::new(
+            .map(|i| IO::new(
                 i,
                 true,
                 None,
                 Arc::downgrade(&inst),
-            )))
+            ))
             .collect();
         inst as _
     }
@@ -105,25 +105,33 @@ impl IO {
         is_output: bool,
         input: Option<IOHandle>,
         node: Weak<RwLock<Node>>,
-    ) -> Self {
-        Self {
+    ) -> IOHandle {
+        IOHandle(Arc::new(RwLock::new(Self {
             channel,
             is_output,
             input,
             node,
-        }
+        })))
     }
 
     pub fn successors(&self) -> Vec<(IOHandle, u32)> {
         let node = self.node.upgrade().unwrap();
         let node = node.read().unwrap();
-        match self.is_output {
-            true => node.inputs.iter()
-                .map(|h| (h.clone(), 1))
-                .collect(),
-            false => node.outputs.iter()
-                .map(|h| (h.clone(), 1))
-                .collect(),
+        if self.is_output {
+            // Can only route to a single input on another
+            // piece of hardware or nothing at all.
+            self.input.as_ref()
+                .map_or(vec![], |v| vec![(v.clone(), 1)])
+        } else {
+            // Patchbay inputs can route to any output.
+            // Inputs for other nodes are terminal.
+            match &node.kind {
+                NodeKind::Interface => vec![],
+                NodeKind::Unit(u) => vec![],
+                NodeKind::Patchbay => node.outputs.iter()
+                    .map(|h| (h.clone(), 1))
+                    .collect(),
+            }
         }
     }
 }

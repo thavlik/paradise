@@ -31,7 +31,7 @@ mod test {
         const NUM_INTERCONNECT_CHANNELS: usize = 32;
         const NUM_UNITS: usize = 4;
 
-        let mut patchbay_io: Vec<_> = (0..NUM_PATCHBAYS)
+        let mut patchbay_io = (0..NUM_PATCHBAYS)
             .map(|i| (
                 (0..NUM_CHANNELS)
                     .map(|j| Box::new(IO::new(j as u8, false, None)))
@@ -40,7 +40,7 @@ mod test {
                     .map(|j| Box::new(IO::new(j as u8, true, None)))
                     .collect::<Vec<_>>(),
             ))
-            .collect();
+            .collect::<Vec<_>>();
 
         // Connect the first handful of channels to the next
         // patchbay. The first unit has unused input channels
@@ -77,9 +77,21 @@ mod test {
                     .for_each(|(output, input)| output.input = Some(input.clone()));
             });
 
-        // Add some audio units to the last patchbay
-        let mut units: Vec<_> = (0..2)
-            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 8))
+        let mut preamps: Vec<_> = (0..2)
+            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 1))
             .collect();
+        let mut compressors: Vec<_> = (0..2)
+            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("dbx560a"))), 1))
+            .collect();
+        let mut equalizers: Vec<_> = (0..2)
+            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("ssl611eq"))), 1))
+            .collect();
+
+        preamps.iter_mut()
+            .zip(compressors.iter_mut())
+            .zip(equalizers.iter_mut())
+            .for_each(|((preamp, comp), eq)| {
+
+            });
     }
 }

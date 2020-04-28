@@ -108,6 +108,7 @@ mod test {
             .collect::<Vec<_>>();
         channel_strips.iter_mut()
             .for_each(|v| {
+                // TODO: assign IO on the patchbays
                 //preamp.inputs[0].borrow_mut()
                 //    .input
                 //    .replace(reserve_on_patchbay(&mut patchbays));

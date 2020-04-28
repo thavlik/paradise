@@ -1,4 +1,5 @@
 use std::sync::{Arc, Weak, RwLock};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct AudioUnit {
@@ -22,6 +23,7 @@ pub enum NodeKind {
 
 #[derive(Debug)]
 pub struct Node {
+    pub uid: Uuid,
     pub kind: NodeKind,
     pub inputs: Vec<IOHandle>,
     pub outputs: Vec<IOHandle>,
@@ -32,12 +34,14 @@ pub type NodeHandle = Arc<RwLock<Node>>;
 impl Node {
     pub fn new(kind: NodeKind, num_channels: u8) -> NodeHandle {
         let mut inst = Arc::new(RwLock::new(Node {
+            uid: Uuid::new_v4(),
             kind,
             inputs: Vec::new(),
             outputs: Vec::new(),
         }));
         inst.write().unwrap().inputs = (0..num_channels)
             .map(|i| IO::new(
+                Uuid::new_v4(),
                 i,
                 false,
                 None,
@@ -46,6 +50,7 @@ impl Node {
             .collect();
         inst.write().unwrap().outputs = (0..num_channels)
             .map(|i| IO::new(
+                Uuid::new_v4(),
                 i,
                 true,
                 None,
@@ -55,8 +60,9 @@ impl Node {
         inst as _
     }
 
-    pub fn make(kind: NodeKind, inputs: Vec<IOHandle>, outputs: Vec<IOHandle>) -> Self {
+    pub fn make(uid: Uuid, kind: NodeKind, inputs: Vec<IOHandle>, outputs: Vec<IOHandle>) -> Self {
         Self {
+            uid,
             kind,
             inputs,
             outputs,
@@ -66,6 +72,7 @@ impl Node {
 
 #[derive(Debug)]
 pub struct IO {
+    pub uid: Uuid,
     pub channel: u8,
     pub is_output: bool,
     pub input: Option<IOHandle>,
@@ -105,12 +112,14 @@ impl std::hash::Hash for IOHandle {
 
 impl IO {
     pub fn new(
+        uid: Uuid,
         channel: u8,
         is_output: bool,
         input: Option<IOHandle>,
         node: Weak<RwLock<Node>>,
     ) -> IOHandle {
         IOHandle(Arc::new(RwLock::new(Self {
+            uid,
             channel,
             is_output,
             input,

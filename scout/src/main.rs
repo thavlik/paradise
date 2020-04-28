@@ -8,6 +8,7 @@ use std::sync::{
 use std::cell::RefCell;
 use std::rc::Rc;
 use uuid::Uuid;
+
 mod node;
 
 use node::{
@@ -26,6 +27,10 @@ fn main() {
     println!("Hello, world!");
 }
 
+fn reserve(source_uid: Uuid, dest_uid: Uuid) -> Result<Vec<Uuid>, ()> {
+    Ok(vec![])
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -39,7 +44,7 @@ mod test {
         //const NUM_CHANNEL_STRIPS: usize = 256;
 
         let mut patchbays: Vec<NodeHandle> = (0..NUM_PATCHBAYS)
-            .map(|_| Arc::new(RwLock::new(Node::make(NodeKind::Patchbay, vec![], vec![]))))
+            .map(|_| Arc::new(RwLock::new(Node::make(Uuid::new_v4(), NodeKind::Patchbay, vec![], vec![]))))
             .collect();
 
         let mut ifaces: Vec<_> = (0..2)
@@ -51,10 +56,10 @@ mod test {
                 {
                     let mut l = pb.write().unwrap();
                     l.inputs = (0..NUM_CHANNELS)
-                        .map(|j| IO::new(j as u8, false, None, Arc::downgrade(&pb)))
+                        .map(|j| IO::new(Uuid::new_v4(), j as u8, false, None, Arc::downgrade(&pb)))
                         .collect::<Vec<_>>();
                     l.outputs = (0..NUM_CHANNELS)
-                        .map(|j| IO::new(j as u8, true, None, Arc::downgrade(&pb)))
+                        .map(|j| IO::new(Uuid::new_v4(), j as u8, true, None, Arc::downgrade(&pb)))
                         .collect::<Vec<_>>();
                 }
                 pb

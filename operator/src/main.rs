@@ -10,6 +10,8 @@ use node::{
     Node,
     NodeKind,
     IO,
+    AudioUnit,
+    ClassId,
 };
 
 fn main() {
@@ -32,8 +34,12 @@ mod test {
 
         let mut patchbay_io: Vec<_> = (0..NUM_PATCHBAYS)
             .map(|i| (
-                (0..NUM_CHANNELS).map(|j| Box::new(IO::new(j as u8, false, None))).collect::<Vec<_>>(),
-                (0..NUM_CHANNELS).map(|j| Box::new(IO::new(j as u8, true, None))).collect::<Vec<_>>(),
+                (0..NUM_CHANNELS)
+                    .map(|j| Box::new(IO::new(j as u8, false, None)))
+                    .collect::<Vec<_>>(),
+                (0..NUM_CHANNELS)
+                    .map(|j| Box::new(IO::new(j as u8, true, None)))
+                    .collect::<Vec<_>>(),
             ))
             .collect();
 
@@ -44,16 +50,10 @@ mod test {
             let (a, b) = patchbay_io[i..i + 2].split_at_mut(1);
             a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(output, input)| {
-                    output.other = Some(input.clone());
-                    input.other = Some(output.clone());
-                });
+                .for_each(|(output, input)| output.input = Some(input.clone()));
             a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(input, output)| {
-                    output.other = Some(input.clone());
-                    input.other = Some(output.clone());
-                });
+                .for_each(|(input, output)| output.input = Some(input.clone()));
         }
 
         // Create some patchbays from the inputs/outputs
@@ -62,7 +62,7 @@ mod test {
             .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs, outputs))
             .collect();
 
-        let mut ifaces: Vec<_> = (0..1)
+        let mut ifaces: Vec<_> = (0..2)
             .map(|i| Node::new(NodeKind::Interface, 8))
             .collect();
 
@@ -72,21 +72,15 @@ mod test {
             .for_each(|(i, (iface, pb))| {
                 iface.inputs.iter_mut()
                     .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(input, output)| {
-                        input.other = Some(output.clone());
-                        output.other = Some(input.clone());
-                    });
+                    .for_each(|(input, output)| output.input = Some(input.clone()));
                 iface.outputs.iter_mut()
                     .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(output, input)| {
-                        output.other = Some(input.clone());
-                        input.other = Some(output.clone());
-                    });
+                    .for_each(|(output, input)| output.input = Some(input.clone()));
             });
 
         // Add some audio units to the last patchbay
-        let units: Vec<_> = (0..NUM_UNITS).map(|i| {
-            0
-        }).collect();
+        let mut units: Vec<_> = (0..2)
+            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(0)), 8))
+            .collect();
     }
 }

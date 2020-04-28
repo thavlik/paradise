@@ -1,7 +1,21 @@
+pub type ClassId = u64;
+
+pub struct AudioUnit {
+    class_id: ClassId,
+}
+
+impl AudioUnit {
+    pub fn new(class_id: ClassId) -> Self {
+        Self {
+            class_id
+        }
+    }
+}
+
 pub enum NodeKind {
     Interface,
     Patchbay,
-    Unit(String), // Audio unit class name
+    Unit(AudioUnit),
 }
 
 pub struct Node {
@@ -39,19 +53,19 @@ impl Node {
 pub struct IO {
     pub channel: u8,
     pub is_output: bool,
-    pub other: Option<Box<IO>>,
+    pub input: Option<Box<IO>>,
 }
 
 impl IO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        other: Option<Box<IO>>,
+        input: Option<Box<IO>>,
     ) -> Self {
         Self {
             channel,
             is_output,
-            other,
+            input,
         }
     }
 }

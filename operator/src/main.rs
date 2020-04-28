@@ -36,6 +36,7 @@ mod test {
 
         const NUM_CHANNELS: usize = 128;
         const NUM_INTERCONNECT_CHANNELS: usize = 32;
+        const NUM_UNITS: usize = 4;
 
         // Create some patchbays
         let mut patchbays: Vec<_> = (0..8)
@@ -54,20 +55,10 @@ mod test {
             let (a, b) = patchbays[i..i+2].split_at_mut(1);
             a[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(out_bay, in_bay)| {
-                    in_bay.inputs[..NUM_INTERCONNECT_CHANNELS]
-                        .iter_mut()
-                        .zip(out_bay.outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                        .for_each(|(output, input)| {});
+                .for_each(|(output, input)| {
+                    input.set_other(Some(IO::PatchbayIO(output.clone())));
+                    output.set_other(Some(IO::PatchbayIO(input.clone())));
                 });
-            for n in 0..NUM_INTERCONNECT_CHANNELS {
-                *patchbays[i+0].outputs[n].other
-                    .lock()
-                    .unwrap() = Some(IO::PatchbayIO(patchbays[i+1].inputs[n].clone()));
-                *patchbays[i+1].inputs[n].other
-                    .lock()
-                    .unwrap() = Some(IO::PatchbayIO(patchbays[i+0].outputs[n].clone()));
-            }
         }
 
         // Connect all of the channels of the audio interfaces
@@ -89,5 +80,10 @@ mod test {
                         output.set_other(Some(IO::PatchbayIO(input.clone())));
                     });
             });
+
+        // Add some audio units to the last patchbay
+        let units: Vec<_> = (0..NUM_UNITS).map(|i| {
+            0
+        }).collect();
     }
 }

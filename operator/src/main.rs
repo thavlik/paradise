@@ -3,6 +3,7 @@ use std::ops::Deref;
 use std::sync::{
     Arc,
     Mutex,
+    RwLock,
 };
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -11,6 +12,7 @@ mod node;
 
 use node::{
     Node,
+    NodeHandle,
     NodeKind,
     IO,
     IOHandle,
@@ -36,88 +38,99 @@ mod test {
         const NUM_UNITS: usize = 4;
         const NUM_CHANNEL_STRIPS: usize = 256;
 
-        let mut patchbay_io = (0..NUM_PATCHBAYS)
-            .map(|i| (
+        let mut patchbays: Vec<NodeHandle> = (0..NUM_PATCHBAYS)
+            .map(|_| Arc::new(RwLock::new(Node::make(NodeKind::Patchbay, vec![], vec![]))))
+            .collect();
+
+        let mut patchbay_io = patchbays.iter()
+            .map(|pb| (
                 (0..NUM_CHANNELS)
-                    .map(|j| IOHandle::new(IO::new(j as u8, false, None)))
+                    .map(|j| IOHandle::new(IO::new(j as u8, false, None, Arc::downgrade(&pb))))
                     .collect::<Vec<_>>(),
                 (0..NUM_CHANNELS)
-                    .map(|j| IOHandle::new(IO::new(j as u8, true, None)))
+                    .map(|j| IOHandle::new(IO::new(j as u8, true, None, Arc::downgrade(&pb))))
                     .collect::<Vec<_>>(),
             ))
             .collect::<Vec<_>>();
-
-        // Connect the first handful of channels to the next
-        // patchbay. The first unit has unused input channels
-        // and the last has as many unused outputs.
-        for i in 0..patchbay_io.len() - 1 {
-            let (a, b) = patchbay_io[i..i + 2].split_at_mut(1);
-            a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
-                .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(output, input)| {
-                    //output.borrow_mut()
-                    //    .input
-                    //    .replace(input.clone());
-                });
-            a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
-                .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(input, output)| {
-                    //output.borrow_mut()
-                    //    .input
-                    //    .replace(input.clone());
-                });
-        }
-
-        // Create some patchbays from the inputs/outputs
-        let mut patchbays: Vec<_> = patchbay_io
-            .into_iter()
-            .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs, outputs))
-            .collect();
-
         let mut ifaces: Vec<_> = (0..2)
             .map(|i| Node::new(NodeKind::Interface, 8))
             .collect();
+        let mut patchbays: Vec<_> = (0..2)
+            .map(|i| Node::new(NodeKind::Interface, 8))
+            .collect();
 
-        ifaces.iter_mut()
-            .zip(patchbays.iter_mut())
-            .enumerate()
-            .for_each(|(i, (iface, pb))| {
-                iface.inputs.iter_mut()
-                    .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(input, output)| {
-                        //output.borrow_mut()
-                        //    .input
-                        //    .replace(input.clone());
-                    });
-                iface.outputs.iter_mut()
-                    .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
+        /*
+            // Connect the first handful of channels to the next
+            // patchbay. The first unit has unused input channels
+            // and the last has as many unused outputs.
+            for i in 0..patchbay_io.len() - 1 {
+                let (a, b) = patchbay_io[i..i + 2].split_at_mut(1);
+                a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                    .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
                     .for_each(|(output, input)| {
                         //output.borrow_mut()
                         //    .input
                         //    .replace(input.clone());
                     });
-            });
+                a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                    .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                    .for_each(|(input, output)| {
+                        //output.borrow_mut()
+                        //    .input
+                        //    .replace(input.clone());
+                    });
+            }
 
-        // Build the channel strips, patch them into the last
-        // channel of each
-        let mut channel_strips = (0..NUM_CHANNEL_STRIPS)
-            .map(|_| ["neve511", "dbx560a", "ssl611eq"]
-                .iter()
-                .map(|name| Node::new(NodeKind::Unit(AudioUnit::new(String::from(*name))), 1))
-                .collect::<Vec<_>>())
-            .collect::<Vec<_>>();
-        channel_strips.iter_mut()
-            .for_each(|v| {
-                // TODO: assign IO on the patchbays
-                //preamp.inputs[0].borrow_mut()
-                //    .input
-                //    .replace(reserve_on_patchbay(&mut patchbays));
-            });
+            // Create some patchbays from the inputs/outputs
+            let mut patchbays: Vec<_> = patchbay_io
+                .into_iter()
+                .map(|(inputs, outputs)| Node::make(NodeKind::Patchbay, inputs, outputs))
+                .collect();
+
+
+            ifaces.iter_mut()
+                .zip(patchbays.iter_mut())
+                .enumerate()
+                .for_each(|(i, (iface, pb))| {
+                    iface.inputs.iter_mut()
+                        .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
+                        .for_each(|(input, output)| {
+                            //output.borrow_mut()
+                            //    .input
+                            //    .replace(input.clone());
+                        });
+                    iface.outputs.iter_mut()
+                        .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
+                        .for_each(|(output, input)| {
+                            //output.borrow_mut()
+                            //    .input
+                            //    .replace(input.clone());
+                        });
+                });
+
+            // Build the channel strips, patch them into the last
+            // channel of each
+            let mut channel_strips = (0..NUM_CHANNEL_STRIPS)
+                .map(|_| ["neve511", "dbx560a", "ssl611eq"]
+                    .iter()
+                    .map(|name| Node::new(NodeKind::Unit(AudioUnit::new(String::from(*name))), 1))
+                    .collect::<Vec<_>>())
+                .collect::<Vec<_>>();
+            channel_strips.iter_mut()
+                .for_each(|v| {
+                    // TODO: assign IO on the patchbays
+                    //preamp.inputs[0].borrow_mut()
+                    //    .input
+                    //    .replace(reserve_on_patchbay(&mut patchbays));
+                });
+
+         */
+
         astar(
-            &ifaces[0].outputs[0],
-            |io| io.deref().borrow().successors(),
+            &ifaces[0].read().unwrap().outputs[0],
+            |io| io.deref().read().unwrap().successors(),
             |io| 0,
-            |io| *io == channel_strips[0][0].inputs[0],
+            |io| *io == patchbays[0].read().unwrap().inputs[0],
         );
     }
 }

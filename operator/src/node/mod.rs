@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Weak, RwLock};
 
 pub struct AudioUnit {
     class_name: String,
@@ -25,22 +24,32 @@ pub struct Node {
     pub outputs: Vec<IOHandle>,
 }
 
-type NodeHandle = Box<Node>;
+pub type NodeHandle = Arc<RwLock<Node>>;
 
 impl Node {
-    pub fn new(kind: NodeKind, num_channels: u8) -> Self {
-        Self::make(
+    pub fn new(kind: NodeKind, num_channels: u8) -> NodeHandle {
+        let mut inst = Arc::new(RwLock::new(Node {
             kind,
-            (0..num_channels).map(|i| IOHandle::new(IO::new(
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+        }));
+        inst.write().unwrap().inputs = (0..num_channels)
+            .map(|i| IOHandle::new(IO::new(
                 i,
                 false,
                 None,
-            ))).collect(),
-            (0..num_channels).map(|i| IOHandle::new(IO::new(
+                Arc::downgrade(&inst),
+            )))
+            .collect();
+        inst.write().unwrap().outputs = (0..num_channels)
+            .map(|i| IOHandle::new(IO::new(
                 i,
                 true,
                 None,
-            ))).collect())
+                Arc::downgrade(&inst),
+            )))
+            .collect();
+        inst as _
     }
 
     pub fn make(kind: NodeKind, inputs: Vec<IOHandle>, outputs: Vec<IOHandle>) -> Self {
@@ -50,30 +59,21 @@ impl Node {
             outputs,
         }
     }
-
 }
 
 pub struct IO {
     pub channel: u8,
     pub is_output: bool,
     pub input: Option<IOHandle>,
-    pub node: NodeHandle,
+    pub node: Weak<RwLock<Node>>,
 }
 
 #[derive(Clone)]
-pub struct IOHandle(Rc<RefCell<IO>>);
+pub struct IOHandle(Arc<RwLock<IO>>);
 
 impl IOHandle {
     pub fn new(io: IO) -> Self {
-        Self(Rc::new(RefCell::new(io)))
-    }
-}
-
-impl std::ops::Deref for IOHandle {
-    type Target = Rc<RefCell<IO>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        Self(Arc::new(RwLock::new(io)))
     }
 }
 
@@ -84,6 +84,14 @@ impl PartialEq for IOHandle {
 }
 
 impl Eq for IOHandle {}
+
+impl std::ops::Deref for IOHandle {
+    type Target = Arc<RwLock<IO>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl std::hash::Hash for IOHandle {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -96,7 +104,7 @@ impl IO {
         channel: u8,
         is_output: bool,
         input: Option<IOHandle>,
-        node: NodeHandle,
+        node: Weak<RwLock<Node>>,
     ) -> Self {
         Self {
             channel,
@@ -107,7 +115,15 @@ impl IO {
     }
 
     pub fn successors(&self) -> Vec<(IOHandle, u32)> {
-        // TODO: get list of opposite end on node
-        vec![]
+        let node = self.node.upgrade().unwrap();
+        let node = node.read().unwrap();
+        match self.is_output {
+            true => node.inputs.iter()
+                .map(|h| (h.clone(), 1))
+                .collect(),
+            false => node.outputs.iter()
+                .map(|h| (h.clone(), 1))
+                .collect(),
+        }
     }
 }

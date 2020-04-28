@@ -1,26 +1,53 @@
+use std::sync::{
+    Weak,
+    Arc,
+};
 
 pub struct InterfaceIO {
-    interface: std::sync::Weak<Interface>,
-    channel: usize,
-    other: Option<super::IO>,
-    is_output: bool,
+    pub channel: u8,
+    pub other: Option<super::IO>,
+    pub is_output: bool,
+}
+
+impl InterfaceIO {
+    pub fn new(
+        channel: u8,
+        is_output: bool,
+        other: Option<super::IO>,
+    ) -> Self {
+        Self {
+            channel,
+            is_output,
+            other,
+        }
+    }
 }
 
 pub struct Interface {
-    inputs: Vec<std::sync::Arc<InterfaceIO>>,
-    outputs: Vec<std::sync::Arc<InterfaceIO>>,
+    inputs: Vec<Arc<InterfaceIO>>,
+    outputs: Vec<Arc<InterfaceIO>>,
 }
 
-impl super::NodeTrait for Interface {
-    fn inputs(&self) -> Vec<super::IO> {
-        self.inputs.iter()
-            .map(|input| super::IO::InterfaceIO(input.clone()))
-            .collect()
+impl Interface {
+    pub fn new(inputs: Vec<Arc<InterfaceIO>>,
+               outputs: Vec<Arc<InterfaceIO>>) -> Self {
+        Self {
+            inputs,
+            outputs,
+        }
     }
 
-    fn outputs(&self) -> Vec<super::IO> {
-        self.outputs.iter()
-            .map(|output| super::IO::InterfaceIO(output.clone()))
-            .collect()
+    pub fn new_from_num_channels(num_channels: u8) -> Self {
+        Interface::new(
+            (0..num_channels).map(|i| Arc::new(InterfaceIO::new(
+                i,
+                false,
+                None,
+            ))).collect(),
+            (0..num_channels).map(|i| Arc::new(InterfaceIO::new(
+                i,
+                true,
+                None,
+            ))).collect())
     }
 }

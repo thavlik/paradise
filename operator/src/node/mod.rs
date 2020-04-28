@@ -1,5 +1,5 @@
-mod interface;
-mod patchbay;
+pub mod interface;
+pub mod patchbay;
 
 use std::sync::Arc;
 
@@ -11,11 +11,5 @@ pub enum Node {
 pub enum IO {
     InterfaceIO(Arc<interface::InterfaceIO>),
     PatchbayIO(Arc<patchbay::PatchbayIO>),
-}
-
-pub trait NodeTrait {
-    fn inputs(&self) -> Vec<IO>;
-
-    fn outputs(&self) -> Vec<IO>;
 }
 

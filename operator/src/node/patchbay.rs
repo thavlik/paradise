@@ -1,24 +1,55 @@
+use std::sync::{
+    Weak,
+    Arc,
+    atomic::AtomicBool,
+};
+
 pub struct PatchbayIO {
-    interface: std::sync::Weak<Patchbay>,
-    other: Option<super::IO>,
-    is_output: bool,
+    pub channel: u8,
+    pub is_output: bool,
+    pub other: Option<super::IO>,
 }
+
+impl PatchbayIO {
+    pub fn new(
+        channel: u8,
+        is_output: bool,
+        other: Option<super::IO>,
+    ) -> Self {
+        Self {
+            channel,
+            is_output,
+            other,
+        }
+    }
+}
+
 
 pub struct Patchbay {
-    inputs: Vec<std::sync::Arc<PatchbayIO>>,
-    outputs: Vec<std::sync::Arc<PatchbayIO>>,
+    inputs: Vec<Arc<PatchbayIO>>,
+    outputs: Vec<Arc<PatchbayIO>>,
 }
 
-impl super::NodeTrait for Patchbay {
-    fn inputs(&self) -> Vec<super::IO> {
-        self.inputs.iter()
-            .map(|input| super::IO::PatchbayIO(input.clone()))
-            .collect()
+impl Patchbay {
+    pub fn new(inputs: Vec<Arc<PatchbayIO>>,
+               outputs: Vec<Arc<PatchbayIO>>) -> Self {
+        Self {
+            inputs,
+            outputs,
+        }
     }
 
-    fn outputs(&self) -> Vec<super::IO> {
-        self.outputs.iter()
-            .map(|output| super::IO::PatchbayIO(output.clone()))
-            .collect()
+    pub fn new_from_num_channels(num_channels: u8) -> Self {
+        Patchbay::new(
+            (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
+                i,
+                false,
+                None,
+            ))).collect(),
+            (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
+                i,
+                true,
+                None,
+            ))).collect())
     }
 }

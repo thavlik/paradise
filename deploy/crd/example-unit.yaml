@@ -55,72 +55,69 @@ status:
   # https://www.anatal.io/
   patchbay: pb0
 ---
-# All of this is in the analog world
+# This patch utilizes analog-to-digital conversion
 apiVersion: app.paradise.dev/v1alpha1
-kind: Console
+kind: Patch
 metadata:
-  name: test-console
-  annotations:
-    # For management and billing purposes, the claim can
-    # be annotated with information about end user ownership.
-    paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
+  name: test-output-patch
 spec:
-  # Create ingress for the first input of
-  # the preamp module.
-  inputs: ["preamp.0"]
-
-  # Patch the first output of our eq module into a
-  # remote address. As long as the user is okay with
-  # a round trip to the backend in order to compare
-  # e.g. wet vs bypass, we only need a single output
-  # stream and the source is mutated as needed.
-  outputs:
-    - source: eq.0
-      dest: 297.281.23.1:35000
-
-  # Define a boutique analog chain. This is a simple
-  # one, but you should be able to do more complicated
-  # setups like compressor sidechaining and use of
-  # analog summing mixers with huge IO.
-  units:
-    - name: preamp
-      unit: neve511
-    - name: compressor
-      unit: artprovlaii
-      inputs:
-        - preamp.0
-    - name: eq
-      unit: ssl611eq
-      inputs:
-        - compressor.0
+  source:
+    unitClaim:
+      name: my-ssl611eq-output
+      channel: 0
+  dest:
+    remote:
+      host: 297.281.23.1
+      port: 35000
 status:
-  # Pending
-  # Active
-  # ErrUnitFailure
-  # ErrBadRouting
-  phase: Pending
-
-  # A list of claims is maintained reflecting the
-  # physical hardware are associated with each unit.
-  # Note that individual claims may be in error
-  # states, and that information is propagated to
-  # the Console's status.phase.
-  claims:
-    - name: preamp
-      claim: neve511-claim-0
-    - name: compressor
-      claim: artprovlaii-claim-0
-    - name: eq
-      claim: ssl611eq-claim-0
-
-  # Enumerate private and public network resources
-  # for console IO.
-  ingress:
-    - name: preamp.0
-      private:
-        host: test-console-preamp.default.svc.cluster.local
-        port: 20248
-      public:
-        host: example.com
-        port: 30000
-
+  # ErrUnableToReconcile
+  phase: Active
+---
+# This patch utilizes digital-to-analog conversion
+apiVersion: app.paradise.dev/v1alpha1
+kind: Patch
+metadata:
+  name: test-input-patch
+spec:
+  source:
+    # Using a remote address as a patch source will
+    # whitelist the port in the firewall, etc.
+    remote:
+      host: 297.281.23.1
+      port: 35000
+  dest:
+    unitClaim:
+      name: my-neve511-input
+      channel: 0
+---
+# This patch is 100% analog
+apiVersion: app.paradise.dev/v1alpha1
+kind: Patch
+metadata:
+  name: test-pre-to-comp
+spec:
+  source:
+    # Using a remote address as a patch source will
+    # whitelist the port in the firewall, etc.
+    unitClaim:
+      name: my-neve511-claim
+      channel: 0
+  dest:
+    unitClaim:
+      name: my-comp-claim
+      channel: 0
+---
+# This patch is 100% analog
+apiVersion: app.paradise.dev/v1alpha1
+kind: Patch
+metadata:
+  name: test-pre-to-comp
+spec:
+  source:
+    unitClaim:
+      name: my-comp-claim
+      channel: 0
+  dest:
+    unitClaim:
+      name: my-ssl611eq-output
+      channel: 0

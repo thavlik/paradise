@@ -34,7 +34,7 @@ fn main() {
         .collect();
 
     for i in 0..patchbays.len()-1 {
-        for n in 0..NUM_INTERCONNECT_CHANNELS as usize {
+        for n in 0..NUM_INTERCONNECT_CHANNELS {
             *patchbays[i+0].outputs[n].other
                 .lock()
                 .unwrap() = Some(IO::PatchbayIO(patchbays[i+1].inputs[n].clone()));

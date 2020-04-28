@@ -110,5 +110,8 @@ mod test {
                 (preamp, comp, eq)
             })
             .collect::<Vec<_>>();
+        channel_strips.iter_mut()
+            .for_each(|(preamp, _, eq)| {
+            });
     }
 }

@@ -61,6 +61,27 @@ mod test {
             .map(|(inputs, outputs)| Node::make(inputs, outputs))
             .collect();
 
+        let mut ifaces: Vec<_> = (0..1)
+            .map(|i| Node::new(8))
+            .collect();
+
+        ifaces.iter_mut()
+            .zip(patchbays.iter_mut())
+            .enumerate()
+            .for_each(|(i, (iface, pb))| {
+                iface.inputs.iter_mut()
+                    .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
+                    .for_each(|(input, output)| {
+                        //input.set_other(Some(IO::PatchbayIO(output.clone())));
+                        //output.set_other(Some(IO::InterfaceIO(input.clone())));
+                    });
+                iface.outputs.iter_mut()
+                    .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
+                    .for_each(|(output, input)| {
+                        //input.set_other(Some(IO::InterfaceIO(output.clone())));
+                        //output.set_other(Some(IO::PatchbayIO(input.clone())));
+                    });
+            });
         /*
         let mut iface = Interface::new(8);
 

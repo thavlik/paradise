@@ -25,6 +25,8 @@ pub struct Node {
     pub outputs: Vec<IOHandle>,
 }
 
+type NodeHandle = Box<Node>;
+
 impl Node {
     pub fn new(kind: NodeKind, num_channels: u8) -> Self {
         Self::make(
@@ -55,6 +57,7 @@ pub struct IO {
     pub channel: u8,
     pub is_output: bool,
     pub input: Option<IOHandle>,
+    pub node: NodeHandle,
 }
 
 #[derive(Clone)]
@@ -93,15 +96,18 @@ impl IO {
         channel: u8,
         is_output: bool,
         input: Option<IOHandle>,
+        node: NodeHandle,
     ) -> Self {
         Self {
             channel,
             is_output,
             input,
+            node,
         }
     }
 
     pub fn successors(&self) -> Vec<(IOHandle, u32)> {
+        // TODO: get list of opposite end on node
         vec![]
     }
 }

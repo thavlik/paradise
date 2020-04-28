@@ -2,26 +2,31 @@ use std::sync::{
     Weak,
     Arc,
     atomic::AtomicBool,
+    Mutex,
 };
 use super::IO;
 
 pub struct PatchbayIO {
     pub channel: u8,
     pub is_output: bool,
-    pub other: Option<IO>,
+    pub other: Mutex<Option<IO>>,
 }
 
 impl PatchbayIO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        other: Option<IO>,
+        other: Mutex<Option<IO>>,
     ) -> Self {
         Self {
             channel,
             is_output,
             other,
         }
+    }
+
+    pub fn set_other(&self, other: Option<IO>) {
+        *self.other.lock().unwrap() = other;
     }
 }
 
@@ -37,12 +42,12 @@ impl Patchbay {
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 false,
-                None,
+                Mutex::new(None),
             ))).collect(),
             (0..num_channels).map(|i| Arc::new(PatchbayIO::new(
                 i,
                 true,
-                None,
+                Mutex::new(None),
             ))).collect())
     }
 

@@ -103,8 +103,8 @@ mod test {
                 let mut preamp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 1);
                 let mut comp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("dbx560a"))), 1);
                 let mut eq = Node::new(NodeKind::Unit(AudioUnit::new(String::from("ssl611eq"))), 1);
-                //comp.inputs[0].input = Some(preamp.outputs[0].clone());
-                //eq.inputs[0].input = Some(comp.outputs[0].clone());
+                comp.inputs[0].borrow_mut().input = Some(preamp.outputs[0].clone());
+                eq.inputs[0].borrow_mut().input = Some(comp.outputs[0].clone());
                 (preamp, comp, eq)
             })
             .collect::<Vec<_>>();

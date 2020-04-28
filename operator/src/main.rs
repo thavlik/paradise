@@ -3,6 +3,8 @@ use std::sync::{
     Arc,
     Mutex,
 };
+use std::cell::RefCell;
+use std::rc::Rc;
 
 mod node;
 
@@ -30,14 +32,15 @@ mod test {
         const NUM_CHANNELS: usize = 128;
         const NUM_INTERCONNECT_CHANNELS: usize = 32;
         const NUM_UNITS: usize = 4;
+        const NUM_CHANNEL_STRIPS: usize = 256;
 
         let mut patchbay_io = (0..NUM_PATCHBAYS)
             .map(|i| (
                 (0..NUM_CHANNELS)
-                    .map(|j| Box::new(IO::new(j as u8, false, None)))
+                    .map(|j| Rc::new(RefCell::new(IO::new(j as u8, false, None))))
                     .collect::<Vec<_>>(),
                 (0..NUM_CHANNELS)
-                    .map(|j| Box::new(IO::new(j as u8, true, None)))
+                    .map(|j| Rc::new(RefCell::new(IO::new(j as u8, true, None))))
                     .collect::<Vec<_>>(),
             ))
             .collect::<Vec<_>>();
@@ -49,10 +52,18 @@ mod test {
             let (a, b) = patchbay_io[i..i + 2].split_at_mut(1);
             a[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(output, input)| output.input = Some(input.clone()));
+                .for_each(|(output, input)| {
+                    output.borrow_mut()
+                        .input
+                        .replace(input.clone());
+                });
             a[0].0[..NUM_INTERCONNECT_CHANNELS].iter_mut()
                 .zip(b[0].1[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(input, output)| output.input = Some(input.clone()));
+                .for_each(|(input, output)| {
+                    output.borrow_mut()
+                        .input
+                        .replace(input.clone());
+                });
         }
 
         // Create some patchbays from the inputs/outputs
@@ -71,27 +82,31 @@ mod test {
             .for_each(|(i, (iface, pb))| {
                 iface.inputs.iter_mut()
                     .zip(pb.outputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(input, output)| output.input = Some(input.clone()));
+                    .for_each(|(input, output)| {
+                        output.borrow_mut()
+                            .input
+                            .replace(input.clone());
+                    });
                 iface.outputs.iter_mut()
                     .zip(pb.inputs[NUM_INTERCONNECT_CHANNELS..].iter_mut())
-                    .for_each(|(output, input)| output.input = Some(input.clone()));
+                    .for_each(|(output, input)| {
+                        output.borrow_mut()
+                            .input
+                            .replace(input.clone());
+                    });
             });
 
-        let mut preamps: Vec<_> = (0..2)
-            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 1))
-            .collect();
-        let mut compressors: Vec<_> = (0..2)
-            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("dbx560a"))), 1))
-            .collect();
-        let mut equalizers: Vec<_> = (0..2)
-            .map(|i| Node::new(NodeKind::Unit(AudioUnit::new(String::from("ssl611eq"))), 1))
-            .collect();
-
-        preamps.iter_mut()
-            .zip(compressors.iter_mut())
-            .zip(equalizers.iter_mut())
-            .for_each(|((preamp, comp), eq)| {
-                comp.outputs[0].input = Some(preamp.clone());
-            });
+        // Build the channel strips.
+        let mut channel_strips = (0..NUM_CHANNEL_STRIPS)
+            .zip(patchbays.iter_mut().rev())
+            .map(|(i, pb)| {
+                let mut preamp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("neve511"))), 1);
+                let mut comp = Node::new(NodeKind::Unit(AudioUnit::new(String::from("dbx560a"))), 1);
+                let mut eq = Node::new(NodeKind::Unit(AudioUnit::new(String::from("ssl611eq"))), 1);
+                //comp.inputs[0].input = Some(preamp.outputs[0].clone());
+                //eq.inputs[0].input = Some(comp.outputs[0].clone());
+                (preamp, comp, eq)
+            })
+            .collect::<Vec<_>>();
     }
 }

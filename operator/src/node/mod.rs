@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 pub struct AudioUnit {
     class_name: String,
 }
@@ -18,27 +21,27 @@ pub enum NodeKind {
 
 pub struct Node {
     pub kind: NodeKind,
-    pub inputs: Vec<Box<IO>>,
-    pub outputs: Vec<Box<IO>>,
+    pub inputs: Vec<Rc<RefCell<IO>>>,
+    pub outputs: Vec<Rc<RefCell<IO>>>,
 }
 
 impl Node {
     pub fn new(kind: NodeKind, num_channels: u8) -> Self {
         Self::make(
             kind,
-            (0..num_channels).map(|i| Box::new(IO::new(
+            (0..num_channels).map(|i| Rc::new(RefCell::new(IO::new(
                 i,
                 false,
                 None,
-            ))).collect(),
-            (0..num_channels).map(|i| Box::new(IO::new(
+            )))).collect(),
+            (0..num_channels).map(|i| Rc::new(RefCell::new(IO::new(
                 i,
                 true,
                 None,
-            ))).collect())
+            )))).collect())
     }
 
-    pub fn make(kind: NodeKind, inputs: Vec<Box<IO>>, outputs: Vec<Box<IO>>) -> Self {
+    pub fn make(kind: NodeKind, inputs: Vec<Rc<RefCell<IO>>>, outputs: Vec<Rc<RefCell<IO>>>) -> Self {
         Self {
             kind,
             inputs,
@@ -47,18 +50,17 @@ impl Node {
     }
 }
 
-#[derive(Clone)]
 pub struct IO {
     pub channel: u8,
     pub is_output: bool,
-    pub input: Option<Box<IO>>,
+    pub input: Option<Rc<RefCell<IO>>>,
 }
 
 impl IO {
     pub fn new(
         channel: u8,
         is_output: bool,
-        input: Option<Box<IO>>,
+        input: Option<Rc<RefCell<IO>>>,
     ) -> Self {
         Self {
             channel,

@@ -1,24 +1,55 @@
+# Cluster-scoped resource
 apiVersion: app.paradise.dev/v1alpha1
-kind: AudioUnit
+kind: AudioUnitClass
 metadata:
   name: neve511
 spec:
+  # TODO: think of other stuff to put here that could
+  # be displayed in the VST plugin.
+  displayName: "Neve Portico 511"
+
+  # Manufacturer name. Displayed by the VST plugin.
   manufacturer: "Rupert Neve Designs, LLC."
 
-  # The number of input signals. Defaults to 1.
+  # Number of input signals. Defaults to 1.
   inputs: 1
 
-  # The number of output signals. Defaults to 1.
+  # Number of output signals. Defaults to 1.
   outputs: 1
-status:
-  # If the unit is claimed, the status object will be
-  # updated with details about its current ownership.
-  # There could be multiple AudioUnitClaims attempting
-  # to lay ownership to this resource, but only one
-  # of them (shown here) will be the true owner.
-  claim:
-    name: neve511-test-claim
-    timestamp: "2020-04-24T18:54:38Z"
+---
+# Namespaced resource for managing individual analog hardware
+# components. Each component will have fully analog I/O on
+# a patchbay, which can be used to route the signal anywhere.
+apiVersion: app.paradise.dev/v1alpha1
+kind: AudioUnit
+metadata:
+  name: my-neve511-0
+  namespace: default
+
+  # Uniquely identifies the unit between clusters. This is
+  # necessary because an AudioUnitClaim may be created in
+  # a cluster other than the one servicing the AudioUnits,
+  # as is the case with PersistenceVolume/PersistenceVolumeClaim.
+  uid: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
+
+spec:
+  # Allow this unit to be reserved by claims requesting
+  # units with the same name. There must be a corresponding
+  # AudioUnitClass with this name
+  className: neve511
+
+  # Name of the patchbay servicing I/O for the unit.
+  patchbay:
+  # The name of the patchbay resource. TODO: make this a k8s resource?
+    name: pb-0
+  # Globally unique serial number for the particular patchbay.
+    uid: "602898e4-fe9f-424d-9a31-275c5e26023a"
+    inputs:
+    # OUTPUT 83 of the patchbay -> first (only) input of unit
+      - 83
+    outputs:
+    # First (only) output of unit -> INPUT 34 of patchbay
+      - 34
 ---
 apiVersion: app.paradise.dev/v1alpha1
 kind: AudioUnitClaim
@@ -28,12 +59,15 @@ metadata:
   # For management and billing purposes, the claim can
   # be annotated with information about end user ownership.
     paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
+  finalizers:
+  # The resource will be stay in the Terminating state until
+  # this finalizer is removed by the operator. It will ensure
+  # hardware resources are properly freed before deletion.
+    - paradise.dev/auc-protection
 spec:
-  # The name of the owning Console resource
-  console: test-console
+  # Name of the corresponding AudioUnitClass in the backend.
+  className: neve511
 
-  # The name of the AudioUnit resource
-  unit: neve511
 status:
   # Pending
   # Active
@@ -44,16 +78,15 @@ status:
   # ErrNoMoreUnits
   phase: Pending
 
+  # Globally identifying hardware SKU.
+  # There is a corresponding AudioUnit.metadata.uid that
+  # unambiguously refers to a particular physical unit.
+  uid: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
+
   # The claim will automatically transition into
   # the Expired phase by this date if it is still
   # in the Active phase.
   expiration: "2020-04-24T18:54:38Z"
-
-  # Physical patchbay, for analog signal routing.
-  # All units must be connected to a patchbay for audio
-  # signal routing. This one is MIDI programmable:
-  # https://www.anatal.io/
-  patchbay: pb0
 ---
 # This patch utilizes analog-to-digital conversion
 apiVersion: app.paradise.dev/v1alpha1

@@ -787,6 +787,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fixedbitset"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
+
+[[package]]
 name = "flate2"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1132,6 +1138,15 @@ dependencies = [
  "widestring",
  "winapi 0.3.8",
  "winreg",
+]
+
+[[package]]
+name = "itertools"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f56a2d0bc861f9165be4eb3442afd3c236d8a98afd426f65d92324ae1091a484"
+dependencies = [
+ "either",
 ]
 
 [[package]]
@@ -1558,6 +1573,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "paradise_operator"
+version = "0.1.0"
+dependencies = [
+ "pathfinding",
+]
+
+[[package]]
 name = "paradise_tool"
 version = "0.1.0"
 
@@ -1634,6 +1656,18 @@ dependencies = [
  "redox_syscall",
  "smallvec 1.4.0",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "pathfinding"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86f4d8cc85ca67860ef4324faf86973a39e4e1c78338987eda29a8e6b6ec0c0e"
+dependencies = [
+ "fixedbitset",
+ "indexmap",
+ "itertools",
+ "num-traits",
 ]
 
 [[package]]

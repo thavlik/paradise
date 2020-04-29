@@ -86,6 +86,8 @@ impl PoolTrait for RedisPool {
             .arg(claim.as_bytes())
             .query(conn.deref_mut())?;
 
+        // TODO: modify records in persistent storage
+
         // Announce that the resource has been released over redis
         redis::cmd("PUBLISH")
             .arg("release")

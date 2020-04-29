@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 const LATENCY_MS: f32 = 0.0 ;//150.0;
@@ -12,7 +13,6 @@ pub struct DaemonArgs {
     #[clap(long = "port", short = "p", default_value = "8080")]
     port: u16,
 }
-
 
 
 pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {

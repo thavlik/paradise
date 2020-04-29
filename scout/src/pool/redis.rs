@@ -1,4 +1,5 @@
 use super::*;
+use std::ops::DerefMut;
 use r2d2_redis::{
     r2d2,
     redis,
@@ -24,12 +25,41 @@ impl RedisPool {
 }
 
 impl PoolTrait for RedisPool {
-    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid> {
+    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<SystemTime>) -> Result<Uuid> {
         let mut conn = self.pool.get()?;
+        {
+            let mut pubsub = conn.deref_mut().as_pubsub();
+            pubsub.subscribe("paradise")?;
+            loop {
+                let msg = pubsub.get_message()?;
+                let payload : String = msg.get_payload()?;
+                println!("channel '{}': {}", msg.get_channel_name(), payload);
+            }
+        }
+
         // Generate a novel uid for the claim attempt
-        let claim_uid = Uuid::new_v4();
+        let claim = Claim {
+            uid: Uuid::new_v4(),
+            resource,
+            claimant,
+            expire: None,
+        };
+
         // TODO: write redis script to claim given uid
-        let reply = redis::cmd("PING").query::<String>(conn.deref_mut())?;
+        let mut cmd = redis::cmd("SET");
+        if let Some(expire) = expire {
+            //cmd = *cmd.arg("PX")
+            //    .arg(expire.as_millis().to_string())
+        }
+        let _: () = cmd
+            .arg("NX")
+            .query::<()>(conn.deref_mut())?;
+        // TODO: announce claim over redis
+
+        redis::cmd("PUBLISH")
+            .arg("paradise")
+            .arg("")
+            .query(conn.deref_mut())?;
         Ok(Uuid::new_v4())
     }
 

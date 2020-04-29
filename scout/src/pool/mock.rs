@@ -12,7 +12,7 @@ impl MockPool {
 }
 
 impl PoolTrait for MockPool {
-    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid> {
+    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<SystemTime>) -> Result<Uuid> {
         Ok(Uuid::new_v4())
     }
 

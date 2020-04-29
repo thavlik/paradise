@@ -1,6 +1,8 @@
 use std::default::Default;
-use std::{sync::{atomic::{AtomicPtr, Ordering::SeqCst}}};
+use std::{sync::{atomic::{AtomicPtr, Ordering::SeqCst}}, time::{SystemTime}};
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
+use crate::pool::Claim;
 
 #[derive(Debug)]
 pub struct AudioUnit {
@@ -95,10 +97,7 @@ impl std::hash::Hash for IO {
     }
 }
 
-#[derive(Clone, PartialEq)]
-pub struct Claim {
-    pub uid: Uuid,
-}
+
 
 impl std::ops::Drop for IO {
     fn drop(&mut self) {

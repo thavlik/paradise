@@ -15,6 +15,7 @@ impl RedisPool {
     pub fn new(redis_uri: &str) -> Result<Self> {
         let manager = RedisConnectionManager::new(redis_uri)?;
         let pool = r2d2::Pool::builder()
+            .max_size(15)
             .build(manager)?;
         Ok(Self {
             pool,

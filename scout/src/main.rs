@@ -13,10 +13,8 @@ mod node;
 
 use node::{
     Node,
-    NodeHandle,
     NodeKind,
     IO,
-    IOHandle,
     AudioUnit,
 };
 
@@ -43,25 +41,22 @@ mod test {
         //const NUM_UNITS: usize = 4;
         //const NUM_CHANNEL_STRIPS: usize = 256;
 
-        let mut patchbays: Vec<NodeHandle> = (0..NUM_PATCHBAYS)
-            .map(|_| Arc::new(RwLock::new(Node::make(Uuid::new_v4(), NodeKind::Patchbay, vec![], vec![]))))
+        let mut patchbays: Vec<Box<Node>> = (0..NUM_PATCHBAYS)
+            .map(|_| Node::make(Uuid::new_v4(), NodeKind::Patchbay, vec![], vec![]))
             .collect();
 
-        let mut ifaces: Vec<_> = (0..2)
+        let mut ifaces: Vec<Box<Node>> = (0..2)
             .map(|i| Node::new(NodeKind::Interface, 8))
             .collect();
 
         let mut patchbays = patchbays.into_iter()
             .map(|mut pb| {
-                {
-                    let mut l = pb.write().unwrap();
-                    l.inputs = (0..NUM_CHANNELS)
-                        .map(|j| IO::new(Uuid::new_v4(), j as u8, false, None, Arc::downgrade(&pb)))
-                        .collect::<Vec<_>>();
-                    l.outputs = (0..NUM_CHANNELS)
-                        .map(|j| IO::new(Uuid::new_v4(), j as u8, true, None, Arc::downgrade(&pb)))
-                        .collect::<Vec<_>>();
-                }
+                pb.inputs = (0..NUM_CHANNELS)
+                    .map(|j| IO::new(Uuid::new_v4(), j as u8, false, None, &*pb as _))
+                    .collect::<Vec<_>>();
+                pb.outputs = (0..NUM_CHANNELS)
+                    .map(|j| IO::new(Uuid::new_v4(), j as u8, true, None, &*pb as _))
+                    .collect::<Vec<_>>();
                 pb
             })
             .collect::<Vec<_>>();
@@ -71,12 +66,12 @@ mod test {
         // and the last has as many unused outputs.
         for i in 0..patchbays.len() - 1 {
             let (a, b) = patchbays[i..i + 2].split_at_mut(1);
-            a[0].write().unwrap().outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
-                .zip(b[0].write().unwrap().inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-                .for_each(|(output, input)| output.write().unwrap().input = Some(input.clone()));
-            //a[0].write().unwrap().inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
-            //    .zip(b[0].write().unwrap().outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
-            //    .for_each(|(input, output)| output.write().unwrap().input = Some(input.clone()));
+            a[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                .zip(b[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                .for_each(|(output, input)| output.input = Some(&**input as _));
+            a[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                .zip(b[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                .for_each(|(input, output)| output.input = Some(&**input as _));
         }
 
     /*
@@ -111,14 +106,14 @@ mod test {
 
          */
 
-        assert!(patchbays[0].read().unwrap().inputs[0] == patchbays[0].read().unwrap().inputs[0]);
-        assert!(patchbays[0].read().unwrap().inputs[0].clone() == patchbays[0].read().unwrap().inputs[0]);
-        assert!(patchbays[0].read().unwrap().inputs[0] != patchbays[0].read().unwrap().inputs[1]);
+        assert!(patchbays[0].inputs[0] == patchbays[0].inputs[0]);
+        assert!(patchbays[0].inputs[0].clone() == patchbays[0].inputs[0]);
+        assert!(patchbays[0].inputs[0] != patchbays[0].inputs[1]);
         assert!(astar(
-            &patchbays[0].read().unwrap().inputs[0],
-            |io| io.deref().read().unwrap().successors(),
+            &(&*patchbays[0].inputs[0] as *const IO),
+            |io| unsafe { (**io).successors() },
             |io| 0,
-            |io| *io == patchbays.last().unwrap().read().unwrap().inputs[0],
+            |io| unsafe { (**io).uid == patchbays.last().unwrap().inputs[0].uid },
         ).is_some());
     }
 }

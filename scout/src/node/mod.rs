@@ -25,88 +25,70 @@ pub enum NodeKind {
 pub struct Node {
     pub uid: Uuid,
     pub kind: NodeKind,
-    pub inputs: Vec<IOHandle>,
-    pub outputs: Vec<IOHandle>,
+    pub inputs: Vec<Box<IO>>,
+    pub outputs: Vec<Box<IO>>,
 }
 
-pub type NodeHandle = Arc<RwLock<Node>>;
 
 impl Node {
-    pub fn new(kind: NodeKind, num_channels: u8) -> NodeHandle {
-        let mut inst = Arc::new(RwLock::new(Node {
+    pub fn new(kind: NodeKind, num_channels: u8) -> Box<Self> {
+        let mut inst = Box::new(Node {
             uid: Uuid::new_v4(),
             kind,
-            inputs: Vec::new(),
-            outputs: Vec::new(),
-        }));
-        inst.write().unwrap().inputs = (0..num_channels)
-            .map(|i| IO::new(
+            inputs: vec![],
+            outputs: vec![],
+        });
+        let inputs = (0..num_channels)
+            .map(|i| Box::new(IO::new(
                 Uuid::new_v4(),
                 i,
                 false,
                 None,
-                Arc::downgrade(&inst),
-            ))
-            .collect();
-        inst.write().unwrap().outputs = (0..num_channels)
-            .map(|i| IO::new(
+                &*inst as _,
+            )))
+            .collect::<Vec<_>>();
+        let outputs = (0..num_channels)
+            .map(|i| Box::new(IO::new(
                 Uuid::new_v4(),
                 i,
                 true,
                 None,
-                Arc::downgrade(&inst),
-            ))
-            .collect();
+                &*inst as _,
+            )))
+            .collect::<Vec<_>>();
         inst as _
     }
 
-    pub fn make(uid: Uuid, kind: NodeKind, inputs: Vec<IOHandle>, outputs: Vec<IOHandle>) -> Self {
-        Self {
+    pub fn make(uid: Uuid, kind: NodeKind, inputs: Vec<Box<IO>>, outputs: Vec<Box<IO>>) -> Box<Self> {
+        Box::new(Self {
             uid,
             kind,
             inputs,
             outputs,
-        }
+        })
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct IO {
     pub uid: Uuid,
     pub channel: u8,
     pub is_output: bool,
-    pub input: Option<IOHandle>,
-    pub node: Weak<RwLock<Node>>,
+    pub input: Option<*const Self>,
+    pub node: *const Node,
 }
 
-#[derive(Debug, Clone)]
-pub struct IOHandle(Arc<RwLock<IO>>);
-
-impl IOHandle {
-    pub fn new(io: IO) -> Self {
-        Self(Arc::new(RwLock::new(io)))
-    }
-}
-
-impl PartialEq for IOHandle {
+impl PartialEq for IO {
     fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
+        self.uid == other.uid
     }
 }
 
-impl Eq for IOHandle {}
+impl Eq for IO {}
 
-impl std::ops::Deref for IOHandle {
-    type Target = Arc<RwLock<IO>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::hash::Hash for IOHandle {
+impl std::hash::Hash for IO {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        (&self.0.read().unwrap() as *const _ as u64).hash(state);
+        self.uid.hash(state)
     }
 }
 
@@ -115,36 +97,39 @@ impl IO {
         uid: Uuid,
         channel: u8,
         is_output: bool,
-        input: Option<IOHandle>,
-        node: Weak<RwLock<Node>>,
-    ) -> IOHandle {
-        IOHandle(Arc::new(RwLock::new(Self {
+        input: Option<*const Self>,
+        node: *const Node,
+    ) -> Box<Self> {
+        Box::new(Self {
             uid,
             channel,
             is_output,
             input,
             node,
-        })))
+        })
     }
 
-    pub fn successors(&self) -> Vec<(IOHandle, u32)> {
-        let node = self.node.upgrade().unwrap();
-        let node = node.read().unwrap();
-        if self.is_output {
-            // Can only route to a single input on another
-            // piece of hardware or nothing at all.
-            self.input.as_ref()
-                .map_or(vec![], |v| vec![(v.clone(), 1)])
-        } else {
-            // Patchbay inputs can route to any output.
-            // Inputs for other nodes are terminal.
-            match &node.kind {
-                NodeKind::Interface => vec![],
-                NodeKind::Unit(u) => vec![],
-                NodeKind::Patchbay => node.outputs.iter()
-                    .map(|h| (h.clone(), 1))
-                    .collect(),
+    pub fn successors(&self) -> Vec<(*const Self, u32)> {
+        let result = {
+            if self.is_output {
+                // Can only route to a single input on another
+                // piece of hardware or nothing at all.
+                self.input.as_ref()
+                    .map_or(vec![], |v| vec![(v.clone(), 1)])
+            } else {
+                // Patchbay inputs can route to any output.
+                // Inputs for other nodes are terminal.
+                unsafe {
+                    match &(*self.node).kind {
+                        NodeKind::Interface => vec![],
+                        NodeKind::Unit(u) => vec![],
+                        NodeKind::Patchbay => (*self.node).outputs.iter()
+                            .map(|h| (&**h as _, 1))
+                            .collect(),
+                    }
+                }
             }
-        }
+        };
+        result
     }
 }

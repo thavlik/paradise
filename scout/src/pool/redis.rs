@@ -29,38 +29,46 @@ impl PoolTrait for RedisPool {
         let mut conn = self.pool.get()?;
         {
             let mut pubsub = conn.deref_mut().as_pubsub();
-            pubsub.subscribe("paradise")?;
+            pubsub.subscribe("claim")?;
             loop {
-                let msg = pubsub.get_message()?;
-                let payload : String = msg.get_payload()?;
-                println!("channel '{}': {}", msg.get_channel_name(), payload);
+                let payload = pubsub.get_message()?;
+                let payload: Vec<u8> = payload.get_payload()?;
+                let payload: Claim = bincode::deserialize(&payload[..])?;
+                // TODO: propogate writes
             }
         }
 
-        // Generate a novel uid for the claim attempt
-        let claim = Claim {
-            uid: Uuid::new_v4(),
-            resource,
-            claimant,
-            expire: None,
-        };
+        // Generate a novel UUID for the claim
+        let uid = Uuid::new_v4();
 
-        // TODO: write redis script to claim given uid
-        let mut cmd = redis::cmd("SET");
+        // Attempt to claim the resource in redis
+        // TODO: write redis tests for these commands
+        let mut cmd = redis::cmd("SET")
+            .arg(resource.as_bytes())
+            .arg(uid.as_bytes());
         if let Some(expire) = expire {
-            //cmd = *cmd.arg("PX")
-            //    .arg(expire.as_millis().to_string())
+            cmd = cmd.arg("PX")
+                .arg(expire.duration_since(SystemTime::now())?
+                    .as_millis()
+                    .to_string());
         }
         let _: () = cmd
             .arg("NX")
             .query::<()>(conn.deref_mut())?;
-        // TODO: announce claim over redis
 
+        // Announce the claim over redis
+        let encoded: Vec<u8> = bincode::serialize(&Claim {
+            uid,
+            resource,
+            claimant,
+            expire,
+        }).unwrap();
         redis::cmd("PUBLISH")
-            .arg("paradise")
-            .arg("")
+            .arg("claim")
+            .arg(encoded)
             .query(conn.deref_mut())?;
-        Ok(Uuid::new_v4())
+
+        Ok(uid)
     }
 
     fn release(&self, resource: Uuid) -> Result<()> {

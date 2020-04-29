@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
+pub mod mock;
 pub mod redis;
-use crate::pool::redis::*;
 
 ///
 pub trait PoolTrait {

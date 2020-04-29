@@ -29,31 +29,33 @@ impl RedisPool {
 impl PoolTrait for RedisPool {
     fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<SystemTime>) -> Result<Uuid> {
         let mut conn = self.pool.get()?;
-        {
-            let mut pubsub = conn.deref_mut().as_pubsub();
-            pubsub.subscribe("claim")?;
-            loop {
-                let payload: Vec<u8> = pubsub.get_message()?.get_payload()?;
-                let payload: Claim = bincode::deserialize(&payload[..])?;
-                // TODO: propogate writes
-            }
-        }
+        //{
+        //    let mut pubsub = conn.deref_mut().as_pubsub();
+        //    pubsub.subscribe("claim")?;
+        //    loop {
+        //        let payload: Vec<u8> = pubsub.get_message()?.get_payload()?;
+        //        let payload: Claim = bincode::deserialize(&payload[..])?;
+        //        // TODO: propogate writes
+        //    }
+        //}
 
         // Generate a novel UUID for the claim
         let uid = Uuid::new_v4();
 
         // Attempt to claim the resource in redis
         // TODO: write redis tests for these commands
-        let mut cmd = redis::cmd("SET")
-            .arg(resource.as_bytes())
+        let mut cmd = redis::cmd("SET");
+        cmd.arg(resource.as_bytes())
             .arg(uid.as_bytes());
         if let Some(expire) = expire {
-            cmd = cmd.arg("PX")
+            cmd.arg("PX")
                 .arg(expire.duration_since(SystemTime::now())?
                     .as_millis()
                     .to_string());
         }
-        let _: () = cmd
+        let _: () = redis::cmd("SET")
+            .arg(resource.as_bytes())
+            .arg(uid.as_bytes())
             .arg("NX")
             .query::<()>(conn.deref_mut())?;
 
@@ -77,7 +79,7 @@ impl PoolTrait for RedisPool {
     fn release(&self, resource: Uuid, claim: Uuid) -> Result<()> {
         let mut conn = self.pool.get()?;
 
-        // TODO: delete the redis key if the claim uid matches
+        // TODO: write this script w/ tests
         redis::cmd("EVALSHA")
             .arg(&self.release_hash)
             .arg("1") // num_keys

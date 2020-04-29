@@ -12,19 +12,18 @@ pub struct RedisPool {
 }
 
 impl RedisPool {
-    pub fn new(redis_uri: &str) -> Self {
-        let manager = RedisConnectionManager::new(redis_uri).unwrap();
+    pub fn new(redis_uri: &str) -> Result<Self> {
+        let manager = RedisConnectionManager::new(redis_uri)?;
         let pool = r2d2::Pool::builder()
-            .build(manager)
-            .unwrap();
-        Self {
+            .build(manager)?;
+        Ok(Self {
             pool,
-        }
+        })
     }
 }
 
 impl PoolTrait for RedisPool {
     fn reserve(&self, uid: Uuid) -> Result<()> {
         Ok(())
-    }zs
+    }
 }

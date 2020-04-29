@@ -1,4 +1,4 @@
-use std::sync::{Arc, Weak, RwLock};
+use std::sync::atomic::AtomicPtr;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -92,6 +92,10 @@ impl std::hash::Hash for IO {
     }
 }
 
+pub struct Claim {
+    pub uid: Uuid,
+}
+
 impl IO {
     pub fn new(
         uid: Uuid,
@@ -99,6 +103,7 @@ impl IO {
         is_output: bool,
         input: Option<*const Self>,
         node: *const Node,
+        claim: AtomicPtr<Claim>,
     ) -> Box<Self> {
         Box::new(Self {
             uid,
@@ -106,6 +111,7 @@ impl IO {
             is_output,
             input,
             node,
+            claim,
         })
     }
 

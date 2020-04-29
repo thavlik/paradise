@@ -1554,18 +1554,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24c979d3cc222150ef268718f409e4804951f5677ea1e9dc39e1733ad85d9501"
 
 [[package]]
-name = "paradise-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "cpal",
- "env_logger",
- "paradise_core",
- "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
-]
-
-[[package]]
 name = "paradise-types"
 version = "0.1.0"
 dependencies = [
@@ -1586,6 +1574,18 @@ dependencies = [
  "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-core",
  "uuid",
+]
+
+[[package]]
+name = "paradise_cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "cpal",
+ "env_logger",
+ "paradise_core",
+ "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
 ]
 
 [[package]]

@@ -25,6 +25,7 @@ impl RedisPool {
 
 impl PoolTrait for RedisPool {
     fn reserve(&self, uid: Uuid) -> Result<()> {
+        let conn = self.pool.get()?;
         Ok(())
     }
 }

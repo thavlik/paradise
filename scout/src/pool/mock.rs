@@ -16,7 +16,7 @@ impl PoolTrait for MockPool {
         Ok(Uuid::new_v4())
     }
 
-    fn release(&self, resource: Uuid) -> Result<()> {
+    fn release(&self, resource: Uuid, claim: Uuid) -> Result<()> {
         Ok(())
     }
 }

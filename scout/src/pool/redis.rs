@@ -9,6 +9,7 @@ use r2d2_redis::{
 ///
 pub struct RedisPool {
     pool: r2d2::Pool<RedisConnectionManager>,
+    release_hash: String,
 }
 
 impl RedisPool {
@@ -20,6 +21,7 @@ impl RedisPool {
             .build(manager)?;
         Ok(Self {
             pool,
+            release_hash: format!(""),
         })
     }
 }
@@ -56,6 +58,8 @@ impl PoolTrait for RedisPool {
             .arg("NX")
             .query::<()>(conn.deref_mut())?;
 
+        // TODO: save claim info to persistent storage
+
         // Announce the claim over redis
         let encoded: Vec<u8> = bincode::serialize(&Claim {
             uid,
@@ -71,8 +75,23 @@ impl PoolTrait for RedisPool {
         Ok(uid)
     }
 
-    fn release(&self, resource: Uuid) -> Result<()> {
+    fn release(&self, resource: Uuid, claim: Uuid) -> Result<()> {
         let mut conn = self.pool.get()?;
+
+        // TODO: delete the redis key if the claim uid matches
+        redis::cmd("EVALSHA")
+            .arg(&self.release_hash)
+            .arg("1") // num_keys
+            .arg(resource.as_bytes())
+            .arg(claim.as_bytes())
+            .query(conn.deref_mut())?;
+
+        // Announce that the resource has been released over redis
+        redis::cmd("PUBLISH")
+            .arg("release")
+            .arg(resource.as_bytes())
+            .query(conn.deref_mut())?;
+
         Ok(())
     }
 }

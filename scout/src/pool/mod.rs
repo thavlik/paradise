@@ -23,5 +23,5 @@ pub trait PoolTrait {
     fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<SystemTime>) -> Result<Uuid>;
 
     ///
-    fn release(&self, resource: Uuid) -> Result<()>;
+    fn release(&self, resource: Uuid, claim: Uuid) -> Result<()>;
 }

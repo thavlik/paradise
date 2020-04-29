@@ -16,6 +16,9 @@ type Result<T> = std::result::Result<T, anyhow::Error>;
 pub trait PoolTrait {
     ///
     fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid>;
+
+    ///
+    fn release(&self, resource: Uuid) -> Result<()>;
 }
 
 ///
@@ -43,5 +46,9 @@ impl PoolTrait for RedisPool {
         // TODO: write redis script to claim given uid
         let reply = redis::cmd("PING").query::<String>(conn.deref_mut())?;
         Ok(Uuid::new_v4())
+    }
+
+    fn release(&self, resource: Uuid) -> Result<()> {
+        Ok(())
     }
 }

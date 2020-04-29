@@ -1,5 +1,5 @@
 use std::default::Default;
-use std::sync::{atomic::AtomicPtr};
+use std::{sync::{atomic::{AtomicPtr, Ordering::SeqCst}}};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -100,6 +100,17 @@ pub struct Claim {
     pub uid: Uuid,
 }
 
+impl std::ops::Drop for IO {
+    fn drop(&mut self) {
+        let claim = self.claim.load(SeqCst);
+        if !std::ptr::eq(claim, std::ptr::null()) {
+            unsafe {
+                Box::from_raw(claim);
+            }
+        }
+    }
+}
+
 impl IO {
     pub fn new(
         uid: Uuid,
@@ -107,7 +118,7 @@ impl IO {
         is_output: bool,
         input: Option<*const Self>,
         node: *const Node,
-        claim: AtomicPtr<Claim>,
+        claim: Option<Claim>,
     ) -> Box<Self> {
         Box::new(Self {
             uid,
@@ -115,7 +126,10 @@ impl IO {
             is_output,
             input,
             node,
-            claim,
+            claim: match claim {
+                Some(claim) => AtomicPtr::new(Box::into_raw(Box::new(claim))),
+                None => Default::default(),
+            },
         })
     }
 

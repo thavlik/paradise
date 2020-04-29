@@ -6,7 +6,6 @@ default-members = [
   "daemon",
    "vst2",
    "vst3",
-   "tool",
 ]
 members = [
   "types",
@@ -15,5 +14,4 @@ members = [
   "daemon",
   "vst2",
   "vst3",
-  "tool",
 ]

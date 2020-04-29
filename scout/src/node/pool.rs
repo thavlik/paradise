@@ -15,7 +15,7 @@ type Result<T> = std::result::Result<T, anyhow::Error>;
 ///
 pub trait PoolTrait {
     ///
-    fn claim(&self, uid: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid>;
+    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid>;
 }
 
 ///
@@ -36,7 +36,7 @@ impl RedisPool {
 }
 
 impl PoolTrait for RedisPool {
-    fn claim(&self, uid: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid> {
+    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid> {
         let mut conn = self.pool.get()?;
         // Generate a novel uid for the claim attempt
         let claim_uid = Uuid::new_v4();

@@ -14,10 +14,10 @@ pub struct RedisPool {
 }
 
 impl RedisPool {
-    pub fn new(redis_uri: &str) -> Result<Self> {
+    pub fn new(redis_uri: &str, max_size: u32) -> Result<Self> {
         let manager = RedisConnectionManager::new(redis_uri)?;
         let pool = r2d2::Pool::builder()
-            .max_size(15)
+            .max_size(max_size)
             .build(manager)?;
         Ok(Self {
             pool,

@@ -3,7 +3,11 @@ use std::{
     time::Duration,
     thread,
 };
-use r2d2_redis::{r2d2, redis, RedisConnectionManager};
+use r2d2_redis::{
+    r2d2,
+    redis,
+    RedisConnectionManager,
+};
 use uuid::Uuid;
 
 type Result<T> = std::result::Result<T, anyhow::Error>;

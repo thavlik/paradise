@@ -1,4 +1,5 @@
-use std::sync::atomic::AtomicPtr;
+use std::default::Default;
+use std::sync::{atomic::AtomicPtr};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -45,6 +46,7 @@ impl Node {
                 false,
                 None,
                 &*inst as _,
+                Default::default(),
             )))
             .collect::<Vec<_>>();
         let outputs = (0..num_channels)
@@ -54,6 +56,7 @@ impl Node {
                 true,
                 None,
                 &*inst as _,
+                Default::default(),
             )))
             .collect::<Vec<_>>();
         inst as _
@@ -69,13 +72,14 @@ impl Node {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct IO {
     pub uid: Uuid,
     pub channel: u8,
     pub is_output: bool,
     pub input: Option<*const Self>,
     pub node: *const Node,
+    pub claim: AtomicPtr<Claim>,
 }
 
 impl PartialEq for IO {
@@ -92,6 +96,7 @@ impl std::hash::Hash for IO {
     }
 }
 
+#[derive(Clone)]
 pub struct Claim {
     pub uid: Uuid,
 }

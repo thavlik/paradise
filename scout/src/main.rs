@@ -52,10 +52,10 @@ mod test {
         let mut patchbays = patchbays.into_iter()
             .map(|mut pb| {
                 pb.inputs = (0..NUM_CHANNELS)
-                    .map(|j| IO::new(Uuid::new_v4(), j as u8, false, None, &*pb as _))
+                    .map(|j| IO::new(Uuid::new_v4(), j as u8, false, None, &*pb as _, Default::default()))
                     .collect::<Vec<_>>();
                 pb.outputs = (0..NUM_CHANNELS)
-                    .map(|j| IO::new(Uuid::new_v4(), j as u8, true, None, &*pb as _))
+                    .map(|j| IO::new(Uuid::new_v4(), j as u8, true, None, &*pb as _, Default::default()))
                     .collect::<Vec<_>>();
                 pb
             })
@@ -107,7 +107,6 @@ mod test {
          */
 
         assert!(patchbays[0].inputs[0] == patchbays[0].inputs[0]);
-        assert!(patchbays[0].inputs[0].clone() == patchbays[0].inputs[0]);
         assert!(patchbays[0].inputs[0] != patchbays[0].inputs[1]);
         assert!(astar(
             &(&*patchbays[0].inputs[0] as *const IO),

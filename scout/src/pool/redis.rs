@@ -33,8 +33,7 @@ impl PoolTrait for RedisPool {
             let mut pubsub = conn.deref_mut().as_pubsub();
             pubsub.subscribe("claim")?;
             loop {
-                let payload = pubsub.get_message()?;
-                let payload: Vec<u8> = payload.get_payload()?;
+                let payload: Vec<u8> = pubsub.get_message()?.get_payload()?;
                 let payload: Claim = bincode::deserialize(&payload[..])?;
                 // TODO: propogate writes
             }

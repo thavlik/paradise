@@ -1,5 +1,7 @@
-use uuid::Uuid;
+use std::ops::DerefMut;
+use std::thread;
 use r2d2_redis::{r2d2, redis, RedisConnectionManager};
+use uuid::Uuid;
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
@@ -25,7 +27,8 @@ impl RedisPool {
 
 impl PoolTrait for RedisPool {
     fn reserve(&self, uid: Uuid) -> Result<()> {
-        let conn = self.pool.get()?;
+        let mut conn = self.pool.get()?;
+        let reply = redis::cmd("PING").query::<String>(conn.deref_mut()).unwrap();
         Ok(())
     }
 }

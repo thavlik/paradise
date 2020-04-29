@@ -1,7 +1,8 @@
+use super::*;
+
 #[cfg(test)]
 mod lua;
 
-use super::*;
 #[test]
 fn basic() {
     const NUM_PATCHBAYS: usize = 3;

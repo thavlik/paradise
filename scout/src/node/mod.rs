@@ -2,8 +2,6 @@ use std::default::Default;
 use std::{sync::{atomic::{AtomicPtr, Ordering::SeqCst}}};
 use uuid::Uuid;
 
-mod pool;
-
 #[derive(Debug)]
 pub struct AudioUnit {
     class_name: String,

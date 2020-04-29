@@ -1,25 +1,9 @@
-use std::{
-    ops::DerefMut,
-    time::Duration,
-    thread,
-};
+use super::*;
 use r2d2_redis::{
     r2d2,
     redis,
     RedisConnectionManager,
 };
-use uuid::Uuid;
-
-type Result<T> = std::result::Result<T, anyhow::Error>;
-
-///
-pub trait PoolTrait {
-    ///
-    fn claim(&self, resource: Uuid, claimant: Uuid, expire: Option<Duration>) -> Result<Uuid>;
-
-    ///
-    fn release(&self, resource: Uuid) -> Result<()>;
-}
 
 ///
 pub struct RedisPool {

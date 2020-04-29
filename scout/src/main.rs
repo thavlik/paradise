@@ -10,6 +10,7 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 mod node;
+mod pool;
 
 use node::{
     Node,

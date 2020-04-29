@@ -32,6 +32,49 @@ fn reserve(source_uid: Uuid, dest_uid: Uuid) -> Result<Vec<Uuid>, ()> {
 #[cfg(test)]
 mod test {
     use super::*;
+    #[test]
+    fn basic() {
+        const NUM_PATCHBAYS: usize = 3;
+        const NUM_CHANNELS: usize = 32;
+        const NUM_INTERCONNECT_CHANNELS: usize = 4;
+        let mut patchbays: Vec<Box<Node>> = (0..NUM_PATCHBAYS)
+            .map(|_| Node::make(Uuid::new_v4(), NodeKind::Patchbay, vec![], vec![]))
+            .collect();
+        let mut ifaces: Vec<Box<Node>> = (0..2)
+            .map(|i| Node::new(NodeKind::Interface, 8))
+            .collect();
+        let mut patchbays = patchbays.into_iter()
+            .map(|mut pb| {
+                pb.inputs = (0..NUM_CHANNELS)
+                    .map(|j| IO::new(Uuid::new_v4(), j as u8, false, None, &*pb as _, Default::default()))
+                    .collect::<Vec<_>>();
+                pb.outputs = (0..NUM_CHANNELS)
+                    .map(|j| IO::new(Uuid::new_v4(), j as u8, true, None, &*pb as _, Default::default()))
+                    .collect::<Vec<_>>();
+                pb
+            })
+            .collect::<Vec<_>>();
+        // Connect the first handful of channels to the next
+        // patchbay. The first unit has unused input channels
+        // and the last has as many unused outputs.
+        for i in 0..patchbays.len() - 1 {
+            let (a, b) = patchbays[i..i + 2].split_at_mut(1);
+            a[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                .zip(b[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                .for_each(|(output, input)| output.input = Some(&**input as _));
+            a[0].inputs[..NUM_INTERCONNECT_CHANNELS].iter_mut()
+                .zip(b[0].outputs[..NUM_INTERCONNECT_CHANNELS].iter_mut())
+                .for_each(|(input, output)| output.input = Some(&**input as _));
+        }
+        assert!(patchbays[0].inputs[0] == patchbays[0].inputs[0]);
+        assert!(patchbays[0].inputs[0] != patchbays[0].inputs[1]);
+        assert!(astar(
+            &(&*patchbays[0].inputs[0] as *const IO),
+            |io| unsafe { (**io).successors() },
+            |io| 0,
+            |io| unsafe { (**io).uid == patchbays.last().unwrap().inputs[0].uid },
+        ).is_some());
+    }
 
     #[test]
     fn advanced_routing() {

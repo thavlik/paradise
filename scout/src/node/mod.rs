@@ -30,7 +30,6 @@ pub struct Node {
     pub outputs: Vec<Box<IO>>,
 }
 
-
 impl Node {
     pub fn new(kind: NodeKind, num_channels: u8) -> Box<Self> {
         let mut inst = Box::new(Node {
@@ -96,7 +95,7 @@ impl std::hash::Hash for IO {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Claim {
     pub uid: Uuid,
 }

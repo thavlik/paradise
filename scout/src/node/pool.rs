@@ -27,10 +27,11 @@ pub struct RedisPool {
 }
 
 impl RedisPool {
-    pub fn new(redis_uri: &str, max_size: u32) -> Result<Self> {
+    pub fn new(redis_uri: &str) -> Result<Self> {
         let manager = RedisConnectionManager::new(redis_uri)?;
+        /// https://docs.rs/r2d2/0.8.8/r2d2/struct.Builder.html
         let pool = r2d2::Pool::builder()
-            .max_size(max_size)
+            .max_size(32)
             .build(manager)?;
         Ok(Self {
             pool,
@@ -49,6 +50,7 @@ impl PoolTrait for RedisPool {
     }
 
     fn release(&self, resource: Uuid) -> Result<()> {
+        let mut conn = self.pool.get()?;
         Ok(())
     }
 }

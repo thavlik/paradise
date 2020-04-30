@@ -38,7 +38,23 @@ pub struct Device {
     pub supported_sample_formats: Vec<String>,
 }
 
-fn reconcile(current: &Device, desired: &Device) -> Result<(), ()>{
+fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {
     Err(())
 }
 
+#[cfg(test)]
+mod test {
+    use difference::{Difference, Changeset};
+
+    #[test]
+    fn foo() {
+        let changeset = Changeset::new("test", "tent", "");
+
+        assert_eq!(changeset.diffs, vec![
+            Difference::Same("te".to_string()),
+            Difference::Rem("s".to_string()),
+            Difference::Add("n".to_string()),
+            Difference::Same("t".to_string())
+        ]);
+    }
+}

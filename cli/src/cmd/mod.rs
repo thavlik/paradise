@@ -1,16 +1,13 @@
 use clap::Clap;
 
-pub mod info;
 pub mod daemon;
-pub mod patch;
 pub mod echo;
+pub mod info;
+pub mod patch;
+pub mod reconcile;
 
 #[derive(Clap)]
 pub enum SubCommand {
-    /// Enumerate IO details on all audio devices
-    #[clap(name = "info")]
-    Info(info::InfoArgs),
-
     /// Runs the daemon
     #[clap(name = "daemon")]
     Daemon(daemon::DaemonArgs),
@@ -19,9 +16,17 @@ pub enum SubCommand {
     #[clap(name = "echo")]
     Echo(echo::EchoArgs),
 
+    /// Enumerate IO details on all audio devices
+    #[clap(name = "info")]
+    Info(info::InfoArgs),
+
     /// Patch mode
     #[clap(name = "patch")]
     Patch(patch::PatchArgs),
+
+    ///
+    #[clap(name = "reconcile")]
+    Reconcile(reconcile::ReconcileArgs),
 }
 
 /// Bare metal daemon for Paradise audio engine

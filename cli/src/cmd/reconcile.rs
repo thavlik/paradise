@@ -2,11 +2,11 @@ use cpal::traits::{DeviceTrait, HostTrait};
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
-pub struct InfoArgs {
+pub struct ReconcileArgs {
 }
 
 
-pub async fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
+pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
     println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
     let available_hosts = cpal::available_hosts();
     println!("Available hosts:\n  {:?}", available_hosts);

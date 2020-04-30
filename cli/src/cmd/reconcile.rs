@@ -5,8 +5,8 @@ use cpal::traits::{DeviceTrait, HostTrait};
 pub struct ReconcileArgs {
     /// Path to configuration file. On Windows, the default
     /// value is set to C:\ProgramData\paradise\config.yaml
-    #[clap(long = "config", short = "c", default_value = "/etc/paradise/config.yaml")]
-    pub config: String,
+    #[clap(long = "filename", short = "f", default_value = "/etc/paradise/config.yaml")]
+    pub filename: String,
 
     /// Run reconciliation but without applying any changes
     /// to the system. Useful to see what the result of the
@@ -14,7 +14,6 @@ pub struct ReconcileArgs {
     #[clap(long = "dry_run")]
     pub dry_run: bool,
 }
-
 
 pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
     println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);

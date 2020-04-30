@@ -16,3 +16,4 @@ paradise_core = { path = "../core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 difference = "2.0"
+term = "0.5"

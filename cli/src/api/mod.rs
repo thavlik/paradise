@@ -29,7 +29,7 @@ pub struct Device {
     /// will be raised. If zero, defaults to the
     /// first element of supported_sample_rates.
     #[serde(rename = "defaultSampleRate")]
-    pub default_sample_rate: usize,
+    pub default_sample_rate: Option<usize>,
 
     /// Case insensitive. Default value is the first item.
     /// Typically we'll deal with 32-bit.
@@ -44,17 +44,50 @@ fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use difference::{Difference, Changeset};
 
     #[test]
     fn foo() {
-        let changeset = Changeset::new("test", "tent", "");
+        let a = serde_yaml::to_string(&Device{
+            name: String::from("foo"),
+            inputs: 2,
+            outputs: 2,
+            default_sample_rate: Some(48000),
+            supported_sample_rates: vec![48000],
+            supported_sample_formats: vec![String::from("F32")],
+        }).unwrap();
+        let b = serde_yaml::to_string(&Device{
+            name: String::from("bar"),
+            inputs: 1,
+            outputs: 2,
+            default_sample_rate: Some(48000),
+            supported_sample_rates: vec![48000],
+            supported_sample_formats: vec![String::from("F32")],
+        }).unwrap();
 
-        assert_eq!(changeset.diffs, vec![
-            Difference::Same("te".to_string()),
-            Difference::Rem("s".to_string()),
-            Difference::Add("n".to_string()),
-            Difference::Same("t".to_string())
-        ]);
+        // Compare both texts, the third parameter defines the split level.
+        let Changeset { diffs, .. } = Changeset::new(&a, &b, "\n");
+
+        let mut t = term::stdout().unwrap();
+
+        for i in 0..diffs.len() {
+            match diffs[i] {
+                Difference::Same(ref x) => {
+                    t.reset().unwrap();
+                    writeln!(t, " {}", x);
+                }
+                Difference::Add(ref x) => {
+                    t.fg(term::color::GREEN).unwrap();
+                    writeln!(t, "+{}", x);
+                }
+                Difference::Rem(ref x) => {
+                    t.fg(term::color::RED).unwrap();
+                    writeln!(t, "-{}", x);
+                }
+            }
+        }
+        t.reset().unwrap();
+        t.flush().unwrap();
     }
 }

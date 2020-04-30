@@ -32,7 +32,6 @@ pub async fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
                 },
                 Err(e) => {
                     println!("  {}. ERROR: {}", device_index, e);
-                    continue;
                 },
             }
 

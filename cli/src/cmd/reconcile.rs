@@ -32,7 +32,7 @@ pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
                 },
                 Err(e) => {
                     println!("  {}. ERROR: {}", device_index, e);
-                    continue;
+                    //continue;
                 },
             }
 

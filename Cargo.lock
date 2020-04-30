@@ -1585,8 +1585,9 @@ dependencies = [
  "cpal",
  "env_logger",
  "paradise_core",
+ "serde",
+ "serde_yaml",
  "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
- "yaml-rust",
 ]
 
 [[package]]

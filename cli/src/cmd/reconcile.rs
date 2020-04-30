@@ -3,6 +3,9 @@ use cpal::traits::{DeviceTrait, HostTrait};
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
 pub struct ReconcileArgs {
+    /// Run reconciliation but without applying any changes
+    /// to the system. Useful to see what the result of the
+    /// operation would be before committing.
     #[clap(long = "dry_run")]
     pub dry_run: bool,
 }

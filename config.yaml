@@ -1,0 +1,8 @@
+hosts:
+  - name: "Presonus Quantum"
+    inputs:
+      - name: "Quantum IN 0"
+        channel: 0
+    outputs:
+      - name: "Quantum OUT 0"
+        channel: 0

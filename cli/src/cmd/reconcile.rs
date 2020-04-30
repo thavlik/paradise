@@ -3,6 +3,11 @@ use cpal::traits::{DeviceTrait, HostTrait};
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
 pub struct ReconcileArgs {
+    /// Path to configuration file. On Windows, the default
+    /// value is set to C:\ProgramData\paradise\config.yaml
+    #[clap(long = "config", short = "c", default_value = "/etc/paradise/config.yaml")]
+    pub config: String,
+
     /// Run reconciliation but without applying any changes
     /// to the system. Useful to see what the result of the
     /// operation would be before committing.

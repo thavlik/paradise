@@ -24,7 +24,7 @@ pub enum SubCommand {
     #[clap(name = "patch")]
     Patch(patch::PatchArgs),
 
-    ///
+    /// Reconcile system drivers with config
     #[clap(name = "reconcile")]
     Reconcile(reconcile::ReconcileArgs),
 }

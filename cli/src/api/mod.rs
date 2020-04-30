@@ -38,7 +38,7 @@ pub struct Device {
     pub supported_sample_formats: Vec<String>,
 }
 
-fn reconcile(current: &Device, desired: &Device) {
-
+fn reconcile(current: &Device, desired: &Device) -> Result<(), ()>{
+    Err(())
 }
 

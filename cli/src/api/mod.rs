@@ -1,5 +1,8 @@
+use serde::{Serialize, Deserialize};
+
 /// Defines a virtual audio device which can later be
 /// used by the CLI to stream audio.
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Device {
     /// The name of the device, as it appears to the OS.
     pub name: String,
@@ -27,8 +30,8 @@ pub struct Device {
     pub default_sample_rate: usize,
 
     /// Case insensitive. Default value is the first item.
-    /// Typically we're going to be dealing with 32-bit.
-    /// Options: ["F32", "U16", "U32"]
+    /// Typically we'll deal with 32-bit.
+    /// Example options: ["F32", "U16", "U32"]
     pub supported_sample_formats: Vec<String>,
 }
 

@@ -13,6 +13,6 @@ env_logger = "0.7.1"
 clap = { git = "https://github.com/clap-rs/clap/" }
 tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
 paradise_core = { path = "../core" }
-serde = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 

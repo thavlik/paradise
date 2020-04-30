@@ -3,6 +3,8 @@ use cpal::traits::{DeviceTrait, HostTrait};
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
 pub struct ReconcileArgs {
+    #[clap(long = "dry_run")]
+    pub dry_run: bool,
 }
 
 
@@ -32,7 +34,6 @@ pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
                 },
                 Err(e) => {
                     println!("  {}. ERROR: {}", device_index, e);
-                    //continue;
                 },
             }
 

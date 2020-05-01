@@ -1,8 +1,8 @@
 use serde::{Serialize, Deserialize};
 
 /// Defines a virtual audio device which can later be
-/// used by the CLI to stream audio.
-#[derive(Serialize, Deserialize, Clone)]
+/// used by the CLI to stream audio. 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Device {
     /// The name of the device, as it appears to the OS.
     pub name: String,
@@ -23,13 +23,6 @@ pub struct Device {
     /// e.g. vec![48000, 96000, 192000]
     #[serde(rename = "supportedSampleRates")]
     pub supported_sample_rates: Vec<usize>,
-
-    /// The default sample rate. This value must be
-    /// present supported_sample_rates or an error
-    /// will be raised. If zero, defaults to the
-    /// first element of supported_sample_rates.
-    #[serde(rename = "defaultSampleRate")]
-    pub default_sample_rate: Option<usize>,
 
     /// Case insensitive. Default value is the first item.
     /// Typically we'll deal with 32-bit.
@@ -53,7 +46,6 @@ mod test {
             name: String::from("foo"),
             inputs: 2,
             outputs: 2,
-            default_sample_rate: Some(48000),
             supported_sample_rates: vec![48000],
             supported_sample_formats: vec![String::from("F32")],
         }).unwrap();
@@ -61,7 +53,6 @@ mod test {
             name: String::from("bar"),
             inputs: 1,
             outputs: 2,
-            default_sample_rate: Some(48000),
             supported_sample_rates: vec![48000],
             supported_sample_formats: vec![String::from("F32")],
         }).unwrap();

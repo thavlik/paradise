@@ -2,15 +2,29 @@ use clap::Clap;
 
 pub mod daemon;
 pub mod echo;
+pub mod device;
 pub mod info;
 pub mod patch;
 pub mod reconcile;
+
 
 #[derive(Clap)]
 pub enum SubCommand {
     /// Runs the daemon
     #[clap(name = "daemon")]
     Daemon(daemon::DaemonArgs),
+
+    ///
+    #[clap(name = "create")]
+    Create(device::create::CreateArgs),
+
+    ///
+    #[clap(name = "delete")]
+    Delete(device::delete::DeleteArgs),
+
+    ///
+    #[clap(name = "list")]
+    List(device::list::ListArgs),
 
     /// Proxies a local port to a destination address
     #[clap(name = "echo")]
@@ -36,4 +50,5 @@ pub struct Opts {
     #[clap(subcommand)]
     pub subcmd: SubCommand,
 }
+
 

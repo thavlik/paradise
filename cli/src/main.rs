@@ -20,6 +20,9 @@ fn main() {
             let opts: cmd::Opts = cmd::Opts::parse();
             match opts.subcmd {
                 cmd::SubCommand::Daemon(args) => cmd::daemon::main(args).await.unwrap(),
+                cmd::SubCommand::Create(args) => cmd::device::create::main(args).await.unwrap(),
+                cmd::SubCommand::Delete(args) => cmd::device::delete::main(args).await.unwrap(),
+                cmd::SubCommand::List(args) => cmd::device::list::main(args).await.unwrap(),
                 cmd::SubCommand::Echo(args) => cmd::echo::main(args).await.unwrap(),
                 cmd::SubCommand::Info(args) => cmd::info::main(args).await.unwrap(),
                 cmd::SubCommand::Patch(args) => cmd::patch::main(args).await.unwrap(),

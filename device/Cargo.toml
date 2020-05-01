@@ -1,0 +1,13 @@
+[package]
+name = "paradise_device"
+version = "0.1.0"
+authors = ["Tom Havlik"]
+edition = "2018"
+
+[build-dependencies]
+cbindgen = "0.14.2"
+
+[lib]
+name = "paradise_device"
+crate-type = ["staticlib"]
+

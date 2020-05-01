@@ -296,6 +296,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
+dependencies = [
+ "winapi 0.3.8",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -509,6 +518,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "cbindgen"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "104ca409bbff8293739438c71820a2606111b5f8f81835536dc673dfd807369e"
+dependencies = [
+ "clap 2.33.0",
+ "heck",
+ "log",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -553,6 +580,21 @@ dependencies = [
 
 [[package]]
 name = "clap"
+version = "2.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5067f5bb2d80ef5d68b4c87db81601f0b75bca627bc2ef76b141d7b846a3c6d9"
+dependencies = [
+ "ansi_term",
+ "atty",
+ "bitflags",
+ "strsim 0.8.0",
+ "textwrap",
+ "unicode-width",
+ "vec_map",
+]
+
+[[package]]
+name = "clap"
 version = "3.0.0-beta.1"
 source = "git+https://github.com/clap-rs/clap/#5f72b0b083303f5ac6881c7c33479a3895c8f85f"
 dependencies = [
@@ -562,7 +604,7 @@ dependencies = [
  "indexmap",
  "lazy_static",
  "os_str_bytes",
- "strsim",
+ "strsim 0.10.0",
  "termcolor",
  "textwrap",
  "unicode-width",
@@ -1606,7 +1648,7 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "async-trait",
- "clap",
+ "clap 3.0.0-beta.1",
  "colored",
  "env_logger",
  "futures 0.3.4",
@@ -1627,7 +1669,7 @@ name = "paradise_cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap",
+ "clap 3.0.0-beta.1",
  "cpal",
  "difference",
  "env_logger",
@@ -1649,6 +1691,13 @@ dependencies = [
  "log4rs",
  "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
  "vst",
+]
+
+[[package]]
+name = "paradise_device"
+version = "0.1.0"
+dependencies = [
+ "cbindgen",
 ]
 
 [[package]]
@@ -2277,6 +2326,12 @@ checksum = "ef5430c8e36b713e13b48a9f709cc21e046723fe44ce34587b73a830203b533e"
 
 [[package]]
 name = "strsim"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
+
+[[package]]
+name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
@@ -2699,6 +2754,15 @@ dependencies = [
  "log",
  "pin-project-lite",
  "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "toml"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffc92d160b1eef40665be3a05630d003936a3bc7da7421277846c2613e92c71a"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

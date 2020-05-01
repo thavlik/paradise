@@ -34,9 +34,11 @@ devices:
       # and it's used internally by your computer for
       # efficient audio routing when TLS is unnecessary.
       - addr: my-insecure-upstream
-    # Number of input channels supported by the listeners.
+    # Number of input channels. Audio received by the endpoints
+    # will be directed to one of these, which can then be used
+    # by any application utilizing microphone input.
     inputs: 2
-    # Output channel description
+    # Output channel definitions
     outputs:
     # First output feeds back into both inputs. This
     # demonstrates how multiple destination addresses
@@ -45,19 +47,20 @@ devices:
     # created.
       - dest:
           - name: my-example-loopback-0
-            addr: my-insecure-upstream
-            channel: 0
-          - name: my-example-loopback-1
             addr: my-secure-upstream
-            channel: 1
+            channel: 0
           # It is only necessary to specify the public
           # certs on the client when self-signing. Use
           # of LetsEncrypt et al creates certificates
           # that are trusted by the client machine's
           # certificate authority. TODO: skip key verification?
             tls:
+              enabled: true
               cacert: /etc/cert/ca.crt
               cert: /etc/cert/tls.crt
+          - name: my-example-loopback-1
+            addr: my-insecure-upstream
+            channel: 1
     # Second output doesn't go anywhere. We'll define
     # it anyway so it will be recognized by the OS.
     # You could use 127.0.0.1 and run a server in user

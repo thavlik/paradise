@@ -1,8 +1,28 @@
-hosts:
-  - name: "Presonus Quantum"
+devices:
+  # Friendly name of the device, as it appears in the
+  # host OS's control panel.
+  - name: "My Virtual Device"
+  # List of network interfaces (with protocol) that
+  # serve as endpoints for receiving audio. Specifying
+  # 0.0.0.0 as the IP will listen on all interfaces.
     inputs:
-      - name: "Quantum IN 0"
-        channel: 0
+      - name: input0
+        remote: 127.0.0.1:20000/UDP
+      - name: input1
+        remote: 127.0.0.1:20001/UDP
     outputs:
-      - name: "Quantum OUT 0"
-        channel: 0
+    # First output feeds back into both inputs. This
+    # demonstrates how multiple destination addresses
+    # can be used for a single output, and also how
+    # a potentially terrible feedback loop can be
+    # created. TODO: work on mixer ideas
+      - dest:
+          - name: my-example-loopback-0
+            remote: 127.0.0.1:20000/UDP
+          - name: my-example-loopback-1
+            remote: 127.0.0.1:20001/UDP
+    # Second output doesn't go anywhere. We'll define
+    # it anyway so it will be recognized by the OS.
+    # You could use 127.0.0.1 and run a server in user
+    # space that receives the audio.
+      - dest: []

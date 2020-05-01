@@ -21,14 +21,14 @@ pub struct Device {
     /// shouldn't be taken as indication that they'll
     /// ever differ.
     /// e.g. vec![48000, 96000, 192000]
-    #[serde(rename = "supportedSampleRates")]
-    pub supported_sample_rates: Vec<usize>,
+    //#[serde(rename = "supportedSampleRates")]
+    //pub supported_sample_rates: Vec<usize>,
 
     /// Case insensitive. Default value is the first item.
     /// Typically we'll deal with 32-bit.
     /// Example options: ["F32", "U16", "U32"]
-    #[serde(rename = "supportedSampleFormats")]
-    pub supported_sample_formats: Vec<String>,
+    //#[serde(rename = "supportedSampleFormats")]
+    //pub supported_sample_formats: Vec<String>,
 }
 
 fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {

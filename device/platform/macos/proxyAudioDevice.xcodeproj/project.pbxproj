@@ -341,7 +341,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "export PATH=\"$HOME/.cargo/bin:$PATH\" \ncd ../../\ncargo build\n";
+			shellScript = "echo \"Building rust library\"\ncd ../../\nexport PATH=\"$HOME/.cargo/bin:$PATH\"\ncargo build\necho \"Rust library built successfully\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

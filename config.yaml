@@ -1,26 +1,34 @@
 devices:
-  # Friendly name of the device, as it appears in the
-  # host OS's control panel.
+  # Simple example of a virtual audio device. Mixing
+  # and routing is done in user space. This describes
+  # the kernel module side of things.
   - name: "My Virtual Device"
   # List of network interfaces (with protocol) that
   # serve as endpoints for receiving audio. Specifying
   # 0.0.0.0 as the IP will listen on all interfaces.
     inputs:
       - name: input0
-        remote: 127.0.0.1:20000/UDP
+        addr: 127.0.0.1:20000/UDP
+        tls:
+          cacert: /etc/cert/ca.crt # optional
+          cert: /etc/cert/tls.crt
+          key: /etc/cert/tls.key
       - name: input1
-        remote: 127.0.0.1:20001/UDP
+        addr: 127.0.0.1:20001/UDP
     outputs:
     # First output feeds back into both inputs. This
     # demonstrates how multiple destination addresses
     # can be used for a single output, and also how
     # a potentially terrible feedback loop can be
-    # created. TODO: work on mixer ideas
+    # created.
       - dest:
           - name: my-example-loopback-0
-            remote: 127.0.0.1:20000/UDP
+            addr: 127.0.0.1:20000/UDP
+            tls:
+              cacert: /etc/cert/ca.crt # optional
+              cert: /etc/cert/tls.crt
           - name: my-example-loopback-1
-            remote: 127.0.0.1:20001/UDP
+            addr: 127.0.0.1:20001/UDP
     # Second output doesn't go anywhere. We'll define
     # it anyway so it will be recognized by the OS.
     # You could use 127.0.0.1 and run a server in user

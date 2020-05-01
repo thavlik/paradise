@@ -224,6 +224,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2D7477B51578168D00412279 /* Build configuration list for PBXNativeTarget "ProxyAudioDevice" */;
 			buildPhases = (
+				793AF43C245BC8E700AB419D /* ShellScript */,
 				2D7477A51578168D00412279 /* Sources */,
 				2D7477A61578168D00412279 /* Frameworks */,
 				2D46CA7A17D6ADC500049D4A /* Resources */,
@@ -323,6 +324,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		793AF43C245BC8E700AB419D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "export PATH=\"$HOME/.cargo/bin:$PATH\" \ncd ../../\ncargo build\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2D7477A51578168D00412279 /* Sources */ = {

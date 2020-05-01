@@ -6,7 +6,6 @@ type Result<T> = std::result::Result<T, anyhow::Error>;
 type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
 type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
 
-mod api;
 mod cmd;
 mod stream;
 mod util;

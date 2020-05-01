@@ -1,6 +1,5 @@
 use anyhow::Error;
 use cpal::traits::{DeviceTrait, HostTrait};
-use crate::api::Device;
 
 /// Delete a virtual audio device
 #[derive(clap::Clap)]

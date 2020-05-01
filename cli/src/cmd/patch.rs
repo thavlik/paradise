@@ -21,6 +21,7 @@ type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::str
 type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
 
 pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
+    /*
     let host = match args.host {
         Some(name) => {
             let host = crate::util::get_host_by_name(&name)?;
@@ -97,6 +98,7 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
     }
 
     println!("shutting down");
+    */
     Ok(())
 }
 

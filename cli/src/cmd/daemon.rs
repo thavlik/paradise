@@ -16,6 +16,7 @@ pub struct DaemonArgs {
 
 
 pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
+    /*
     let host = match std::env::var("AUDIO_HOST") {
         Ok(name) => crate::util::get_host_by_name(&name)?,
         _ => match args.audio_host {
@@ -71,6 +72,7 @@ pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
             port += 1;
         }
     }
+    */
     /*
     let input_device = host
         .default_input_device()

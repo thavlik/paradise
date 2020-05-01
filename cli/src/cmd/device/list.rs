@@ -1,6 +1,5 @@
 use anyhow::Error;
 use cpal::traits::{DeviceTrait, HostTrait};
-use crate::api::Device;
 
 /// Lists virtual audio devices
 #[derive(clap::Clap)]
@@ -64,6 +63,7 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
             })
             .collect::<Vec<_>>();*/
 
+        /*
         let d = host.devices()?.enumerate()
             .map(|(_, d)| {
                 if let Ok(conf) = d.default_input_config() {
@@ -94,8 +94,7 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
                     supported_sample_formats: vec![String::from("F32")],
                 }
             }).collect::<Vec<_>>();
-
-        d.iter().for_each(|d| {});
+        d.iter().for_each(|d| {});*/
 
         /*
         for (device_index, device) in devices.enumerate() {

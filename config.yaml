@@ -1,3 +1,5 @@
+patches:
+
 devices:
   # Simple example of a virtual audio device. Mixing
   # and routing is done in user space. This describes

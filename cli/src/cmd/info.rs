@@ -26,6 +26,7 @@ pub async fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
         let devices = host.devices()?;
         println!("  Devices: ");
         for (device_index, device) in devices.enumerate() {
+            device.name().expect(&format!("device {}", device_index));
             match device.name() {
                 Ok(name) => {
                     println!("  {}. \"{}\"", device_index, name);

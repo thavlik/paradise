@@ -1,17 +1,58 @@
+use std::net::{SocketAddr};
 use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Outputs {
+    pub channels: usize,
+    pub destinations: Vec<Destination>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Inputs {
+    pub channels: usize,
+    pub listeners: Vec<Listener>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Protocol {
+    TCP,
+    UDP
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Addr {
+    Upstream(String),
+    IP((SocketAddr, Protocol)),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TLS {
+    pub cacert: Option<String>,
+    pub cert: String,
+    pub key: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Listener {
+    pub addr: Addr,
+    pub tls: Option<TLS>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Destination {
+    pub name: String,
+    pub addr: Addr,
+    pub channels: Option<Vec<usize>>,
+    pub tls: Option<TLS>,
+}
 
 /// Defines a virtual audio device which can later be
 /// used by the CLI to stream audio. 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Device {
-    /// The name of the device, as it appears to the OS.
     pub name: String,
-
-    /// Number of input channels
-    pub inputs: usize,
-
-    /// Number of output channels.
-    pub outputs: usize,
+    pub inputs: Inputs,
+    pub outputs: Outputs,
 }
 
 fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {
@@ -27,17 +68,25 @@ mod test {
     fn foo() {
         let a = serde_yaml::to_string(&Device{
             name: String::from("foo"),
-            inputs: 2,
-            outputs: 2,
-            supported_sample_rates: vec![48000],
-            supported_sample_formats: vec![String::from("F32")],
+            inputs: Inputs{
+                channels: 2,
+                listeners: vec![],
+            },
+            outputs: Outputs{
+                channels: 2,
+                destinations: vec![],
+            },
         }).unwrap();
         let b = serde_yaml::to_string(&Device{
-            name: String::from("bar"),
-            inputs: 1,
-            outputs: 2,
-            supported_sample_rates: vec![48000],
-            supported_sample_formats: vec![String::from("F32")],
+            name: String::from("foo"),
+            inputs: Inputs{
+                channels: 2,
+                listeners: vec![],
+            },
+            outputs: Outputs{
+                channels: 2,
+                destinations: vec![],
+            },
         }).unwrap();
 
         // Compare both texts, the third parameter defines the split level.

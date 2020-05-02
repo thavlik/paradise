@@ -7,6 +7,15 @@ pub struct ListArgs {
 }
 
 pub async fn main(args: ListArgs) -> Result<(), Error> {
+    /*
+    let devices = &[Device{
+        name: String::from(d.name().unwrap_or("NULL".to_string())),
+        inputs: 2,
+        outputs: 2,
+        supported_sample_rates: vec![44100, 48000, 96000, 192000],
+        supported_sample_formats: vec![String::from("F32")],
+    }];
+    */
     println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
     let available_hosts = cpal::available_hosts();
     println!("Available hosts:\n  {:?}", available_hosts);

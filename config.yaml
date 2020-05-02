@@ -18,49 +18,55 @@ devices:
   # mixing and other complicated routing is done in user
   # space. This describes the kernel side of things.
   - name: "My Virtual Device"
-    listeners:
-      # Network interface on which to listen for receiving
-      # audio packets. Specifying 0.0.0.0 as the IP will
-      # listen on all interfaces.
-      - addr: my-secure-upstream
-      # Transport layer security configuration. This is
-      # most useful for sending audio over public pipes.
-        tls:
-          cacert: /etc/cert/ca.crt # optional cert authority
-          cert: /etc/cert/tls.crt # public cert
-          key: /etc/cert/tls.key # private key
-      # Expose the same endpoint without TLS on localhost.
-      # The idea is that this is not externally accessible,
-      # and it's used internally by your computer for
-      # efficient audio routing when TLS is unnecessary.
-      - addr: my-insecure-upstream
-    # Number of input channels. Audio received by the endpoints
-    # will be directed to one of these, which can then be used
-    # by any application utilizing microphone input.
-    inputs: 2
+    inputs:
+      # Number of input channels. Audio received by the
+      # endpoints will be directed to one of these, which
+      # can then be used by any application utilizing
+      # microphone input.
+      channels: 2
+      listeners:
+        # Network interface on which to listen for receiving
+        # audio packets. Specifying 0.0.0.0 as the IP will
+        # listen on all interfaces.
+        - addr: my-secure-upstream
+        # Transport layer security configuration. This is
+        # most useful for sending audio over public pipes.
+          tls:
+            cacert: /etc/cert/ca.crt # optional cert authority
+            cert: /etc/cert/tls.crt # public cert
+            key: /etc/cert/tls.key # private key
+        # Expose the same endpoint without TLS on localhost.
+        # The idea is that this is not externally accessible,
+        # and it's used internally by your computer for
+        # efficient audio routing when TLS is unnecessary.
+        - addr: my-insecure-upstream
     # Output channel definitions
     outputs:
-    # First output feeds back into both inputs. This
-    # demonstrates how multiple destination addresses
-    # can be used for a single output, and also how
-    # a potentially terrible feedback loop can be
-    # created.
-      - dest:
-          - name: my-example-loopback-0
-            addr: my-secure-upstream
-            channel: 0
-          # It is only necessary to specify the public
-          # certs on the client when self-signing. Use
-          # of LetsEncrypt et al creates certificates
-          # that are trusted by the client machine's
-          # certificate authority. TODO: skip key verification?
-            tls:
-              enabled: true
-              cacert: /etc/cert/ca.crt
-              cert: /etc/cert/tls.crt
-          - name: my-example-loopback-1
-            addr: my-insecure-upstream
-            channel: 1
-    # Second output doesn't go anywhere. We'll define
-    # it anyway so it will be recognized by the OS.
-      - dest: []
+      # Number of output channels recognized by host OS.
+      channels: 2
+      # List of addresses that will receive audio. The first
+      # demonstrates use of TLS and the second how only
+      # specific channels can be selected for a destination.
+      destinations:
+        - name: my-example-loopback-0
+          addr: my-secure-upstream
+        # It is only necessary to specify the public
+        # certs on the client when self-signing. Use
+        # of LetsEncrypt et al creates certificates
+        # that are trusted by the client machine's
+        # certificate authority. TODO: skip key verification?
+          tls:
+            enabled: true
+            cacert: /etc/cert/ca.crt
+            cert: /etc/cert/tls.crt
+          # TCP only: optionally supply client private key
+          # for mTLS.
+            #key: /etc/cert/other.key
+
+        # Second output doesn't utilize TLS.
+        - name: my-example-loopback-1
+          addr: my-insecure-upstream
+        # Only send audio received on the second output
+        # channel of this device.
+          channels:
+            - 1

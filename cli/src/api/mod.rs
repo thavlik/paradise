@@ -20,12 +20,6 @@ pub enum Protocol {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Addr {
-    Upstream(String),
-    IP((SocketAddr, Protocol)),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TLS {
     pub cacert: Option<String>,
     pub cert: String,
@@ -34,14 +28,14 @@ pub struct TLS {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Listener {
-    pub addr: Addr,
+    pub addr: String,
     pub tls: Option<TLS>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Destination {
     pub name: String,
-    pub addr: Addr,
+    pub addr: String,
     pub channels: Option<Vec<usize>>,
     pub tls: Option<TLS>,
 }
@@ -55,6 +49,24 @@ pub struct Device {
     pub outputs: Outputs,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Upstream {
+    pub name: String,
+    pub addr: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Config {
+    pub upstream: Option<Vec<Upstream>>,
+    pub devices: Vec<Device>,
+}
+
+impl Config {
+    pub fn from_yaml(doc: &str) -> Result<Self, serde_yaml::Error> {
+        serde_yaml::from_str(doc)
+    }
+}
+
 fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {
     Err(())
 }
@@ -63,6 +75,20 @@ fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {
 mod test {
     use super::*;
     use difference::{Difference, Changeset};
+
+    #[test]
+    fn test_load_config() {
+        let test = include_str!("../../../config.yaml");
+        let config: Config = serde_yaml::from_str(test).unwrap();
+        assert!(config.upstream.is_some());
+    }
+
+    #[test]
+    fn test_diff() {
+        let test = include_str!("../../../config.yaml");
+        let config: Config = serde_yaml::from_str(test).unwrap();
+        assert!(config.upstream.is_some());
+    }
 
     #[test]
     fn foo() {
@@ -78,7 +104,7 @@ mod test {
             },
         }).unwrap();
         let b = serde_yaml::to_string(&Device{
-            name: String::from("foo"),
+            name: String::from("bar"),
             inputs: Inputs{
                 channels: 2,
                 listeners: vec![],

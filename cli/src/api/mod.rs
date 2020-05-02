@@ -14,12 +14,6 @@ pub struct Inputs {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Protocol {
-    TCP,
-    UDP
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TLS {
     pub cacert: Option<String>,
     pub cert: String,
@@ -49,6 +43,13 @@ pub struct Device {
     pub outputs: Outputs,
 }
 
+impl Device {
+    pub fn sort(&mut self) {
+        self.inputs.listeners.sort_by(|a, b| a.addr.partial_cmp(&b.addr).unwrap());
+        self.outputs.destinations.sort_by(|a, b| a.name.partial_cmp(&b.name).unwrap());
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Upstream {
     pub name: String,
@@ -62,13 +63,21 @@ pub struct Config {
 }
 
 impl Config {
+    /// Creates a config from yaml and sorts the items
+    /// so they are in deterministic order.
     pub fn from_yaml(doc: &str) -> Result<Self, serde_yaml::Error> {
-        serde_yaml::from_str(doc)
+        let mut config: Config = serde_yaml::from_str(doc)?;
+        config.sort();
+        Ok(config)
     }
-}
 
-fn reconcile(current: &Device, desired: &Device) -> Result<(), ()> {
-    Err(())
+    pub fn sort(&mut self) {
+        if let Some(upstream) = &mut self.upstream {
+            upstream.sort_by(|a, b| a.name.partial_cmp(&b.name).unwrap());
+        }
+        self.devices.sort_by(|a, b| a.name.partial_cmp(&b.name).unwrap());
+        self.devices.iter_mut().for_each(|d| d.sort());
+    }
 }
 
 #[cfg(test)]
@@ -76,17 +85,18 @@ mod test {
     use super::*;
     use difference::{Difference, Changeset};
 
+    const CONFIG: &'static str = include_str!("../../../config.yaml");
+
     #[test]
-    fn test_load_config() {
-        let test = include_str!("../../../config.yaml");
-        let config: Config = serde_yaml::from_str(test).unwrap();
+    fn test_load_raw_yaml() {
+        let config: Config = serde_yaml::from_str(CONFIG).unwrap();
+
         assert!(config.upstream.is_some());
     }
 
     #[test]
-    fn test_diff() {
-        let test = include_str!("../../../config.yaml");
-        let config: Config = serde_yaml::from_str(test).unwrap();
+    fn test_from_yaml() {
+        let config = Config::from_yaml(CONFIG).unwrap();
         assert!(config.upstream.is_some());
     }
 

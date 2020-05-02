@@ -1,5 +1,7 @@
+use anyhow::Error;
 use std::net::{SocketAddr};
 use serde::{Serialize, Deserialize};
+use difference::{Difference, Changeset};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Outputs {
@@ -81,14 +83,20 @@ impl Config {
 }
 
 
-fn reconcile(a: &Device, b: &Device) -> Result<(), Error>{
-    Ok(())
+fn reconcile(a: &Config, b: &Config) -> Result<Vec<Difference>, Error>{
+    let a = serde_yaml::to_string(a)?;
+    let b = serde_yaml::to_string(b)?;
+    let Changeset { mut diffs, .. } = Changeset::new(&a, &b, "\n");
+    diffs.retain(|d| match d {
+        Difference::Same(_) => false,
+        _ => true,
+    });
+    Ok(diffs)
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use difference::{Difference, Changeset};
 
     const CONFIG: &'static str = include_str!("../../../config.yaml");
 
@@ -109,12 +117,16 @@ mod test {
     fn test_basic_diff() {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
-        desired.devices[0].outputs.channels = 4
-        let diff = reconcile(&current, &device).unwrap();
+        desired.devices[0].outputs.channels = 4;
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 2);
+        assert_eq!(diffs[0], Difference::Rem(String::from("      channels: 2")));
+        assert_eq!(diffs[1], Difference::Add(String::from("      channels: 4")));
     }
 
     #[test]
     fn foo() {
+        /*
         let a = serde_yaml::to_string(&Device{
             name: String::from("foo"),
             inputs: Inputs{
@@ -161,5 +173,6 @@ mod test {
         }
         t.reset().unwrap();
         t.flush().unwrap();
+        */
     }
 }

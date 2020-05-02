@@ -80,6 +80,11 @@ impl Config {
     }
 }
 
+
+fn reconcile(a: &Device, b: &Device) -> Result<(), Error>{
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -98,6 +103,14 @@ mod test {
     fn test_from_yaml() {
         let config = Config::from_yaml(CONFIG).unwrap();
         assert!(config.upstream.is_some());
+    }
+
+    #[test]
+    fn test_basic_diff() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].outputs.channels = 4
+        let diff = reconcile(&current, &device).unwrap();
     }
 
     #[test]

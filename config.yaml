@@ -63,6 +63,4 @@ devices:
             channel: 1
     # Second output doesn't go anywhere. We'll define
     # it anyway so it will be recognized by the OS.
-    # You could use 127.0.0.1 and run a server in user
-    # space that receives the audio.
       - dest: []

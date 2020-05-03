@@ -1,3 +1,15 @@
+# Interfaces describe points of IO for the cluster.
+# Notably, all IO is clocked together, which is
+# typically desired for multitrack.
+apiVersion: app.paradise.dev/v1alpha1
+kind: Interface
+metadata:
+  name: my-quantum
+spec:
+  inputs: 8
+  outputs: 8
+  sampleRate: 192000
+---
 # Cluster-scoped resource
 apiVersion: app.paradise.dev/v1alpha1
 kind: AudioUnitClass

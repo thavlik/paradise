@@ -30,6 +30,14 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
     let mut available_hosts = cpal::available_hosts();
     available_hosts.retain(|h| h.name().ends_with(DEVICE_SUFFIX));
     println!("{:?}", available_hosts);
+
+    // TODO: infer Device definition from cpal output
+    // TODO: find endpoint for device
+    // TODO: query endpoint for driver info
+    // TODO: compare driver info with cpal-derived info
+    //  - if different, driver is broken
+    //  - if same, driver is healthy
+
     for host_id in available_hosts {
         // Idea: all virtual devices have a suffix of (Paradise)
         println!("{}", host_id.name());

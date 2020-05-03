@@ -37,8 +37,11 @@ metadata:
   # send/receive audio, perform automation, etc...
   # All audio units that are configurable in any way have an
   # endpoint associated with them. This is considered a mandatory
-  # field.
-  endpoint: "126.172.10.102:30000"
+  # field. It does not have to be unique to the device, as the
+  # datagram can contain that information. Note that this endpoint
+  # *not* be able to receive the audio stream, as is the case
+  # with analog units. Analog units must receive audio from a patch.
+  endpoint: io1.quantum.svc.cluster.local:4000
 
 spec:
   # Allow this unit to be reserved by claims requesting
@@ -105,15 +108,13 @@ metadata:
   name: test-output-patch
 spec:
   source:
-    unitClaim:
-      name: my-ssl611eq-output
-      channel: 0
+    name: my-ssl611eq-output
+    channel: 0
   dest:
-    remote:
-      host: 297.281.23.1
-      port: 35000
-      protocol: UDP
-      tls: my-tls-secret
+    host: 297.281.23.1
+    port: 35000
+    protocol: UDP
+    tls: my-tls-secret
 status:
   # ErrUnableToReconcile
   phase: Active
@@ -129,17 +130,15 @@ metadata:
   name: test-input-patch
 spec:
   source:
-    entrypoint:
-      name: my-entrypoint
-      channel: 3
+    name: my-entrypoint
+    channel: 3
   dest:
-    unitClaim:
-      name: my-neve511-input
-      # You can patch to a unit in a different namespace.
-      # By default, it's assumed the unit is in the same
-      # namespace as the patch.
-      namespace: some-other-namespace
-      channel: 0
+    name: my-neve511-input
+    # You can patch to a unit in a different namespace.
+    # By default, it's assumed the unit is in the same
+    # namespace as the patch.
+    namespace: some-other-namespace
+    channel: 0
 status:
   phase: Active
 ---
@@ -152,15 +151,11 @@ metadata:
   name: test-pre-to-comp
 spec:
   source:
-    # Using a remote address as a patch source will
-    # whitelist the port in the firewall, etc.
-    unitClaim:
-      name: my-neve511-claim
-      channel: 0
+    name: my-neve511-claim
+    channel: 0
   dest:
-    unitClaim:
-      name: my-comp-claim
-      channel: 0
+    name: my-comp-claim
+    channel: 0
 status:
   phase: Active
 ---
@@ -171,12 +166,10 @@ metadata:
   name: test-pre-to-comp
 spec:
   source:
-    unitClaim:
-      name: my-comp-claim
-      channel: 0
+    name: my-comp-claim
+    channel: 0
   dest:
-    unitClaim:
-      name: my-ssl611eq-output
-      channel: 0
+    name: my-ssl611eq-output
+    channel: 0
 status:
   phase: Active

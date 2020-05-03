@@ -157,6 +157,27 @@ mod test {
 
     const CONFIG: &'static str = include_str!("../../../config.yaml");
 
+    fn is_same(diff: &Difference) -> bool {
+        match diff {
+            Difference::Same(_) => true,
+            _ => false,
+        }
+    }
+
+    fn is_add(diff: &Difference) -> bool {
+        match diff {
+            Difference::Add(b) => true,
+            _ => false,
+        }
+    }
+
+    fn is_rem(diff: &Difference) -> bool {
+        match diff {
+            Difference::Rem(b) => true,
+            _ => false,
+        }
+    }
+
     #[test]
     fn test_load_raw_yaml() {
         let config: Config = serde_yaml::from_str(CONFIG).unwrap();
@@ -197,10 +218,26 @@ mod test {
 
     #[test]
     fn test_mutate_listener_addr() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].inputs.listeners[0].addr = String::from("127.0.0.1:2000/TCP");
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 4);
+        assert_eq!(diffs[1], Difference::Rem(String::from("      - addr: my-insecure-upstream")));
+        assert_eq!(diffs[2], Difference::Add(String::from("      - addr: \"127.0.0.1:2000/TCP\"")));
     }
 
     #[test]
     fn test_add_listener() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].inputs.listeners.push(Listener{
+            addr: String::from("127.0.0.1:2000/TCP"),
+            tls: None,
+        });
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 3);
+        assert!(is_add(&diffs[1]));
     }
 
     #[test]
@@ -210,10 +247,7 @@ mod test {
         desired.devices[0].inputs.listeners = vec![];
         let diffs = reconcile(&current, &desired).unwrap();
         assert_eq!(diffs.len(), 4);
-        match &diffs[1] {
-            Difference::Rem(_) => {},
-            _ => panic!("expected rem for second diff"),
-        };
+        assert!(is_rem(&diffs[1]));
         assert_eq!(diffs[2], Difference::Add(String::from("    listeners: []")));
     }
 
@@ -230,14 +264,39 @@ mod test {
 
     #[test]
     fn test_mutate_destination_addr() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].outputs.destinations[0].addr = String::from("127.0.0.1:2000/TCP");
+        let diffs = reconcile(&current, &desired).unwrap();
+        print_diffs(&diffs);
+        assert_eq!(diffs.len(), 4);
+        assert_eq!(diffs[1], Difference::Rem(String::from("      - addr: my-insecure-upstream")));
+        assert_eq!(diffs[2], Difference::Add(String::from("      - addr: \"127.0.0.1:2000/TCP\"")));
     }
 
     #[test]
     fn test_add_destination() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].outputs.destinations.push(Destination{
+            addr: String::from("127.0.0.1:2000/TCP"),
+            channels: None,
+            tls: None,
+        });
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 2);
+        assert!(is_add(&diffs[1]));
     }
 
     #[test]
     fn test_remove_destination() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].outputs.destinations= vec![];
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 3);
+        assert!(is_rem(&diffs[1]));
+        assert_eq!(diffs[2], Difference::Add(String::from("    destinations: []")));
     }
 
     #[test]

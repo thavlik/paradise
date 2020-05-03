@@ -19,24 +19,21 @@ const DEVICE_SUFFIX: &'static str = " (Paradise)";
 const DEVICE_SUFFIX: &'static str = ",paradise";
 
 pub async fn main(args: ListArgs) -> Result<(), Error> {
-    // Get virtual devices from cpal
-    // What can do we do ensure it's a virtual device?
-    /*
-    let devices = &[Device{
-        name: String::from(d.name().unwrap_or("NULL".to_string())),
-        inputs: 2,
-        outputs: 2,
-        supported_sample_rates: vec![44100, 48000, 96000, 192000],
-        supported_sample_formats: vec![String::from("F32")],
-    }];
-    */
     let mut available_hosts = cpal::available_hosts();
+
+    // Filter only for devices that have the right suffix
+    // This suffix is platform dependent. With ALSA, device
+    // the device suffix does not contain spaces by convention.
+    // Windows and MacOS are more forgiving about spaces
+    // in device names. This is all from the perspective of
+    // cpal, so under the hood this may be inaccurate.
     available_hosts.retain(|h| h.name().ends_with(DEVICE_SUFFIX));
 
     if available_hosts.is_empty() {
+        // Print empty output
         match args.output.as_ref() {
             "plain" => println!("No virtual devices"),
-            "json" | "yaml" => println!("{:?}", available_hosts),
+            "json" | "yaml" => println!("[]"),
             format => return Err(Error::msg(format!("unrecognized output format '{}'", format))),
         };
     }

@@ -4,6 +4,9 @@ use cpal::traits::{DeviceTrait, HostTrait};
 /// Lists virtual audio devices
 #[derive(clap::Clap)]
 pub struct ListArgs {
+    /// Delete all virtual devices
+    #[clap(short = "o", long = "output", default_value = "plain")]
+    output: String,
 }
 
 #[cfg(windows)]
@@ -29,7 +32,14 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
     */
     let mut available_hosts = cpal::available_hosts();
     available_hosts.retain(|h| h.name().ends_with(DEVICE_SUFFIX));
-    println!("{:?}", available_hosts);
+
+    if available_hosts.is_empty() {
+        match args.output.as_ref() {
+            "plain" => println!("No virtual devices"),
+            "json" | "yaml" => println!("{:?}", available_hosts),
+            format => return Err(Error::msg(format!("unrecognized output format '{}'", format))),
+        };
+    }
 
     // TODO: infer Device definition from cpal output
     // TODO: find endpoint for device

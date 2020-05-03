@@ -38,8 +38,8 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
         };
     }
 
-    // TODO: infer Device definition from cpal output
-    // TODO: find endpoint for device
+    // TODO: infer partial Device definition from cpal output
+    // TODO: discover endpoint for device
     // TODO: query endpoint for driver info
     // TODO: compare driver info with cpal-derived info
     //  - if different, driver is broken

@@ -40,15 +40,15 @@ spec:
 
   # Name of the patchbay servicing I/O for the unit.
   patchbay:
-  # The name of the patchbay resource. TODO: make this a k8s resource?
+    # The name of the patchbay resource. TODO: make this a k8s resource?
     name: pb-0
-  # Globally unique serial number for the particular patchbay.
+    # Globally unique serial number for the particular patchbay.
     uid: "602898e4-fe9f-424d-9a31-275c5e26023a"
     inputs:
-    # OUTPUT 83 of the patchbay -> first (only) input of unit
+      # OUTPUT 83 of the patchbay -> first (only) input of unit
       - 83
     outputs:
-    # First (only) output of unit -> INPUT 34 of patchbay
+      # First (only) output of unit -> INPUT 34 of patchbay
       - 34
 ---
 apiVersion: app.paradise.dev/v1alpha1
@@ -56,13 +56,13 @@ kind: AudioUnitClaim
 metadata:
   name: neve511-claim-0
   annotations:
-  # For management and billing purposes, the claim can
-  # be annotated with information about end user ownership.
+    # For management and billing purposes, the claim can
+    # be annotated with information about end user ownership.
     paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
   finalizers:
-  # The resource will be stay in the Terminating state until
-  # this finalizer is removed by the operator. It will ensure
-  # hardware resources are properly freed before deletion.
+    # The resource will be stay in the Terminating state until
+    # this finalizer is removed by the operator. It will ensure
+    # hardware resources are properly freed before deletion.
     - paradise.dev/auc-protection
 spec:
   # Name of the corresponding AudioUnitClass in the backend.
@@ -104,6 +104,8 @@ spec:
     remote:
       host: 297.281.23.1
       port: 35000
+      protocol: UDP
+      tls: my-tls-secret
 status:
   # ErrUnableToReconcile
   phase: Active
@@ -119,14 +121,16 @@ metadata:
   name: test-input-patch
 spec:
   source:
-    # Using a remote address as a patch source will
-    # whitelist the port in the firewall, etc.
-    remote:
-      host: 297.281.23.1
-      port: 35000
+    entrypoint:
+      name: my-entrypoint
+      channel: 3
   dest:
     unitClaim:
       name: my-neve511-input
+      # You can patch to a unit in a different namespace.
+      # By default, it's assumed the unit is in the same
+      # namespace as the patch.
+      namespace: some-other-namespace
       channel: 0
 status:
   phase: Active

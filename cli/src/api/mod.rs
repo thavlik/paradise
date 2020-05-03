@@ -79,51 +79,87 @@ impl Config {
         self.devices.sort_by(|a, b| a.name.partial_cmp(&b.name).unwrap());
         self.devices.iter_mut().for_each(|d| d.sort());
     }
-}
 
-
-fn reconcile(a: &Config, b: &Config) -> Result<Vec<Difference>, Error>{
-    let mut diffs: Vec<Difference> = vec![];
-    a.devices.iter()
-        .for_each(|ad| {
-            let current_device = &serde_yaml::to_string(ad).unwrap()[4..];
-            let bd = match b.devices.iter()
-                .find(|bd| bd.name == ad.name) {
-                Some(bd) => bd,
-                None => {
-                    // The old device is not present in the new config.
-                    // The entire config. All lines in the config belonging
-                    // to the device should be removed.
-                    diffs.extend(current_device.split("\n").map(|line| Difference::Rem(line.to_string())));
-                    return;
-                },
-            };
-            // Both ad and bd are present in the config
-            let desired_device = &serde_yaml::to_string(bd).unwrap()[4..];
-            let mut changes = Changeset::new(current_device, desired_device, "\n");
-            diffs.append(&mut changes.diffs);
-        });
-    b.devices.iter()
-        .filter(|bd| {
-            a.devices.iter()
-                .find(|ad| {
-                    ad.name == bd.name
-                }).is_none()
-        })
-        .map(|d| serde_yaml::to_string(d).unwrap())
-        .for_each(|yaml| {
-            let lines = yaml[4..].split("\n");
-            lines.for_each(|line| {
-                diffs.push(Difference::Add(String::from(line)));
+    fn reconcile(a: &Config, b: &Config) -> Vec<Difference> {
+        let mut diffs: Vec<Difference> = vec![];
+        a.devices.iter()
+            .for_each(|ad| {
+                let current_device = &serde_yaml::to_string(ad).unwrap()[4..];
+                let bd = match b.devices.iter()
+                    .find(|bd| bd.name == ad.name) {
+                    Some(bd) => bd,
+                    None => {
+                        // The old device is not present in the new config.
+                        // The entire config. All lines in the config belonging
+                        // to the device should be removed.
+                        diffs.extend(current_device.split("\n").map(|line| Difference::Rem(line.to_string())));
+                        return;
+                    },
+                };
+                // Both ad and bd are present in the config
+                let desired_device = &serde_yaml::to_string(bd).unwrap()[4..];
+                let mut changes = Changeset::new(current_device, desired_device, "\n");
+                diffs.append(&mut changes.diffs);
             });
+        b.devices.iter()
+            .filter(|bd| {
+                a.devices.iter()
+                    .find(|ad| {
+                        ad.name == bd.name
+                    }).is_none()
+            })
+            .map(|d| serde_yaml::to_string(d).unwrap())
+            .for_each(|yaml| {
+                let lines = yaml[4..].split("\n");
+                lines.for_each(|line| {
+                    diffs.push(Difference::Add(String::from(line)));
+                });
+            });
+        diffs.iter_mut().for_each(|diff| match diff {
+            Difference::Same(diff) => *diff = prefix_lines("  ", diff),
+            Difference::Add(diff) => *diff = prefix_lines("  ", diff),
+            Difference::Rem(diff) => *diff = prefix_lines("  ", diff),
         });
-    diffs.iter_mut().for_each(|diff| match diff {
-        Difference::Same(diff) => *diff = prefix_lines("  ", diff),
-        Difference::Add(diff) => *diff = prefix_lines("  ", diff),
-        Difference::Rem(diff) => *diff = prefix_lines("  ", diff),
-    });
-    Ok(diffs)
+        diffs
+    }
+
+    pub fn diff(a: Self, b: Self) -> Vec<Difference> {
+        let a = a.resolve();
+        let b = b.resolve();
+        Self::reconcile(&a, &b)
+    }
+
+    pub fn resolve(self) -> Self {
+        let Self { upstream, mut devices } = self;
+        let mut addrs: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+        if let Some(upstream) = upstream {
+            upstream.into_iter()
+                .for_each(|up| {
+                    addrs.insert(up.name, up.addr);
+                });
+        }
+        devices.iter_mut()
+            .for_each(|d| {
+                d.inputs.listeners.iter_mut()
+                    .for_each(|input| match addrs.get(&input.addr) {
+                        Some(addr) => input.addr = addr.clone(),
+                        None => {},
+                    });
+                d.outputs.destinations.iter_mut()
+                    .for_each(|output| match addrs.get(&output.addr) {
+                        Some(addr) => output.addr = addr.clone(),
+                        None => {},
+                    });
+            });
+        Self {
+            upstream: None,
+            devices,
+        }
+    }
 }
+
+
+
 
 fn prefix_lines(prefix: &str, lines: &str) -> String {
     let result = lines.split("\n")
@@ -200,7 +236,7 @@ mod test {
         let mut desired = current.clone();
         desired.devices[0].name = String::from("New Virtual Device");
         let desired_device: String = serde_yaml::to_string(&desired.devices[0]).unwrap();
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), device_lines * 2);
     }
 
@@ -209,7 +245,7 @@ mod test {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
         desired.devices[0].inputs.channels = 4;
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 4);
         assert_eq!(diffs[1], Difference::Rem(String::from("    channels: 2")));
         assert_eq!(diffs[2], Difference::Add(String::from("    channels: 4")));
@@ -220,9 +256,9 @@ mod test {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
         desired.devices[0].inputs.listeners[0].addr = String::from("127.0.0.1:2000/TCP");
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 4);
-        assert_eq!(diffs[1], Difference::Rem(String::from("      - addr: my-insecure-upstream")));
+        assert_eq!(diffs[1], Difference::Rem(String::from("      - addr: \"127.0.0.1:20001/UDP\"")));
         assert_eq!(diffs[2], Difference::Add(String::from("      - addr: \"127.0.0.1:2000/TCP\"")));
     }
 
@@ -234,7 +270,7 @@ mod test {
             addr: String::from("127.0.0.1:2000/TCP"),
             tls: None,
         });
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 3);
         assert!(is_add(&diffs[1]));
     }
@@ -244,7 +280,7 @@ mod test {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
         desired.devices[0].inputs.listeners = vec![];
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 4);
         assert!(is_rem(&diffs[1]));
         assert_eq!(diffs[2], Difference::Add(String::from("    listeners: []")));
@@ -255,7 +291,7 @@ mod test {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
         desired.devices[0].outputs.channels = 4;
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 4);
         assert_eq!(diffs[1], Difference::Rem(String::from("    channels: 2")));
         assert_eq!(diffs[2], Difference::Add(String::from("    channels: 4")));
@@ -266,10 +302,9 @@ mod test {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
         desired.devices[0].outputs.destinations[0].addr = String::from("127.0.0.1:2000/TCP");
-        let diffs = reconcile(&current, &desired).unwrap();
-        print_diffs(&diffs);
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 4);
-        assert_eq!(diffs[1], Difference::Rem(String::from("      - addr: my-insecure-upstream")));
+        assert_eq!(diffs[1], Difference::Rem(String::from("      - addr: \"127.0.0.1:20001/UDP\"")));
         assert_eq!(diffs[2], Difference::Add(String::from("      - addr: \"127.0.0.1:2000/TCP\"")));
     }
 
@@ -282,7 +317,7 @@ mod test {
             channels: None,
             tls: None,
         });
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 2);
         assert!(is_add(&diffs[1]));
     }
@@ -292,7 +327,7 @@ mod test {
         let current = Config::from_yaml(CONFIG).unwrap();
         let mut desired = current.clone();
         desired.devices[0].outputs.destinations= vec![];
-        let diffs = reconcile(&current, &desired).unwrap();
+        let diffs = Config::diff(current, desired);
         assert_eq!(diffs.len(), 3);
         assert!(is_rem(&diffs[1]));
         assert_eq!(diffs[2], Difference::Add(String::from("    destinations: []")));

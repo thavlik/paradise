@@ -181,7 +181,6 @@ mod test {
     #[test]
     fn test_load_raw_yaml() {
         let config: Config = serde_yaml::from_str(CONFIG).unwrap();
-
         assert!(config.upstream.is_some());
     }
 
@@ -297,56 +296,5 @@ mod test {
         assert_eq!(diffs.len(), 3);
         assert!(is_rem(&diffs[1]));
         assert_eq!(diffs[2], Difference::Add(String::from("    destinations: []")));
-    }
-
-    #[test]
-    fn foo() {
-        /*
-        let a = serde_yaml::to_string(&Device{
-            name: String::from("foo"),
-            inputs: Inputs{
-                channels: 2,
-                listeners: vec![],
-            },
-            outputs: Outputs{
-                channels: 2,
-                destinations: vec![],
-            },
-        }).unwrap();
-        let b = serde_yaml::to_string(&Device{
-            name: String::from("bar"),
-            inputs: Inputs{
-                channels: 2,
-                listeners: vec![],
-            },
-            outputs: Outputs{
-                channels: 2,
-                destinations: vec![],
-            },
-        }).unwrap();
-
-        // Compare both texts, the third parameter defines the split level.
-        let Changeset { diffs, .. } = Changeset::new(&a, &b, "\n");
-
-        let mut t = term::stdout().unwrap();
-        for i in 0..diffs.len() {
-            match diffs[i] {
-                Difference::Same(ref x) => {
-                    t.reset().unwrap();
-                    writeln!(t, " {}", x);
-                }
-                Difference::Add(ref x) => {
-                    t.fg(term::color::GREEN).unwrap();
-                    writeln!(t, "+{}", x);
-                }
-                Difference::Rem(ref x) => {
-                    t.fg(term::color::RED).unwrap();
-                    writeln!(t, "-{}", x);
-                }
-            }
-        }
-        t.reset().unwrap();
-        t.flush().unwrap();
-        */
     }
 }

@@ -48,8 +48,7 @@ devices:
       # demonstrates use of TLS and the second how only
       # specific channels can be selected for a destination.
       destinations:
-        - name: my-example-loopback-0
-          addr: my-secure-upstream
+        - addr: my-secure-upstream
         # It is only necessary to specify the public
         # certs on the client when self-signing. Use
         # of LetsEncrypt et al creates certificates
@@ -64,8 +63,7 @@ devices:
             #key: /etc/cert/other.key
 
         # Second output doesn't utilize TLS.
-        - name: my-example-loopback-1
-          addr: my-insecure-upstream
+        - addr: my-insecure-upstream
         # Only send audio received on the second output
         # channel of this device.
           channels:

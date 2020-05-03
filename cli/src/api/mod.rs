@@ -30,7 +30,6 @@ pub struct Listener {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Destination {
-    pub name: String,
     pub addr: String,
     pub channels: Option<Vec<usize>>,
     pub tls: Option<TLS>,
@@ -48,7 +47,7 @@ pub struct Device {
 impl Device {
     pub fn sort(&mut self) {
         self.inputs.listeners.sort_by(|a, b| a.addr.partial_cmp(&b.addr).unwrap());
-        self.outputs.destinations.sort_by(|a, b| a.name.partial_cmp(&b.name).unwrap());
+        self.outputs.destinations.sort_by(|a, b| a.addr.partial_cmp(&b.addr).unwrap());
     }
 }
 
@@ -87,7 +86,7 @@ fn reconcile(a: &Config, b: &Config) -> Result<Vec<Difference>, Error>{
     let mut diffs: Vec<Difference> = vec![];
     a.devices.iter()
         .for_each(|ad| {
-            let current_device: String = serde_yaml::to_string(ad).unwrap();
+            let current_device = &serde_yaml::to_string(ad).unwrap()[4..];
             let bd = match b.devices.iter()
                 .find(|bd| bd.name == ad.name) {
                 Some(bd) => bd,
@@ -100,8 +99,8 @@ fn reconcile(a: &Config, b: &Config) -> Result<Vec<Difference>, Error>{
                 },
             };
             // Both ad and bd are present in the config
-            let desired_device: String = serde_yaml::to_string(bd).unwrap();
-            let mut changes = Changeset::new(&current_device, &desired_device, "\n");
+            let desired_device = &serde_yaml::to_string(bd).unwrap()[4..];
+            let mut changes = Changeset::new(current_device, desired_device, "\n");
             diffs.append(&mut changes.diffs);
         });
     b.devices.iter()
@@ -113,34 +112,57 @@ fn reconcile(a: &Config, b: &Config) -> Result<Vec<Difference>, Error>{
         })
         .map(|d| serde_yaml::to_string(d).unwrap())
         .for_each(|yaml| {
-            let lines = yaml.split("\n");
+            let lines = yaml[4..].split("\n");
             lines.for_each(|line| {
                 diffs.push(Difference::Add(String::from(line)));
             });
         });
+    diffs.iter_mut().for_each(|diff| match diff {
+        Difference::Same(diff) => *diff = prefix_lines("  ", diff),
+        Difference::Add(diff) => *diff = prefix_lines("  ", diff),
+        Difference::Rem(diff) => *diff = prefix_lines("  ", diff),
+    });
     Ok(diffs)
 }
 
-fn print_diffs(diffs: &Vec<Difference>) {
+fn prefix_lines(prefix: &str, lines: &str) -> String {
+    let result = lines.split("\n")
+        .map(|line| format!("{}{}\n", prefix, line))
+        .fold(String::new(), |p, c| format!("{}{}", p, c));
+    String::from(&result[..result.len()-2])
+}
+
+fn print_diff(line_prefix: &str, lines: &str, color: term::color::Color) {
     let mut t = term::stdout().unwrap();
+    t.fg(color).unwrap();
+    writeln!(t, "{}", prefix_lines(line_prefix, lines));
+    t.reset().unwrap();
+    t.flush().unwrap();
+}
+
+fn print_diffs(diffs: &Vec<Difference>) {
+    //let mut t = term::stdout().unwrap();
     for i in 0..diffs.len() {
         match diffs[i] {
             Difference::Same(ref x) => {
-                t.reset().unwrap();
-                writeln!(t, " {}", x);
+                //t.reset().unwrap();
+                //writeln!(t, " {}", x);
+                print_diff("'", x, term::color::WHITE);
             }
             Difference::Add(ref x) => {
-                t.fg(term::color::GREEN).unwrap();
-                writeln!(t, "+{}", x);
+                //t.fg(term::color::GREEN).unwrap();
+                //writeln!(t, "+{}", x);
+                print_diff("+", x, term::color::GREEN);
             }
             Difference::Rem(ref x) => {
-                t.fg(term::color::RED).unwrap();
-                writeln!(t, "-{}", x);
+                //t.fg(term::color::RED).unwrap();
+                //writeln!(t, "-{}", x);
+                print_diff("-", x, term::color::RED);
             }
         }
     }
-    t.reset().unwrap();
-    t.flush().unwrap();
+    //t.reset().unwrap();
+    //t.flush().unwrap();
 }
 
 #[cfg(test)]
@@ -163,26 +185,55 @@ mod test {
     }
 
     #[test]
-    fn test_mutate_output_channels() {
-        let current = Config::from_yaml(CONFIG).unwrap();
-        let mut desired = current.clone();
-        desired.devices[0].outputs.channels = 4;
-        //let diffs = reconcile(&current, &desired).unwrap();
-        //assert_eq!(diffs.len(), 2);
-        //assert_eq!(diffs[0], Difference::Rem(String::from("      channels: 2")));
-        //assert_eq!(diffs[1], Difference::Add(String::from("      channels: 4")));
-    }
-
-    #[test]
-    fn test_rename_device() {
+    fn test_mutate_device_name() {
         let current = Config::from_yaml(CONFIG).unwrap();
         let current_device: String = serde_yaml::to_string(&current.devices[0]).unwrap();
-        let device_lines = serde_yaml::to_string(&current.devices[0]).unwrap().split("\n").collect::<Vec<_>>().len();
+        let device_lines = serde_yaml::to_string(&current.devices[0]).unwrap().split("\n").collect::<Vec<_>>().len() - 1;
         let mut desired = current.clone();
         desired.devices[0].name = String::from("New Virtual Device");
         let desired_device: String = serde_yaml::to_string(&desired.devices[0]).unwrap();
         let diffs = reconcile(&current, &desired).unwrap();
         assert_eq!(diffs.len(), device_lines * 2);
+    }
+
+    #[test]
+    fn test_mutate_input_channels() {
+    }
+
+    #[test]
+    fn test_mutate_listener_addr() {
+    }
+
+    #[test]
+    fn test_add_listener() {
+    }
+
+    #[test]
+    fn test_remove_listener() {
+    }
+
+    #[test]
+    fn test_mutate_output_channels() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].outputs.channels = 4;
+        let diffs = reconcile(&current, &desired).unwrap();
+        print_diffs(&diffs);
+        assert_eq!(diffs.len(), 4);
+        assert_eq!(diffs[1], Difference::Rem(String::from("    channels: 2")));
+        assert_eq!(diffs[2], Difference::Add(String::from("    channels: 4")));
+    }
+
+    #[test]
+    fn test_mutate_destination_addr() {
+    }
+
+    #[test]
+    fn test_add_destination() {
+    }
+
+    #[test]
+    fn test_remove_destination() {
     }
 
     #[test]

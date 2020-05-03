@@ -10,5 +10,5 @@ pub struct ApplyArgs {
 }
 
 pub async fn main(args: ApplyArgs) -> Result<(), Error> {
-    Err(Error::msg("unimplemented"))
+    Err(Error::msg(format!("yes is {}", args.yes)))
 }

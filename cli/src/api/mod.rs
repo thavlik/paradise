@@ -142,28 +142,13 @@ fn print_diff(line_prefix: &str, lines: &str, color: term::color::Color) {
 }
 
 fn print_diffs(diffs: &Vec<Difference>) {
-    //let mut t = term::stdout().unwrap();
     for i in 0..diffs.len() {
         match diffs[i] {
-            Difference::Same(ref x) => {
-                //t.reset().unwrap();
-                //writeln!(t, " {}", x);
-                print_diff("'", x, term::color::WHITE);
-            }
-            Difference::Add(ref x) => {
-                //t.fg(term::color::GREEN).unwrap();
-                //writeln!(t, "+{}", x);
-                print_diff("+", x, term::color::GREEN);
-            }
-            Difference::Rem(ref x) => {
-                //t.fg(term::color::RED).unwrap();
-                //writeln!(t, "-{}", x);
-                print_diff("-", x, term::color::RED);
-            }
+            Difference::Same(ref x) => print_diff("'", x, term::color::WHITE),
+            Difference::Add(ref x) => print_diff("+", x, term::color::GREEN),
+            Difference::Rem(ref x) => print_diff("-", x, term::color::RED),
         }
     }
-    //t.reset().unwrap();
-    //t.flush().unwrap();
 }
 
 #[cfg(test)]
@@ -187,6 +172,8 @@ mod test {
 
     #[test]
     fn test_mutate_device_name() {
+        // This results in the device being deleted and an
+        // entirely new one being created in its place.
         let current = Config::from_yaml(CONFIG).unwrap();
         let current_device: String = serde_yaml::to_string(&current.devices[0]).unwrap();
         let device_lines = serde_yaml::to_string(&current.devices[0]).unwrap().split("\n").collect::<Vec<_>>().len() - 1;
@@ -199,6 +186,13 @@ mod test {
 
     #[test]
     fn test_mutate_input_channels() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].inputs.channels = 4;
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 4);
+        assert_eq!(diffs[1], Difference::Rem(String::from("    channels: 2")));
+        assert_eq!(diffs[2], Difference::Add(String::from("    channels: 4")));
     }
 
     #[test]
@@ -219,7 +213,6 @@ mod test {
         let mut desired = current.clone();
         desired.devices[0].outputs.channels = 4;
         let diffs = reconcile(&current, &desired).unwrap();
-        print_diffs(&diffs);
         assert_eq!(diffs.len(), 4);
         assert_eq!(diffs[1], Difference::Rem(String::from("    channels: 2")));
         assert_eq!(diffs[2], Difference::Add(String::from("    channels: 4")));

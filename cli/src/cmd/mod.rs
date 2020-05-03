@@ -1,5 +1,6 @@
 use clap::Clap;
 
+pub mod apply;
 pub mod daemon;
 pub mod echo;
 pub mod device;
@@ -10,6 +11,10 @@ pub mod reconcile;
 
 #[derive(Clap)]
 pub enum SubCommand {
+    /// Runs the daemon
+    #[clap(name = "apply")]
+    Apply(apply::ApplyArgs),
+
     /// Runs the daemon
     #[clap(name = "daemon")]
     Daemon(daemon::DaemonArgs),

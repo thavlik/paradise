@@ -19,6 +19,7 @@ fn main() {
         .block_on(async {
             let opts: cmd::Opts = cmd::Opts::parse();
             match opts.subcmd {
+                cmd::SubCommand::Apply(args) => cmd::apply::main(args).await.unwrap(),
                 cmd::SubCommand::Daemon(args) => cmd::daemon::main(args).await.unwrap(),
                 cmd::SubCommand::Create(args) => cmd::device::create::main(args).await.unwrap(),
                 cmd::SubCommand::Delete(args) => cmd::device::delete::main(args).await.unwrap(),

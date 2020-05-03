@@ -1,14 +1,14 @@
 use anyhow::Error;
 use cpal::traits::{DeviceTrait, HostTrait};
 
-/// Delete a virtual audio device
+/// Apply a configuration file
 #[derive(clap::Clap)]
-pub struct DeleteArgs {
+pub struct ApplyArgs {
     /// Accept the changes without prompting for user input
     #[clap(short = "y")]
     yes: bool,
 }
 
-pub async fn main(args: DeleteArgs) -> Result<(), Error> {
+pub async fn main(args: ApplyArgs) -> Result<(), Error> {
     Err(Error::msg("unimplemented"))
 }

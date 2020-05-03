@@ -6,7 +6,18 @@ use cpal::traits::{DeviceTrait, HostTrait};
 pub struct ListArgs {
 }
 
+#[cfg(windows)]
+const DEVICE_SUFFIX: &'static str = " (Paradise)";
+
+#[cfg(target_os = "macos")]
+const DEVICE_SUFFIX: &'static str = " (Paradise)";
+
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+const DEVICE_SUFFIX: &'static str = ",paradise";
+
 pub async fn main(args: ListArgs) -> Result<(), Error> {
+    // Get virtual devices from cpal
+    // What can do we do ensure it's a virtual device?
     /*
     let devices = &[Device{
         name: String::from(d.name().unwrap_or("NULL".to_string())),
@@ -16,14 +27,15 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
         supported_sample_formats: vec![String::from("F32")],
     }];
     */
-    println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
-    let available_hosts = cpal::available_hosts();
-    println!("Available hosts:\n  {:?}", available_hosts);
+    let mut available_hosts = cpal::available_hosts();
+    available_hosts.retain(|h| h.name().ends_with(DEVICE_SUFFIX));
+    println!("{:?}", available_hosts);
     for host_id in available_hosts {
+        // Idea: all virtual devices have a suffix of (Paradise)
         println!("{}", host_id.name());
         let host = cpal::host_from_id(host_id)?;
         let devices = host.devices()?;
-        println!("  Devices: ");
+        //println!("  Devices: ");
 
         /*
         let d = host.devices()?.enumerate()

@@ -14,5 +14,8 @@ pub struct ApplyArgs {
 }
 
 pub async fn main(args: ApplyArgs) -> Result<(), Error> {
-    Err(Error::msg(format!("filename is {}, yes is {}", &args.filename, args.yes)))
+    Err(Error::msg(format!(
+        "filename is {}, yes is {}",
+        &args.filename, args.yes
+    )))
 }

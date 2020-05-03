@@ -17,7 +17,9 @@ pub struct DeleteArgs {
 
 pub async fn main(args: DeleteArgs) -> Result<(), Error> {
     if args.names.len() == 0 && !args.all {
-        return Err(Error::msg("you must specify at least one device name or --all to delete all devices"));
+        return Err(Error::msg(
+            "you must specify at least one device name or --all to delete all devices",
+        ));
     }
     Err(Error::msg("unimplemented"))
 }

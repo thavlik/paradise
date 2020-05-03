@@ -17,8 +17,12 @@ pub struct PatchArgs {
     source: String,
 }
 
-type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
-type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise_core::stream::tx::udp::UdpTxStream<
+    paradise_core::stream::tx::locking::LockingTxBuffer,
+>;
+type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
+    paradise_core::stream::rx::locking::LockingRxBuffer,
+>;
 
 pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
     /*

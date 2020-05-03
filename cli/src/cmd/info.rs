@@ -2,9 +2,7 @@ use cpal::traits::{DeviceTrait, HostTrait};
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
-pub struct InfoArgs {
-}
-
+pub struct InfoArgs {}
 
 pub async fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
     println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
@@ -13,11 +11,13 @@ pub async fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
     for host_id in available_hosts {
         println!("{}", host_id.name());
         let host = cpal::host_from_id(host_id)?;
-        let default_in = host.default_input_device()
+        let default_in = host
+            .default_input_device()
             .map(|e| e.name())
             .filter(|e| e.is_ok())
             .map(|e| e.unwrap());
-        let default_out = host.default_output_device()
+        let default_out = host
+            .default_output_device()
             .map(|e| e.name())
             .filter(|e| e.is_ok())
             .map(|e| e.unwrap());
@@ -30,10 +30,10 @@ pub async fn main(args: InfoArgs) -> Result<(), anyhow::Error> {
             match device.name() {
                 Ok(name) => {
                     println!("  {}. \"{}\"", device_index, name);
-                },
+                }
                 Err(e) => {
                     println!("  {}. ERROR: {}", device_index, e);
-                },
+                }
             }
 
             // Input configs

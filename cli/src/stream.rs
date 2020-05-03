@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use crate::{Result, TxStream, RxStream};
+use crate::{Result, RxStream, TxStream};
 
 pub struct Channel {
     host: usize,

@@ -5,7 +5,9 @@ pub mod locking;
 pub mod udp;
 
 pub trait TxBuffer
-    where Self: std::marker::Sync + std::marker::Send {
+where
+    Self: std::marker::Sync + std::marker::Send,
+{
     fn new() -> Self;
 
     /// Accumulates the data into the send buffer. Called by plugin.
@@ -19,7 +21,12 @@ pub trait TxStream {
     fn process(&self, input_buffer: &[f32], clock: u64);
 }
 
-pub fn write_message_header(buf: &mut [u8], size: Option<usize>, timestamp: u64, status: u8) -> usize {
+pub fn write_message_header(
+    buf: &mut [u8],
+    size: Option<usize>,
+    timestamp: u64,
+    status: u8,
+) -> usize {
     let mut offset = 0;
     if let Some(size) = size {
         if size > std::usize::MAX {

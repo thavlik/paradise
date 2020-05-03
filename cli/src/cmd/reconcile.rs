@@ -5,7 +5,11 @@ use cpal::traits::{DeviceTrait, HostTrait};
 pub struct ReconcileArgs {
     /// Path to configuration file. On Windows, the default
     /// value is set to C:\ProgramData\paradise\config.yaml
-    #[clap(long = "filename", short = "f", default_value = "/etc/paradise/config.yaml")]
+    #[clap(
+        long = "filename",
+        short = "f",
+        default_value = "/etc/paradise/config.yaml"
+    )]
     pub filename: String,
 
     /// Run reconciliation but without applying any changes
@@ -22,11 +26,13 @@ pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
     for host_id in available_hosts {
         println!("{}", host_id.name());
         let host = cpal::host_from_id(host_id)?;
-        let default_in = host.default_input_device()
+        let default_in = host
+            .default_input_device()
             .map(|e| e.name())
             .filter(|e| e.is_ok())
             .map(|e| e.unwrap());
-        let default_out = host.default_output_device()
+        let default_out = host
+            .default_output_device()
             .map(|e| e.name())
             .filter(|e| e.is_ok())
             .map(|e| e.unwrap());
@@ -38,10 +44,10 @@ pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
             match device.name() {
                 Ok(name) => {
                     println!("  {}. \"{}\"", device_index, name);
-                },
+                }
                 Err(e) => {
                     println!("  {}. ERROR: {}", device_index, e);
-                },
+                }
             }
 
             // Input configs

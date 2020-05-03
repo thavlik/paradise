@@ -1,7 +1,7 @@
-use std::net::SocketAddr;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use std::net::SocketAddr;
 
-const LATENCY_MS: f32 = 0.0 ;//150.0;
+const LATENCY_MS: f32 = 0.0; //150.0;
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
@@ -13,7 +13,6 @@ pub struct DaemonArgs {
     #[clap(long = "port", short = "p", default_value = "8080")]
     port: u16,
 }
-
 
 pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
     /*

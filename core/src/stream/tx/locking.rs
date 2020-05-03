@@ -11,9 +11,7 @@ impl LockingTxBuffer {
     }
 
     fn cycle(&self) -> std::sync::MutexGuard<Vec<f32>> {
-        self.buf[cycle(&self.parity)]
-            .lock()
-            .unwrap()
+        self.buf[cycle(&self.parity)].lock().unwrap()
     }
 }
 

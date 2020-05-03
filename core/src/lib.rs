@@ -19,5 +19,5 @@ extern crate crossbeam;
 extern crate lazy_static;
 
 pub mod editor;
-pub mod stream;
 pub mod runtime;
+pub mod stream;

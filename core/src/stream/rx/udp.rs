@@ -1,13 +1,19 @@
 use super::*;
 
-pub struct UdpRxStream<B> where B: RxBuffer {
+pub struct UdpRxStream<B>
+where
+    B: RxBuffer,
+{
     clock: std::sync::atomic::AtomicU64,
     stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: std::sync::Arc<B>,
     sync: std::sync::Arc<std::sync::atomic::AtomicU64>,
 }
 
-impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
+impl<B> UdpRxStream<B>
+where
+    B: 'static + RxBuffer,
+{
     pub fn new(addr: std::net::SocketAddr) -> std::io::Result<std::sync::Arc<Self>> {
         let sock = std::net::UdpSocket::bind(&addr)?;
         sock.set_nonblocking(true)?;
@@ -23,7 +29,12 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
         Ok(stream)
     }
 
-    async fn entry(b: std::sync::Arc<B>, sock: std::net::UdpSocket, sync: std::sync::Arc<std::sync::atomic::AtomicU64>, stop: crossbeam::crossbeam_channel::Receiver<()>) {
+    async fn entry(
+        b: std::sync::Arc<B>,
+        sock: std::net::UdpSocket,
+        sync: std::sync::Arc<std::sync::atomic::AtomicU64>,
+        stop: crossbeam::crossbeam_channel::Receiver<()>,
+    ) {
         const BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         // TODO: set clock. Right now all samples are accepted.
@@ -37,23 +48,21 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
             let (amt, _src) = match sock.recv_from(&mut buf[..]) {
                 Ok(value) => value,
                 Err(e) => match e.kind() {
-                    std::io::ErrorKind::WouldBlock => {
-                        continue
-                    },
+                    std::io::ErrorKind::WouldBlock => continue,
                     _ => {
                         println!("recv_from: {:?}", e);
-                        continue
+                        continue;
                     }
-                }
+                },
             };
             let hdr = &buf[..8];
-            let timestamp = ((hdr[0] as u64) << 48) |
-                ((hdr[1] as u64) << 40) |
-                ((hdr[2] as u64) << 32) |
-                ((hdr[3] as u64) << 24) |
-                ((hdr[4] as u64) << 16) |
-                ((hdr[5] as u64) << 8) |
-                ((hdr[6] as u64) << 0);
+            let timestamp = ((hdr[0] as u64) << 48)
+                | ((hdr[1] as u64) << 40)
+                | ((hdr[2] as u64) << 32)
+                | ((hdr[3] as u64) << 24)
+                | ((hdr[4] as u64) << 16)
+                | ((hdr[5] as u64) << 8)
+                | ((hdr[6] as u64) << 0);
             // Don't accumulate samples older than the oldest timestamp observed in the previous flushed
             let delta = timestamp - clock;
             if delta < 0 {
@@ -69,20 +78,26 @@ impl<B> UdpRxStream<B> where B: 'static + RxBuffer {
                 continue;
             }
             let num_samples = data.len() / 4;
-            let samples: &[f32] = unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
+            let samples: &[f32] =
+                unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
             b.accumulate(timestamp, samples);
         }
     }
 }
 
 impl<B> std::ops::Drop for UdpRxStream<B>
-    where B: RxBuffer {
+where
+    B: RxBuffer,
+{
     fn drop(&mut self) {
         self.stop.send(());
     }
 }
 
-impl<B> RxStream for UdpRxStream<B> where B: 'static + RxBuffer {
+impl<B> RxStream for UdpRxStream<B>
+where
+    B: 'static + RxBuffer,
+{
     fn process(&self, output_buffer: &mut [f32]) -> u64 {
         // Swap out the current receive buffer
         self.buf.flush(output_buffer);

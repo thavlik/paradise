@@ -1,7 +1,11 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
-type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
-type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise_core::stream::tx::udp::UdpTxStream<
+    paradise_core::stream::tx::locking::LockingTxBuffer,
+>;
+type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
+    paradise_core::stream::rx::locking::LockingRxBuffer,
+>;
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
@@ -25,4 +29,3 @@ pub async fn main(args: EchoArgs) -> Result<(), anyhow::Error> {
     println!("shutting down");
     Ok(())
 }
-

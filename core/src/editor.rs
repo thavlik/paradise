@@ -3,12 +3,11 @@ use vst::editor::{KeyCode, KnobMode};
 //use flutter_winit::FlutterWindow;
 //use glutin::window::WindowBuilder;
 
-pub struct Editor {
-}
+pub struct Editor {}
 
 impl Editor {
     pub fn new() -> Self {
-        Editor{}
+        Editor {}
     }
 }
 

@@ -1,8 +1,6 @@
-use std::{
-    time::SystemTime,
-};
+use serde::{Deserialize, Serialize};
+use std::time::SystemTime;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 

@@ -1,10 +1,6 @@
 use super::*;
+use r2d2_redis::{r2d2, redis, RedisConnectionManager};
 use std::ops::DerefMut;
-use r2d2_redis::{
-    r2d2,
-    redis,
-    RedisConnectionManager,
-};
 
 ///
 pub struct RedisPool {
@@ -16,9 +12,7 @@ impl RedisPool {
     pub fn new(redis_uri: &str) -> Result<Self> {
         let manager = RedisConnectionManager::new(redis_uri)?;
         /// https://docs.rs/r2d2/0.8.8/r2d2/struct.Builder.html
-        let pool = r2d2::Pool::builder()
-            .max_size(32)
-            .build(manager)?;
+        let pool = r2d2::Pool::builder().max_size(32).build(manager)?;
         Ok(Self {
             pool,
             release_hash: format!(""),
@@ -45,13 +39,14 @@ impl PoolTrait for RedisPool {
         // Attempt to claim the resource in redis
         // TODO: write redis tests for these commands
         let mut cmd = redis::cmd("SET");
-        cmd.arg(resource.as_bytes())
-            .arg(uid.as_bytes());
+        cmd.arg(resource.as_bytes()).arg(uid.as_bytes());
         if let Some(expire) = expire {
-            cmd.arg("PX")
-                .arg(expire.duration_since(SystemTime::now())?
+            cmd.arg("PX").arg(
+                expire
+                    .duration_since(SystemTime::now())?
                     .as_millis()
-                    .to_string());
+                    .to_string(),
+            );
         }
         let _: () = redis::cmd("SET")
             .arg(resource.as_bytes())
@@ -67,7 +62,8 @@ impl PoolTrait for RedisPool {
             resource,
             claimant,
             expire,
-        }).unwrap();
+        })
+        .unwrap();
         redis::cmd("PUBLISH")
             .arg("claim")
             .arg(encoded)

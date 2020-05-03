@@ -34,7 +34,12 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
         match args.output.as_ref() {
             "plain" => println!("No virtual devices"),
             "json" | "yaml" => println!("[]"),
-            format => return Err(Error::msg(format!("unrecognized output format '{}'", format))),
+            format => {
+                return Err(Error::msg(format!(
+                    "unrecognized output format '{}'",
+                    format
+                )))
+            }
         };
     }
 

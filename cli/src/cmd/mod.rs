@@ -2,12 +2,11 @@ use clap::Clap;
 
 pub mod apply;
 pub mod daemon;
-pub mod echo;
 pub mod device;
+pub mod echo;
 pub mod info;
 pub mod patch;
 pub mod reconcile;
-
 
 #[derive(Clap)]
 pub enum SubCommand {
@@ -55,5 +54,3 @@ pub struct Opts {
     #[clap(subcommand)]
     pub subcmd: SubCommand,
 }
-
-

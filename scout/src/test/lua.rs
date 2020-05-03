@@ -1,18 +1,11 @@
-
 #[cfg(test)]
 mod release {
     #[test]
-    fn ok() {
-
-    }
+    fn ok() {}
 
     #[test]
-    fn err_no_claim() {
-
-    }
+    fn err_no_claim() {}
 
     #[test]
-    fn err_bad_claim() {
-
-    }
+    fn err_bad_claim() {}
 }

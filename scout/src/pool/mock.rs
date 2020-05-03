@@ -1,13 +1,11 @@
 use super::*;
 
 ///
-pub struct MockPool {
-}
+pub struct MockPool {}
 
 impl MockPool {
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 }
 

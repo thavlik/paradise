@@ -1,4 +1,5 @@
-#[macro_use] extern crate async_trait;
+#[macro_use]
+extern crate async_trait;
 
 pub mod client;
 pub mod server;

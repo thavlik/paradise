@@ -1,12 +1,8 @@
-use pathfinding::prelude::{astar};
-use std::ops::Deref;
-use std::sync::{
-    Arc,
-    Mutex,
-    RwLock,
-};
+use pathfinding::prelude::astar;
 use std::cell::RefCell;
+use std::ops::Deref;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex, RwLock};
 use uuid::Uuid;
 
 mod node;
@@ -15,12 +11,7 @@ mod pool;
 #[cfg(test)]
 mod test;
 
-use node::{
-    Node,
-    NodeKind,
-    IO,
-    AudioUnit,
-};
+use node::{AudioUnit, Node, NodeKind, IO};
 
 fn main() {
     //let result = astar(&Pos(1, 1), |p| p.successors(), |_| 0,

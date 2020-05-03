@@ -5,7 +5,9 @@ pub mod locking;
 pub mod udp;
 
 pub trait RxBuffer
-    where Self: std::marker::Sync + std::marker::Send {
+where
+    Self: std::marker::Sync + std::marker::Send,
+{
     fn new() -> Self;
 
     /// Accumulates the data into the current write buffer.
@@ -20,4 +22,3 @@ pub trait RxBuffer
 pub trait RxStream {
     fn process(&self, output_buffer: &mut [f32]) -> u64;
 }
-

@@ -29,12 +29,15 @@ use vst::buffer::AudioBuffer;
 use vst::plugin::{Category, Info, Plugin, PluginParameters};
 use vst::util::AtomicFloat;
 
-type TxStream = paradise_core::stream::tx::udp::UdpTxStream::<paradise_core::stream::tx::locking::LockingTxBuffer>;
-type RxStream = paradise_core::stream::rx::udp::UdpRxStream::<paradise_core::stream::rx::locking::LockingRxBuffer>;
+type TxStream = paradise_core::stream::tx::udp::UdpTxStream<
+    paradise_core::stream::tx::locking::LockingTxBuffer,
+>;
+type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
+    paradise_core::stream::rx::locking::LockingRxBuffer,
+>;
 
 //type TxStream = stream::tx::tcp::TcpTxStream::<stream::tx::locking::LockingTxBuffer>;
 //type RxStream = stream::rx::tcp::TcpRxStream::<stream::rx::locking::LockingRxBuffer>;
-
 
 // this is a 4-pole filter with resonance, which is why there's 4 states and vouts
 #[derive(Clone)]
@@ -73,12 +76,15 @@ impl RemoteAudioEffect {
         rt.lock().unwrap().block_on(async {});
 
         if self.tx.len() == 0 {
-            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(std::net::Ipv4Addr::new(127, 0, 0, 1), 30001));
-            match rt.lock()
+            let dest_addr = std::net::SocketAddr::V4(std::net::SocketAddrV4::new(
+                std::net::Ipv4Addr::new(127, 0, 0, 1),
+                30001,
+            ));
+            match rt
+                .lock()
                 .unwrap()
-                .block_on(async {
-                    TxStream::new(dest_addr)
-                }) {
+                .block_on(async { TxStream::new(dest_addr) })
+            {
                 Ok(tx) => self.tx = vec![tx],
                 Err(e) => {
                     return false;
@@ -87,21 +93,18 @@ impl RemoteAudioEffect {
         }
         if self.rx.len() == 0 {
             let receive_port = 30000;
-            match rt.lock()
-                .unwrap()
-                .block_on(async {
-                    let addr = format!("0.0.0.0:{}", receive_port)
-                        .parse()
-                        .unwrap();
-                    RxStream::new(addr)
-                }) {
+            match rt.lock().unwrap().block_on(async {
+                let addr = format!("0.0.0.0:{}", receive_port).parse().unwrap();
+                RxStream::new(addr)
+            }) {
                 Ok(rx) => self.rx = vec![rx],
                 Err(e) => {
                     return false;
                 }
             };
         }
-        self.running.store(true, std::sync::atomic::Ordering::SeqCst);
+        self.running
+            .store(true, std::sync::atomic::Ordering::SeqCst);
         true
     }
 }
@@ -142,7 +145,8 @@ impl RemoteAudioEffectParameters {
         // cutoff formula gives us a natural feeling cutoff knob that spends more time in the low frequencies
         self.cutoff.set(20000. * (1.8f32.powf(10. * value - 10.)));
         // bilinear transformation for g gives us a very accurate cutoff
-        self.g.set((PI * self.cutoff.get() / (self.sample_rate.get())).tan());
+        self.g
+            .set((PI * self.cutoff.get() / (self.sample_rate.get())).tan());
     }
 
     // returns the value used to set cutoff. for get_parameter function
@@ -152,7 +156,8 @@ impl RemoteAudioEffectParameters {
 
     pub fn set_poles(&self, value: f32) {
         self.pole_value.set(value);
-        self.poles.store(((value * 3.).round()) as usize, Ordering::Relaxed);
+        self.poles
+            .store(((value * 3.).round()) as usize, Ordering::Relaxed);
     }
 }
 
@@ -256,9 +261,9 @@ impl Plugin for RemoteAudioEffect {
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         let (inputs, mut outputs) = buffer.split();
         if !self.ensure_started() {
-            outputs.into_iter()
-                .for_each(|output| output.iter_mut()
-                    .for_each(|v| *v = 0.0));
+            outputs
+                .into_iter()
+                .for_each(|output| output.iter_mut().for_each(|v| *v = 0.0));
             return;
         }
         if inputs.len() != self.tx.len() {
@@ -269,20 +274,26 @@ impl Plugin for RemoteAudioEffect {
             //panic!("num outputs ({}) does not match num rx streams ({})", outputs.len(), self.rx.len());
             return;
         }
-        let clock = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos() as u64;
+        let clock = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as u64;
         //std::thread::sleep(std::time::Duration::from_millis(2));
-        inputs.into_iter()
+        inputs
+            .into_iter()
             .zip(self.tx.iter())
             .for_each(|(input, tx)| tx.process(input, clock));
-        let latency = clock - outputs.into_iter()
-            .zip(self.rx.iter())
-            .map(|(output, rx)| {
-                output.iter_mut()
-                    .for_each(|v| *v = 0.0);
-                rx.process(output)
-            })
-            .fold(0, |p, c| p.max(c));
-        self.latency.store(latency, std::sync::atomic::Ordering::SeqCst);
+        let latency = clock
+            - outputs
+                .into_iter()
+                .zip(self.rx.iter())
+                .map(|(output, rx)| {
+                    output.iter_mut().for_each(|v| *v = 0.0);
+                    rx.process(output)
+                })
+                .fold(0, |p, c| p.max(c));
+        self.latency
+            .store(latency, std::sync::atomic::Ordering::SeqCst);
     }
 
     fn get_parameter_object(&mut self) -> Arc<dyn PluginParameters> {

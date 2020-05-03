@@ -1,8 +1,11 @@
-use std::default::Default;
-use std::{sync::{atomic::{AtomicPtr, Ordering::SeqCst}}, time::{SystemTime}};
-use serde::{Serialize, Deserialize};
-use uuid::Uuid;
 use crate::pool::Claim;
+use serde::{Deserialize, Serialize};
+use std::default::Default;
+use std::{
+    sync::atomic::{AtomicPtr, Ordering::SeqCst},
+    time::SystemTime,
+};
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct AudioUnit {
@@ -11,9 +14,7 @@ pub struct AudioUnit {
 
 impl AudioUnit {
     pub fn new(class_name: String) -> Self {
-        Self {
-            class_name
-        }
+        Self { class_name }
     }
 }
 
@@ -41,29 +42,38 @@ impl Node {
             outputs: vec![],
         });
         let inputs = (0..num_channels)
-            .map(|i| Box::new(IO::new(
-                Uuid::new_v4(),
-                i,
-                false,
-                None,
-                &*inst as _,
-                Default::default(),
-            )))
+            .map(|i| {
+                Box::new(IO::new(
+                    Uuid::new_v4(),
+                    i,
+                    false,
+                    None,
+                    &*inst as _,
+                    Default::default(),
+                ))
+            })
             .collect::<Vec<_>>();
         let outputs = (0..num_channels)
-            .map(|i| Box::new(IO::new(
-                Uuid::new_v4(),
-                i,
-                true,
-                None,
-                &*inst as _,
-                Default::default(),
-            )))
+            .map(|i| {
+                Box::new(IO::new(
+                    Uuid::new_v4(),
+                    i,
+                    true,
+                    None,
+                    &*inst as _,
+                    Default::default(),
+                ))
+            })
             .collect::<Vec<_>>();
         inst as _
     }
 
-    pub fn make(uid: Uuid, kind: NodeKind, inputs: Vec<Box<IO>>, outputs: Vec<Box<IO>>) -> Box<Self> {
+    pub fn make(
+        uid: Uuid,
+        kind: NodeKind,
+        inputs: Vec<Box<IO>>,
+        outputs: Vec<Box<IO>>,
+    ) -> Box<Self> {
         Box::new(Self {
             uid,
             kind,
@@ -96,8 +106,6 @@ impl std::hash::Hash for IO {
         self.uid.hash(state)
     }
 }
-
-
 
 impl std::ops::Drop for IO {
     fn drop(&mut self) {
@@ -137,8 +145,7 @@ impl IO {
             if self.is_output {
                 // Can only route to a single input on another
                 // piece of hardware or nothing at all.
-                self.input.as_ref()
-                    .map_or(vec![], |v| vec![(v.clone(), 1)])
+                self.input.as_ref().map_or(vec![], |v| vec![(v.clone(), 1)])
             } else {
                 // Patchbay inputs can route to any output.
                 // Inputs for other nodes are terminal.
@@ -146,7 +153,9 @@ impl IO {
                     match &(*self.node).kind {
                         NodeKind::Interface => vec![],
                         NodeKind::Unit(u) => vec![],
-                        NodeKind::Patchbay => (*self.node).outputs.iter()
+                        NodeKind::Patchbay => (*self.node)
+                            .outputs
+                            .iter()
                             .map(|h| (&**h as _, 1))
                             .collect(),
                     }

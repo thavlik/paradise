@@ -30,12 +30,9 @@ impl LockingRxBuffer {
 
     fn get_state(&self) -> std::sync::MutexGuard<LockingRxBufferState> {
         let parity = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
-        self.state[parity]
-            .lock()
-            .unwrap()
+        self.state[parity].lock().unwrap()
     }
 }
-
 
 impl RxBuffer for LockingRxBuffer {
     fn new() -> Self {
@@ -45,19 +42,19 @@ impl RxBuffer for LockingRxBuffer {
                 std::sync::Mutex::new(LockingRxBufferState {
                     discard: 0,
                     oldest: 0,
-                    chunks: vec![Chunk{
+                    chunks: vec![Chunk {
                         timestamp: 0,
-                        samples: vec![0.0; 4*192000],
+                        samples: vec![0.0; 4 * 192000],
                     }],
                 }),
                 std::sync::Mutex::new(LockingRxBufferState {
                     discard: 0,
                     oldest: 0,
-                    chunks: vec![Chunk{
+                    chunks: vec![Chunk {
                         timestamp: 0,
-                        samples: vec![0.0; 4*192000],
+                        samples: vec![0.0; 4 * 192000],
                     }],
-                })
+                }),
             ],
         }
     }
@@ -74,7 +71,11 @@ impl RxBuffer for LockingRxBuffer {
             }
             let amt = remaining.min(chunk.samples.len());
             unsafe {
-                std::ptr::copy_nonoverlapping(chunk.samples[..amt].as_ptr(), output_buffer[written..written+amt].as_mut_ptr(), amt);
+                std::ptr::copy_nonoverlapping(
+                    chunk.samples[..amt].as_ptr(),
+                    output_buffer[written..written + amt].as_mut_ptr(),
+                    amt,
+                );
             }
             written += amt;
             if chunk.samples.len() == amt {
@@ -105,17 +106,23 @@ impl RxBuffer for LockingRxBuffer {
         }
         state.oldest = state.oldest.min(timestamp);
         // Determine where the samples belong
-        let i = match state.chunks.iter()
+        let i = match state
+            .chunks
+            .iter()
             .enumerate()
-            .find(|(_, chunk)| chunk.timestamp > timestamp) {
+            .find(|(_, chunk)| chunk.timestamp > timestamp)
+        {
             Some((i, _)) => i,
             None => state.chunks.len(),
         };
         // Insert the samples such that all elements are order
         // according to timestamp.
-        state.chunks.insert(i, Chunk {
-            timestamp,
-            samples: Vec::from(in_samples),
-        });
+        state.chunks.insert(
+            i,
+            Chunk {
+                timestamp,
+                samples: Vec::from(in_samples),
+            },
+        );
     }
 }

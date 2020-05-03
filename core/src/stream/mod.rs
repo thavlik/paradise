@@ -1,5 +1,5 @@
-pub mod tx;
 pub mod rx;
+pub mod tx;
 
 fn cycle(parity: &std::sync::atomic::AtomicUsize) -> usize {
     let original: usize = parity.fetch_add(1, std::sync::atomic::Ordering::SeqCst);

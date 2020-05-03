@@ -29,5 +29,8 @@ pub struct CreateArgs {
 }
 
 pub async fn main(args: CreateArgs) -> Result<(), Error> {
-    Err(Error::msg(format!("name = {}, yes = {}, inputs = {:?}, outputs = {:?}", &args.name, args.yes, &args.inputs, &args.outputs)))
+    Err(Error::msg(format!(
+        "name = {}, yes = {}, inputs = {:?}, outputs = {:?}",
+        &args.name, args.yes, &args.inputs, &args.outputs
+    )))
 }

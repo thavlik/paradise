@@ -1,14 +1,3 @@
-# Interfaces describe points of IO for the cluster.
-# Notably, all IO is clocked together, which is
-# typically desired for multitrack.
-apiVersion: app.paradise.dev/v1alpha1
-kind: Interface
-metadata:
-  name: my-quantum
-spec:
-  inputs: 8
-  outputs: 8
-  sampleRate: 192000
 ---
 # Cluster-scoped resource
 apiVersion: app.paradise.dev/v1alpha1
@@ -43,6 +32,13 @@ metadata:
   # a cluster other than the one servicing the AudioUnits,
   # as is the case with PersistenceVolume/PersistenceVolumeClaim.
   uid: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
+
+  # Audio unit driver endpoint. Used to to retrieve device info,
+  # send/receive audio, perform automation, etc...
+  # All audio units that are configurable in any way have an
+  # endpoint associated with them. This is considered a mandatory
+  # field.
+  endpoint: "126.172.10.102:30000"
 
 spec:
   # Allow this unit to be reserved by claims requesting

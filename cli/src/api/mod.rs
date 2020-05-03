@@ -205,6 +205,16 @@ mod test {
 
     #[test]
     fn test_remove_listener() {
+        let current = Config::from_yaml(CONFIG).unwrap();
+        let mut desired = current.clone();
+        desired.devices[0].inputs.listeners = vec![];
+        let diffs = reconcile(&current, &desired).unwrap();
+        assert_eq!(diffs.len(), 4);
+        match &diffs[1] {
+            Difference::Rem(_) => {},
+            _ => panic!("expected rem for second diff"),
+        };
+        assert_eq!(diffs[2], Difference::Add(String::from("    listeners: []")));
     }
 
     #[test]

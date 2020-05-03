@@ -129,7 +129,8 @@ fn prefix_lines(prefix: &str, lines: &str) -> String {
     let result = lines.split("\n")
         .map(|line| format!("{}{}\n", prefix, line))
         .fold(String::new(), |p, c| format!("{}{}", p, c));
-    String::from(&result[..result.len()-2])
+    // Remove extra \n from the end
+    String::from(&result[..result.len()-1])
 }
 
 fn print_diff(line_prefix: &str, lines: &str, color: term::color::Color) {

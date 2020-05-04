@@ -1,4 +1,5 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use anyhow::{Error, Result};
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
@@ -7,14 +8,33 @@ pub struct PatchArgs {
     #[clap(long = "host")]
     host: Option<String>,
 
-    /// Output audio default. Can be the name or index. Default is system default.
+    /// Output audio default. Can be the name or index.
+    /// Default is system default.
     #[clap(long = "device", short = "d")]
     device: Option<String>,
 
+    /// Channel index. Starts at zero. Multiple channels
+    /// should be comma separated, e.g. 0,1,7,8
+    /// Default is channel 0 only
+    #[clap(long = "channel", short = "c")]
+    channel: Option<String>,
+
     /// Source network interface, e.g. 0.0.0.0:30000
-    /// for all interfaces port 30000
-    #[clap(long = "source", short = "s")]
-    source: String,
+    /// for all interfaces port 30000. Only defined
+    /// when patching from network to a device output.
+    #[clap(long = "source")]
+    source: Option<String>,
+
+    /// Sink address for receiving audio. Only defined
+    /// when patching from device output patch, as
+    /// patching into a device input entails using
+    /// the `source` flag instead.
+    #[clap(long = "sink")]
+    sink: Option<String>,
+
+    /// Sample rate. Default allows the device to choose.
+    #[clap(long = "sample-rate")]
+    sample_rate: Option<usize>,
 }
 
 type TxStream = paradise_core::stream::tx::udp::UdpTxStream<
@@ -24,8 +44,7 @@ type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
     paradise_core::stream::rx::locking::LockingRxBuffer,
 >;
 
-pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
-    /*
+pub async fn main(args: PatchArgs) -> Result<()> {
     let host = match args.host {
         Some(name) => {
             let host = crate::util::get_host_by_name(&name)?;
@@ -38,6 +57,13 @@ pub async fn main(args: PatchArgs) -> Result<(), anyhow::Error> {
             host
         },
     };
+    match (&args.source, &args.sink) {
+        (Some(source), Some(sink)) => return Err(Error::msg("source and sink cannot be specified at the same time")),
+        (None, None) => return Err(Error::msg("you must specify a source or sink address")),
+        (Some(source), _) => {},
+        (_, Some(sink)) => {},
+    };
+    /*
     let device = match args.device {
         Some(name) => {
             match name.parse::<usize>() {

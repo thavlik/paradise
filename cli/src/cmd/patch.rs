@@ -47,13 +47,22 @@ pub struct PatchArgs {
     #[clap(long = "sample-rate")]
     sample_rate: Option<usize>,
 
-    ///
+    /// Transport protocol.
+    /// Valid options: "tcp", "udp", "quic"
+    #[clap(long = "protocol", default_value = "udp")]
+    protocol: String,
+
+    /// TCP and QUIC only: TLS private key
     #[clap(parse(from_os_str), long = "key")]
     key: Option<PathBuf>,
 
-    ///
+    /// TCP and QUIC only: TLS public cert
     #[clap(parse(from_os_str), long = "cert")]
     cert: Option<PathBuf>,
+
+    /// QUIC only: enable stateless retry
+    #[clap(long = "stateless-retry")]
+    stateless_retry: bool,
 }
 
 type TxStream = paradise_core::stream::tx::udp::UdpTxStream<
@@ -67,6 +76,18 @@ type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
 pub const ALPN_QUIC_HTTP: &[&[u8]] = &[b"hq-27"];
 
 pub async fn main(args: PatchArgs) -> Result<()> {
+    match &args.protocol {
+        "udp" => {
+            if args.cert.is_some() {
+                return Err(Error::msg("--cert is not valid with udp"))
+            }
+            if args.key.is_some() {
+                return Err(Error::msg("--key is not valid with udp"))
+            }
+        },
+        "tcp" | "quic" => return Err(Error::msg("only udp is currently supported")),
+    }
+
     let host = match &args.host {
         Some(name) => {
             let host = crate::util::get_host_by_name(name)?;
@@ -81,7 +102,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     };
 
     let (addr, device_is_output) = match (&args.source, &args.sink) {
-        (Some(source), Some(sink)) => return Err(Error::msg("source and sink cannot be specified at the same time")),
+        (Some(_), Some(_)) => return Err(Error::msg("source and sink cannot be specified at the same time")),
         (None, None) => return Err(Error::msg("you must specify a source or sink address")),
         (Some(source), _) => (source, true), // Source address, sink device output
         (_, Some(sink)) => (sink, false), // Source device input, sink address
@@ -140,15 +161,15 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     };
 
     if device_is_output {
-        // TODO: play on device
         let mut transport_config = quinn::TransportConfig::default();
         transport_config.stream_window_uni(0);
         let mut server_config = quinn::ServerConfig::default();
         server_config.transport = std::sync::Arc::new(transport_config);
         let mut server_config = quinn::ServerConfigBuilder::new(server_config);
         server_config.protocols(ALPN_QUIC_HTTP);
-        //server_config.use_stateless_retry(true);
-
+        if args.stateless_retry {
+            server_config.use_stateless_retry(true);
+        }
         if let (Some(key_path), Some(cert_path)) = (&args.key, &args.cert) {
             let key = fs::read(key_path).context("failed to read private key")?;
             let key = if key_path.extension().map_or(false, |x| x == "der") {
@@ -191,7 +212,6 @@ pub async fn main(args: PatchArgs) -> Result<()> {
 
         let mut endpoint = quinn::Endpoint::builder();
         endpoint.listen(server_config.build());
-
 
         let root: PathBuf = ".".into();
         let root = Arc::<Path>::from(root);

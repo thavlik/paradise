@@ -45,10 +45,10 @@ type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
 >;
 
 pub async fn main(args: PatchArgs) -> Result<()> {
-    let host = match args.host {
+    let host = match &args.host {
         Some(name) => {
-            let host = crate::util::get_host_by_name(&name)?;
-            println!("found host \"{}\"", &name);
+            let host = crate::util::get_host_by_name(name)?;
+            println!("found host \"{}\"", name);
             host
         },
         None => {

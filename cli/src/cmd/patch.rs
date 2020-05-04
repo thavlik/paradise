@@ -213,7 +213,12 @@ pub async fn main(args: PatchArgs) -> Result<()> {
                 }),
             );
         }
-
+        let conf = device.default_output_config().unwrap();
+        let conf: cpal::StreamConfig = conf.into();
+        let output_data_fn = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+        };
+        let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
+        output_stream.play()?;
     } else {
         // TODO: Record audio, send it to addr
     }

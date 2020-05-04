@@ -57,7 +57,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
             host
         },
     };
-    let (addr, is_output) = match (&args.source, &args.sink) {
+    let (addr, device_is_output) = match (&args.source, &args.sink) {
         (Some(source), Some(sink)) => return Err(Error::msg("source and sink cannot be specified at the same time")),
         (None, None) => return Err(Error::msg("you must specify a source or sink address")),
         (Some(source), _) => {
@@ -100,23 +100,21 @@ pub async fn main(args: PatchArgs) -> Result<()> {
                 },
             }
         },
-        None => {
-            if is_output {
-                match host.default_output_device() {
-                    Some(device) => {
-                        println!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
-                        device
-                    },
-                    None => return Err(anyhow::Error::msg(format!("default output device not available"))),
-                }
-            } else {
-                match host.default_input_device() {
-                    Some(device) => {
-                        println!("using default input device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
-                        device
-                    },
-                    None => return Err(anyhow::Error::msg(format!("default input device not available"))),
-                }
+        None => if device_is_output {
+            match host.default_output_device() {
+                Some(device) => {
+                    println!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
+                    device
+                },
+                None => return Err(anyhow::Error::msg(format!("default output device not available"))),
+            }
+        } else {
+            match host.default_input_device() {
+                Some(device) => {
+                    println!("using default input device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
+                    device
+                },
+                None => return Err(anyhow::Error::msg(format!("default input device not available"))),
             }
         },
     };

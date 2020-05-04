@@ -187,6 +187,29 @@ pub async fn main(args: PatchArgs) -> Result<()> {
             server_config.certificate(quinn::CertificateChain::from_certs(vec![cert]), key)?;
         }
 
+        let mut endpoint = quinn::Endpoint::builder();
+        endpoint.listen(server_config.build());
+
+        let root = Arc::<Path>::from(options.root.clone());
+        if !root.exists() {
+            bail!("root path does not exist");
+        }
+
+        let mut incoming = {
+            let (endpoint, incoming) = endpoint.bind(&options.listen)?;
+            info!("listening on {}", endpoint.local_addr()?);
+            incoming
+        };
+
+        while let Some(conn) = incoming.next().await {
+            info!("connection incoming");
+            tokio::spawn(
+                handle_connection(root.clone(), conn).unwrap_or_else(move |e| {
+                    error!("connection failed: {reason}", reason = e.to_string())
+                }),
+            );
+        }
+
     } else {
         // TODO: Record audio, send it to addr
     }

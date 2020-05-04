@@ -9,14 +9,22 @@ cpal = { path="../../cpal" } #{ git = "https://github.com/rustaudio/cpal" }
 anyhow = "1.0.12"
 env_logger = "0.7.1"
 clap = { git = "https://github.com/clap-rs/clap/" }
-tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
+tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded", "io-driver", "time"] }
 paradise_core = { path = "../core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 difference = "2.0"
 futures = "0.3.1"
 term = "0.5"
+tracing = "0.1.10"
 quinn = { git = "https://github.com/djc/quinn" }
+crc = "1.8.1"
+bencher = "0.1.5"
+directories = "2.0.0"
+rand = "0.7"
 rcgen = "0.8"
 structopt = "0.3.0"
-directories = "2.0.0"
+tracing-subscriber = { version = "0.2.3", default-features = false, features = ["env-filter", "fmt", "ansi", "chrono"]}
+tracing-futures = { version = "0.2.0", default-features = false, features = ["std-future"] }
+unwrap = "1.2.1"
+url = "2"

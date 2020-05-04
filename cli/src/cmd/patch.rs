@@ -76,7 +76,7 @@ type RxStream = paradise_core::stream::rx::udp::UdpRxStream<
 pub const ALPN_QUIC_HTTP: &[&[u8]] = &[b"hq-27"];
 
 pub async fn main(args: PatchArgs) -> Result<()> {
-    match &args.protocol {
+    match args.protocol.as_str() {
         "udp" => {
             if args.cert.is_some() {
                 return Err(Error::msg("--cert is not valid with udp"))
@@ -85,7 +85,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
                 return Err(Error::msg("--key is not valid with udp"))
             }
         },
-        "tcp" | "quic" => return Err(Error::msg("only udp is currently supported")),
+        _ => return Err(Error::msg("only udp is currently supported")),
     }
 
     let host = match &args.host {

@@ -12,8 +12,7 @@ struct LockingRxBufferState {
 }
 
 pub struct LockingRxBuffer {
-    parity: std::sync::atomic::AtomicUsize,
-    state: [std::sync::Mutex<LockingRxBufferState>; 2],
+    state: std::sync::Mutex<LockingRxBufferState>,
 }
 
 unsafe impl std::marker::Send for LockingRxBuffer {}
@@ -29,33 +28,21 @@ impl LockingRxBuffer {
     }
 
     fn get_state(&self) -> std::sync::MutexGuard<LockingRxBufferState> {
-        let parity = self.parity.load(std::sync::atomic::Ordering::SeqCst) % 2;
-        self.state[parity].lock().unwrap()
+        self.state.lock().unwrap()
     }
 }
 
 impl RxBuffer for LockingRxBuffer {
     fn new() -> Self {
         Self {
-            parity: std::default::Default::default(),
-            state: [
-                std::sync::Mutex::new(LockingRxBufferState {
-                    discard: 0,
-                    oldest: 0,
-                    chunks: vec![Chunk {
-                        timestamp: 0,
-                        samples: vec![0.0; 4 * 192000],
-                    }],
-                }),
-                std::sync::Mutex::new(LockingRxBufferState {
-                    discard: 0,
-                    oldest: 0,
-                    chunks: vec![Chunk {
-                        timestamp: 0,
-                        samples: vec![0.0; 4 * 192000],
-                    }],
-                }),
-            ],
+            state: std::sync::Mutex::new(LockingRxBufferState {
+                discard: 0,
+                oldest: 0,
+                chunks: vec![Chunk {
+                    timestamp: 0,
+                    samples: vec![0.0; 4 * 192000],
+                }],
+            }),
         }
     }
 

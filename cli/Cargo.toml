@@ -14,4 +14,9 @@ paradise_core = { path = "../core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 difference = "2.0"
+futures = "0.3.1"
 term = "0.5"
+quinn = { git = "https://github.com/djc/quinn" }
+rcgen = "0.8"
+structopt = "0.3.0"
+directories = "2.0.0"

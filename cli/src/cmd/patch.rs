@@ -57,19 +57,24 @@ pub async fn main(args: PatchArgs) -> Result<()> {
             host
         },
     };
-    match (&args.source, &args.sink) {
+    let (addr, is_output) = match (&args.source, &args.sink) {
         (Some(source), Some(sink)) => return Err(Error::msg("source and sink cannot be specified at the same time")),
         (None, None) => return Err(Error::msg("you must specify a source or sink address")),
-        (Some(source), _) => {},
-        (_, Some(sink)) => {},
+        (Some(source), _) => {
+            // Source address, sink audio output
+            (source, true)
+        },
+        (_, Some(sink)) => {
+            // Source audio input, sink address
+            (sink, false)
+        },
     };
-    /*
-    let device = match args.device {
+    let device: cpal::Device = match args.device {
         Some(name) => {
             match name.parse::<usize>() {
                 Ok(index) => {
                     if index >= host.devices()?.count() {
-                       return Err(anyhow::Error::msg(format!("device index out of range (tip: run info)")));
+                        return Err(anyhow::Error::msg(format!("device index out of range (tip: run info)")));
                     }
                     match host.devices()?
                         .skip(index)
@@ -83,7 +88,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
                 },
                 _ => match host.devices()?
                     .enumerate()
-                    .find(|(i, d)| match d.name() {
+                    .find(|(_, d)| match d.name() {
                         Ok(n) => n == name,
                         _ => false,
                     }) {
@@ -95,14 +100,30 @@ pub async fn main(args: PatchArgs) -> Result<()> {
                 },
             }
         },
-        None => match host.default_output_device() {
-            Some(device) => {
-                println!("using default device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
-                device
-            },
-            None => return Err(anyhow::Error::msg(format!("default output device not available"))),
+        None => {
+            if is_output {
+                match host.default_output_device() {
+                    Some(device) => {
+                        println!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
+                        device
+                    },
+                    None => return Err(anyhow::Error::msg(format!("default output device not available"))),
+                }
+            } else {
+                match host.default_input_device() {
+                    Some(device) => {
+                        println!("using default input device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
+                        device
+                    },
+                    None => return Err(anyhow::Error::msg(format!("default input device not available"))),
+                }
+            }
         },
     };
+
+
+    /*
+
 
     let stream = RxStream::new(args.source.parse()?)?;
 

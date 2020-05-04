@@ -52,7 +52,7 @@ pub struct PatchArgs {
     key: Option<PathBuf>,
 
     ///
-    #[clap(parse(from_os_str), long = "key")]
+    #[clap(parse(from_os_str), long = "cert")]
     cert: Option<PathBuf>,
 }
 
@@ -189,17 +189,18 @@ pub async fn main(args: PatchArgs) -> Result<()> {
             server_config.certificate(quinn::CertificateChain::from_certs(vec![cert]), key)?;
         }
 
-        /*
         let mut endpoint = quinn::Endpoint::builder();
         endpoint.listen(server_config.build());
 
-        let root = Arc::<Path>::from(options.root.clone());
+
+        let root: PathBuf = ".".into();
+        let root = Arc::<Path>::from(root);
         if !root.exists() {
             bail!("root path does not exist");
         }
 
         let mut incoming = {
-            let (endpoint, incoming) = endpoint.bind(&options.listen)?;
+            let (endpoint, incoming) = endpoint.bind(&addr)?;
             info!("listening on {}", endpoint.local_addr()?);
             incoming
         };
@@ -212,7 +213,6 @@ pub async fn main(args: PatchArgs) -> Result<()> {
                 }),
             );
         }
-        */
 
     } else {
         // TODO: Record audio, send it to addr

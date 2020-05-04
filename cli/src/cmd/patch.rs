@@ -140,7 +140,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     };
 
     if device_is_output {
-        // TODO: Listen on addr, play on device
+        // TODO: play on device
         let mut transport_config = quinn::TransportConfig::default();
         transport_config.stream_window_uni(0);
         let mut server_config = quinn::ServerConfig::default();

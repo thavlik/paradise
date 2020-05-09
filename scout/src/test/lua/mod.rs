@@ -1,7 +1,7 @@
 use super::*;
 
 #[cfg(test)]
-pub mod lua;
+pub mod release;
 
 #[cfg(test)]
-pub mod pathfinding;
+pub mod reserve;

@@ -1,7 +1,9 @@
 use pathfinding::prelude::astar;
-use std::cell::RefCell;
-use std::ops::Deref;
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    ops::Deref,
+    rc::Rc,
+};
 use std::sync::{Arc, Mutex, RwLock};
 use uuid::Uuid;
 use node::{AudioUnit, Node, NodeKind, IO};

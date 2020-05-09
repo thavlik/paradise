@@ -108,10 +108,10 @@ metadata:
   name: test-output-patch
 spec:
   source:
-    name: my-ssl611eq
+    name: my-ssl611eq-claim
     channel: 0
   dest:
-    name: my-audio-interface
+    name: my-audio-interface-claim
     channel: 0
 status:
   # ErrUnableToReconcile
@@ -128,7 +128,7 @@ metadata:
   name: test-input-patch
 spec:
   source:
-    name: my-audio-interface
+    name: my-audio-interface-claim
     channel: 3
   dest:
     name: my-neve511-claim

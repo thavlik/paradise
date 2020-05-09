@@ -25,27 +25,34 @@ spec:
       smooth:
         min: -6
         max: 6
+        default: 0
     - name: gain
       coarse:
         min: 0
         max: 66
         tick: 6
+        default: 0
     - name: phantom_power
-      toggle: {}
+      toggle:
+        default: false
     - name: phase_invert
-      toggle: {}
+      toggle:
+        default: false
     - name: hpf
       smooth:
         min: 20
         max: 250
     - name: hpf_enabled
-      toggle: {}
+      toggle:
+        default: false
     - name: texture
       smooth:
         min: 0
         max: 100
+        default: 20
     - name: silk_enabled
-      toggle: {}
+      toggle:
+        default: false
 ---
 # Namespaced resource for managing individual analog hardware
 # components. Each component will have fully analog I/O on

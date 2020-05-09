@@ -96,7 +96,14 @@ spec:
   # Name of the corresponding AudioUnitClass in the backend.
   className: neve511
 
-  # TODO: expose knobs on front of unit
+  # Define overrides for the unit's configuration. As these
+  # are changed on the kubernetes API server, automation
+  # reconciles any differences with the physical unit.
+  config:
+    - name: gain
+      value: 12
+    - name: silk_enabled
+      value: true
 
 status:
   # Pending

@@ -108,13 +108,11 @@ metadata:
   name: test-output-patch
 spec:
   source:
-    name: my-ssl611eq-output
+    name: my-ssl611eq
     channel: 0
   dest:
-    host: 297.281.23.1
-    port: 35000
-    protocol: UDP
-    tls: my-tls-secret
+    name: my-audio-interface
+    channel: 0
 status:
   # ErrUnableToReconcile
   phase: Active
@@ -130,10 +128,10 @@ metadata:
   name: test-input-patch
 spec:
   source:
-    name: my-entrypoint
+    name: my-audio-interface
     channel: 3
   dest:
-    name: my-neve511-input
+    name: my-neve511-claim
     # You can patch to a unit in a different namespace.
     # By default, it's assumed the unit is in the same
     # namespace as the patch.
@@ -152,14 +150,13 @@ metadata:
 spec:
   source:
     name: my-neve511-claim
-    channel: 0
+    channel: 0 # Output
   dest:
     name: my-comp-claim
-    channel: 0
+    channel: 0 # Input
 status:
   phase: Active
 ---
-# This patch is 100% analog
 apiVersion: app.paradise.dev/v1alpha1
 kind: Patch
 metadata:
@@ -169,7 +166,7 @@ spec:
     name: my-comp-claim
     channel: 0
   dest:
-    name: my-ssl611eq-output
+    name: my-ssl611eq-claim
     channel: 0
 status:
   phase: Active

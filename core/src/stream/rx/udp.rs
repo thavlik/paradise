@@ -1,18 +1,21 @@
 use super::*;
+use crate::stream::buffer::Buffer;
 
-pub struct UdpRxStream<B>
+pub struct UdpRxStream<B, T>
 where
-    B: RxBuffer,
+    B: Buffer<T>,
 {
     clock: std::sync::atomic::AtomicU64,
     stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: std::sync::Arc<B>,
     sync: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    phantom: std::marker::PhatomData<T>,
 }
 
-impl<B> UdpRxStream<B>
+impl<B, T> UdpRxStream<B, T>
 where
-    B: 'static + RxBuffer,
+    B: 'static + Buffer<T>,
+    T: Clone,
 {
     pub fn new(addr: std::net::SocketAddr) -> std::io::Result<std::sync::Arc<Self>> {
         let sock = std::net::UdpSocket::bind(&addr)?;
@@ -35,6 +38,7 @@ where
         sync: std::sync::Arc<std::sync::atomic::AtomicU64>,
         stop: crossbeam::crossbeam_channel::Receiver<()>,
     ) {
+        /*
         const BUFFER_SIZE: usize = 256_000;
         let mut buf: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
         // TODO: set clock. Right now all samples are accepted.
@@ -78,25 +82,27 @@ where
                 continue;
             }
             let num_samples = data.len() / 4;
-            let samples: &[f32] =
+            let samples: &[T] =
                 unsafe { std::slice::from_raw_parts(data.as_ptr() as _, num_samples) };
-            b.accumulate(timestamp, samples);
-        }
+            b.accumulate(samples);
+        }*/
     }
 }
 
-impl<B> std::ops::Drop for UdpRxStream<B>
+impl<B, T> std::ops::Drop for UdpRxStream<B, T>
 where
-    B: RxBuffer,
+    B: Buffer<T>,
+    T: Clone,
 {
     fn drop(&mut self) {
         self.stop.send(());
     }
 }
 
-impl<B> RxStream for UdpRxStream<B>
+impl<B, T> RxStream for UdpRxStream<B, T>
 where
-    B: 'static + RxBuffer,
+    B: 'static + Buffer<T>,
+    T: Clone,
 {
     fn process(&self, output_buffer: &mut [f32]) -> u64 {
         // Swap out the current receive buffer

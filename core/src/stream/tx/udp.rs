@@ -1,27 +1,32 @@
 use super::*;
+use crate::stream::buffer::Buffer;
 
-pub struct UdpTxStream<B>
+pub struct UdpTxStream<B, T>
 where
-    B: TxBuffer,
+    B: Buffer<T>,
+    T: Clone,
 {
     stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: std::sync::Arc<B>,
     clock: std::sync::Arc<std::sync::atomic::AtomicU64>,
     status: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    phantom: std::marker::PhatomData<T>,
 }
 
-impl<B> std::ops::Drop for UdpTxStream<B>
+impl<B, T> std::ops::Drop for UdpTxStream<B, T>
 where
-    B: TxBuffer,
+    B: Buffer<T>,
+    T: Clone,
 {
     fn drop(&mut self) {
         self.stop.send(());
     }
 }
 
-impl<B> UdpTxStream<B>
+impl<B, T> UdpTxStream<B, T>
 where
-    B: 'static + TxBuffer,
+    B: 'static + Buffer<T>,
+    T: Clone,
 {
     pub fn new(dest: std::net::SocketAddr) -> std::io::Result<std::sync::Arc<Self>> {
         let addr = format!("0.0.0.0:0"); // double check me
@@ -73,7 +78,7 @@ where
             let clock = clock.load(std::sync::atomic::Ordering::SeqCst);
             let status = status.load(std::sync::atomic::Ordering::SeqCst) as u8;
             let hdr_len = write_message_header(&mut buf[..], None, clock, status);
-            let data: &mut [f32] = unsafe {
+            let data: &mut [T] = unsafe {
                 std::slice::from_raw_parts_mut(
                     buf[hdr_len..].as_mut_ptr() as _,
                     buf[hdr_len..].len() / 4,
@@ -96,11 +101,12 @@ where
     }
 }
 
-impl<B> TxStream for UdpTxStream<B>
+impl<B, T> TxStream for UdpTxStream<B, T>
 where
-    B: 'static + TxBuffer,
+    B: 'static + Buffer<T>,
+    T: Clone,
 {
-    fn process(&self, input_buffer: &[f32], clock: u64) {
+    fn process(&self, input_buffer: &[T], clock: u64) {
         // Accumulate the samples in the send buffer
         self.buf.accumulate(input_buffer);
         self.clock.store(clock, std::sync::atomic::Ordering::SeqCst);

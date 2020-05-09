@@ -63,15 +63,6 @@ apiVersion: app.paradise.dev/v1alpha1
 kind: AudioUnitClaim
 metadata:
   name: neve511-claim-0
-  annotations:
-    # For management and billing purposes, the claim can
-    # be annotated with information about end user ownership.
-    paradise.dev/owner: "6dc990b3-ce16-41ab-8952-41ffce9ebd95"
-  finalizers:
-    # The resource will be stay in the Terminating state until
-    # this finalizer is removed by the operator. It will ensure
-    # hardware resources are properly freed before deletion.
-    - paradise.dev/auc-protection
 spec:
   # Name of the corresponding AudioUnitClass in the backend.
   className: neve511

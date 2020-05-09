@@ -55,12 +55,10 @@ spec:
     name: pb-0
     # Globally unique serial number for the particular patchbay.
     uid: "602898e4-fe9f-424d-9a31-275c5e26023a"
-    inputs:
-      # OUTPUT 83 of the patchbay -> first (only) input of unit
-      - 83
-    outputs:
-      # First (only) output of unit -> INPUT 34 of patchbay
-      - 34
+    outputs:  # Output channels reserved on patchbay
+      - 83    # OUTPUT 83 of the patchbay -> first (only) input of unit
+    inputs:   # Input channels reserved on patchbay
+      - 34    # First (only) output of unit -> INPUT 34 of patchbay
 ---
 apiVersion: app.paradise.dev/v1alpha1
 kind: AudioUnitClaim

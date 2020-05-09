@@ -51,10 +51,9 @@ spec:
 
   # Name of the patchbay servicing I/O for the unit.
   patchbay:
-    # The name of the patchbay resource. TODO: make this a k8s resource?
-    name: pb-0
     # Globally unique serial number for the particular patchbay.
     uid: "602898e4-fe9f-424d-9a31-275c5e26023a"
+
     outputs:  # Output channels reserved on patchbay
       - 83    # OUTPUT 83 of the patchbay -> first (only) input of unit
     inputs:   # Input channels reserved on patchbay

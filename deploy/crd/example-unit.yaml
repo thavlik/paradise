@@ -17,6 +17,35 @@ spec:
 
   # Number of output signals. Defaults to 1.
   outputs: 1
+
+  # Unit configuration. Corresponds to knobs and buttons
+  # on the front of the unit.
+  config:
+    - name: trim
+      smooth:
+        min: -6
+        max: 6
+    - name: gain
+      coarse:
+        min: 0
+        max: 66
+        tick: 6
+    - name: phantom_power
+      toggle: {}
+    - name: phase_invert
+      toggle: {}
+    - name: hpf
+      smooth:
+        min: 20
+        max: 250
+    - name: hpf_enabled
+      toggle: {}
+    - name: texture
+      smooth:
+        min: 0
+        max: 100
+    - name: silk_enabled
+      toggle: {}
 ---
 # Namespaced resource for managing individual analog hardware
 # components. Each component will have fully analog I/O on
@@ -66,6 +95,8 @@ metadata:
 spec:
   # Name of the corresponding AudioUnitClass in the backend.
   className: neve511
+
+  # TODO: expose knobs on front of unit
 
 status:
   # Pending

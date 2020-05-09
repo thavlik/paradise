@@ -15,3 +15,6 @@ r2d2_redis = { git = "https://github.com/sorccu/r2d2-redis"}
 anyhow = "1.0.28"
 serde = "1.0.63"
 bincode = "1.2.1"
+
+[dev-dependencies]
+uuid = { version = "0.8", features = ["v4"] }

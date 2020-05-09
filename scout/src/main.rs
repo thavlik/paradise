@@ -8,6 +8,12 @@ use uuid::Uuid;
 mod node;
 mod pool;
 
+pub mod rk {
+    pub fn claim(resource: &str) -> String {
+        format!("c:{}", resource)
+    }
+}
+
 #[cfg(test)]
 mod test;
 

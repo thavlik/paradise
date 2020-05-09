@@ -1,5 +1,6 @@
 use crate::types;
 use actix_web;
+use anyhow::{Error, Result};
 use colored::*;
 
 fn error_json<T: std::string::ToString>(e: T) -> String {
@@ -215,19 +216,19 @@ pub mod test {
             #[async_trait]
             impl<T> types::AudioInterface for Client<T> where T: types::AudioInterface + std::clone::Clone {
 
-                    async fn create_stream(&self, req: types::CreateStreamRequest) -> Result<types::CreateStreamResponse, String> {
+                    async fn create_stream(&self, req: types::CreateStreamRequest) -> Result<types::CreateStreamResponse> {
                         Err(String::new())
                     }
 
-                    async fn delete_stream(&self, req: types::DeleteStreamRequest) -> Result<types::DeleteStreamResponse, String> {
+                    async fn delete_stream(&self, req: types::DeleteStreamRequest) -> Result<types::DeleteStreamResponse> {
                         Err(String::new())
                     }
 
-                    async fn get_device_info(&self, req: types::GetDeviceInfoRequest) -> Result<types::GetDeviceInfoResponse, String> {
+                    async fn get_device_info(&self, req: types::GetDeviceInfoRequest) -> Result<types::GetDeviceInfoResponse> {
                         Err(String::new())
                     }
 
-                    async fn list_streams(&self, req: types::ListStreamsRequest) -> Result<types::ListStreamsResponse, String> {
+                    async fn list_streams(&self, req: types::ListStreamsRequest) -> Result<types::ListStreamsResponse> {
                         Err(String::new())
                     }
 

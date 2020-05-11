@@ -39,6 +39,9 @@ mod macos {
     // Removes the driver from the system without restarting Core Audio.
     // Requires sudo.
     fn remove_device(name: &str) -> Result<()> {
+        if !device_exists(name)? {
+            return Err(Error::msg(format!("device '{}' not found", name)));
+        }
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")

@@ -30,6 +30,9 @@ mod macos {
     }
 
     fn install_device(device: &Device) -> Result<()> {
+        if device_exists(&device.name)? {
+            return Err(Error::msg(format!("device '{}' already exists", &device.name)));
+        }
         Ok(())
     }
 

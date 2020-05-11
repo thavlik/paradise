@@ -14,11 +14,10 @@ mod macos {
 
     // TODO: remove the driver from the macOS system, restart CoreAudio with
     fn remove_device(name: &str) -> Result<()> {
-        let command = format!("rm -rf {}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name);
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")
-            .arg(&command)
+            .arg(format!("rm -rf {}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name))
             .status()?;
         if status.success() {
             Ok(())

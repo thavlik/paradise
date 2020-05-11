@@ -39,6 +39,16 @@ mod macos {
             Err(Error::msg(format!("command failed with code {:?}", status.code())))
         }
     }
+
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        //#[test]
+        //fn restart_core_audio_should_work() {
+        //    restart_core_audio().unwrap();
+        //}
+    }
 }
 
 /// Create a virtual audio device

@@ -2,6 +2,10 @@ use anyhow::{Result, Error};
 use cpal::traits::{DeviceTrait, HostTrait};
 use std::process::Command;
 
+pub struct Device {
+    name: String,
+}
+
 #[cfg(target_os = "macos")]
 mod macos {
     use super::*;
@@ -9,8 +13,9 @@ mod macos {
     const PLUGIN_PREFIX: &'static str = "paradise-";
     const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
 
-    //fn install_device(device_config: DeviceConfig) -> Result<()> {
-    //}
+    fn install_device(device: &Device) -> Result<()> {
+        Ok(())
+    }
 
     // Removes the driver from the system without restarting Core Audio.
     // Requires sudo.
@@ -45,10 +50,30 @@ mod macos {
     mod test {
         use super::*;
 
-        //#[test]
-        //fn restart_core_audio_should_work() {
-        //    restart_core_audio().unwrap();
-        //}
+        fn test_device_name() -> String {
+            format!("test-{}", Uuid::new_v4().to_string()[..8])
+        }
+
+        #[test]
+        fn restart_core_audio_should_work() {
+            restart_core_audio().unwrap();
+        }
+
+        #[test]
+        fn install_uninstall_should_work() {
+            let device = Device{
+                name: test_device_name(),
+            };
+            install_device(&device).unwrap();
+            restart_core_audio().unwrap();
+            // TODO: verify device was installed correctly using cpal
+            // TODO: test streaming with UDP/QUIC streams
+            remove_device(&device.name);
+            // TODO: test if device is still streaming
+            restart_core_audio().unwrap();
+            // TODO: verify stream is stopped
+            // TODO: verify device was removed correctly using cpal
+        }
     }
 }
 

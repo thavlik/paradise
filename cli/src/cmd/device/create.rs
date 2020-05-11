@@ -29,10 +29,14 @@ mod macos {
         }
     }
 
+    // Generates and installs a driver package for the given Device.
+    // Requires sudo.
     fn install_device(device: &Device) -> Result<()> {
         if device_exists(&device.name)? {
             return Err(Error::msg(format!("device '{}' already exists", &device.name)));
         }
+        // TODO: generate modified .driver package
+        // TODO: copy driver package to PLUGIN_PATH
         Ok(())
     }
 

@@ -1,6 +1,7 @@
 use anyhow::{Result, Error};
 use cpal::traits::{DeviceTrait, HostTrait};
 use std::process::Command;
+use std::path::Path;
 
 pub struct Device {
     name: String,
@@ -13,6 +14,14 @@ mod macos {
     const PLUGIN_PREFIX: &'static str = "paradise-";
     const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
 
+    fn driver_path(name: &str) -> String {
+        format!("{}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name)
+    }
+
+    fn device_exists(name: &str) -> Result<bool> {
+        Ok(Path::new(&driver_path(name)).exists())
+    }
+
     fn install_device(device: &Device) -> Result<()> {
         Ok(())
     }
@@ -23,7 +32,7 @@ mod macos {
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")
-            .arg(format!("rm -rf {}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name))
+            .arg(format!("rm -rf {}", driver_path(name)))
             .status()?;
         if status.success() {
             Ok(())

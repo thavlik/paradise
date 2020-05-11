@@ -61,8 +61,10 @@ mod macos {
 
         #[test]
         fn install_uninstall_should_work() {
+            let name = test_device_name();
+            // TODO: ensure device with this name does not already exist
             let device = Device{
-                name: test_device_name(),
+                name,
             };
             install_device(&device).unwrap();
             restart_core_audio().unwrap();

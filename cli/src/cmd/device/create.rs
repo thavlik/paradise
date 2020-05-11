@@ -6,12 +6,26 @@ use std::process::Command;
 mod macos {
     use super::*;
 
+    const PLUGIN_PREFIX: &'static str = "paradise-";
+    const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
+
     //fn install_device(device_config: DeviceConfig) -> Result<()> {
     //}
 
     // TODO: remove the driver from the macOS system, restart CoreAudio with
-    //fn remove_device(uid: Uuid) -> Result<()> {
-    //}
+    fn remove_device(name: &str) -> Result<()> {
+        let command = format!("rm -rf {}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name);
+        let status = Command::new("sudo")
+            .arg("sh")
+            .arg("-c")
+            .arg(&command)
+            .status()?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(Error::msg(format!("command failed with code {:?}", status.code())))
+        }
+    }
 
     fn restart_core_audio() -> Result<()> {
         let status = Command::new("sudo")
@@ -22,7 +36,7 @@ mod macos {
         if status.success() {
             Ok(())
         } else {
-            Err(Error::msg(format!("restart command exited with code {:?}", status.code())))
+            Err(Error::msg(format!("command failed with code {:?}", status.code())))
         }
     }
 }

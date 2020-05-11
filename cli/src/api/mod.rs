@@ -198,7 +198,7 @@ fn print_diffs(diffs: &Vec<Difference>) {
 mod test {
     use super::*;
 
-    const CONFIG: &'static str = include_str!("../../../config.yaml");
+    const CONFIG: &'static str = include_str!("../../../config-v1.yaml");
 
     fn is_same(diff: &Difference) -> bool {
         match diff {

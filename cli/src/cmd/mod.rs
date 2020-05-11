@@ -3,9 +3,9 @@ use clap::Clap;
 pub mod apply;
 pub mod daemon;
 pub mod device;
-pub mod echo;
+//pub mod echo;
 pub mod info;
-pub mod patch;
+//pub mod patch;
 pub mod reconcile;
 
 #[derive(Clap)]
@@ -31,16 +31,16 @@ pub enum SubCommand {
     List(device::list::ListArgs),
 
     /// Proxies a local port to a destination address
-    #[clap(name = "echo")]
-    Echo(echo::EchoArgs),
+    //#[clap(name = "echo")]
+    //Echo(echo::EchoArgs),
 
     /// Enumerate IO details on all audio devices
     #[clap(name = "info")]
     Info(info::InfoArgs),
 
     /// Patch mode
-    #[clap(name = "patch")]
-    Patch(patch::PatchArgs),
+    //#[clap(name = "patch")]
+    //Patch(patch::PatchArgs),
 
     /// Reconcile system drivers with config
     #[clap(name = "reconcile")]

@@ -1758,7 +1758,6 @@ dependencies = [
  "directories",
  "env_logger",
  "futures 0.3.4",
- "paradise_core",
  "quinn",
  "rand",
  "rcgen",

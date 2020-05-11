@@ -12,7 +12,8 @@ mod macos {
     //fn install_device(device_config: DeviceConfig) -> Result<()> {
     //}
 
-    // TODO: remove the driver from the macOS system, restart CoreAudio with
+    // Removes the driver from the system without restarting Core Audio.
+    // Requires sudo.
     fn remove_device(name: &str) -> Result<()> {
         let status = Command::new("sudo")
             .arg("sh")
@@ -26,6 +27,7 @@ mod macos {
         }
     }
 
+    // Restarts core audio. Requires sudo.
     fn restart_core_audio() -> Result<()> {
         let status = Command::new("sudo")
             .arg("sh")

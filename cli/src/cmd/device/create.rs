@@ -1,5 +1,31 @@
-use anyhow::Error;
+use anyhow::{Result, Error};
 use cpal::traits::{DeviceTrait, HostTrait};
+use std::process::Command;
+
+#[cfg(target_os = "macos")]
+mod macos {
+    use super::*;
+
+    //fn install_device(device_config: DeviceConfig) -> Result<()> {
+    //}
+
+    // TODO: remove the driver from the macOS system, restart CoreAudio with
+    //fn remove_device(uid: Uuid) -> Result<()> {
+    //}
+
+    // TODO: run this shell script
+    fn restart_core_audio() -> Result<()> {
+        let status = Command::new("bash")
+            .arg("-c")
+            .arg("sudo launchctl kickstart -k system/com.apple.audio.coreaudiod")
+            .status()?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(Error::msg(format!("restart command exited with code {:?}", status.code())))
+        }
+    }
+}
 
 /// Create a virtual audio device
 #[derive(clap::Clap)]

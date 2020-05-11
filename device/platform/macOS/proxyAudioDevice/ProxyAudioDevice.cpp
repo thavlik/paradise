@@ -2721,7 +2721,7 @@ OSStatus ProxyAudioDevice::GetDevicePropertyData(AudioServerPlugInDriverRef inDr
             *((CFStringRef *)outData) = CFStringCreateCopy(NULL, deviceName);
             *outDataSize = sizeof(CFStringRef);
             break;
-
+ 
         case kAudioObjectPropertyManufacturer:
             //    This is the human readable name of the maker of the plug-in.
             FailWithAction(inDataSize < sizeof(CFStringRef),

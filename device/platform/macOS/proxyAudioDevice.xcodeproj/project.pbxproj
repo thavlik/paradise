@@ -31,7 +31,7 @@
 		77CAB5812215405C0092B2B0 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77CAB5802215405C0092B2B0 /* Cocoa.framework */; };
 		77CE24F02375EF7B004556AD /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77CE24EE2375EF7B004556AD /* utilities.cpp */; };
 		77CE24F12375F011004556AD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DD7AA9915EC572000C67AE1 /* IOKit.framework */; };
-		793AF43B245BC78000AB419D /* libparadise_device.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 793AF436245BC6D900AB419D /* libparadise_device.a */; };
+		798DEA63246902A000A2B0EF /* ProxyAudioDevice.driver in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2D7477A91578168D00412279 /* ProxyAudioDevice.driver */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +43,19 @@
 			remoteInfo = ProxyAudioDevice;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		798DEA622469028A00A2B0EF /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "${PROJECT_DIR}/build/${CONFIGURATION}";
+			dstSubfolderSpec = 0;
+			files = (
+				798DEA63246902A000A2B0EF /* ProxyAudioDevice.driver in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2D46CA7917D6AD8A00049D4A /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -97,7 +110,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				793AF43B245BC78000AB419D /* libparadise_device.a in Frameworks */,
 				77CE24F12375F011004556AD /* IOKit.framework in Frameworks */,
 				77CAB5632212252F0092B2B0 /* AppKit.framework in Frameworks */,
 				776E4F5E2208138E00AE0417 /* Carbon.framework in Frameworks */,
@@ -228,6 +240,7 @@
 				2D7477A51578168D00412279 /* Sources */,
 				2D7477A61578168D00412279 /* Frameworks */,
 				2D46CA7A17D6ADC500049D4A /* Resources */,
+				798DEA622469028A00A2B0EF /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -265,12 +278,12 @@
 				LastUpgradeCheck = 1010;
 				TargetAttributes = {
 					2D7477A81578168D00412279 = {
-						DevelopmentTeam = NT8P8N8KB5;
+						DevelopmentTeam = 9F38VUKBEB;
 						ProvisioningStyle = Automatic;
 					};
 					77CAB567221534640092B2B0 = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = NT8P8N8KB5;
+						DevelopmentTeam = 9F38VUKBEB;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.HardenedRuntime = {
@@ -580,7 +593,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = NT8P8N8KB5;
+				DEVELOPMENT_TEAM = 9F38VUKBEB;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=0",
@@ -590,6 +603,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Audio/Plug-Ins/HAL";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MARKETING_VERSION = 1.0.5;
+				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.paradise.VirtualDevice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -606,7 +620,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = NT8P8N8KB5;
+				DEVELOPMENT_TEAM = 9F38VUKBEB;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=1",
@@ -616,6 +630,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Audio/Plug-Ins/HAL";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MARKETING_VERSION = 1.0.5;
+				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.paradise.VirtualDevice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -632,7 +647,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = NT8P8N8KB5;
+				DEVELOPMENT_TEAM = 9F38VUKBEB;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=1",
@@ -642,6 +657,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Audio/Plug-Ins/HAL";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MARKETING_VERSION = 1.0.5;
+				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = dev.paradise.VirtualDevice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -670,7 +686,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = NT8P8N8KB5;
+				DEVELOPMENT_TEAM = 9F38VUKBEB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -682,6 +698,7 @@
 				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.briankendall.Proxy-Audio-Device-Settings";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -709,7 +726,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = NT8P8N8KB5;
+				DEVELOPMENT_TEAM = 9F38VUKBEB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -725,6 +742,7 @@
 				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.briankendall.Proxy-Audio-Device-Settings";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -752,7 +770,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = NT8P8N8KB5;
+				DEVELOPMENT_TEAM = 9F38VUKBEB;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -768,6 +786,7 @@
 				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.briankendall.Proxy-Audio-Device-Settings";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRIP_INSTALLED_PRODUCT = NO;

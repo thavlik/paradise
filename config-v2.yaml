@@ -1,0 +1,14 @@
+devices:
+  # Unique device name, but ultimately each device is
+  # assigned a UUID upon creation. It follows the same
+  # conventions as Kubernetes names, so use hyphens and
+  # only lowercase letters.
+  - name: virtual-quantum
+  # Optional. In cases where the name of the device is
+  # displayed this text will be used instead of the `name`
+  # field.
+    displayName: "Virtual Quantum"
+    inputs:
+      channels: 2
+    outputs:
+      channels: 2

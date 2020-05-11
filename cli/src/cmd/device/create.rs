@@ -67,7 +67,7 @@ mod macos {
             install_device(&device).unwrap();
             restart_core_audio().unwrap();
             // TODO: verify device was installed correctly using cpal
-            // TODO: test streaming with UDP/QUIC streams
+            // TODO: test streaming with UDP/QUIC
             remove_device(&device.name);
             // TODO: test if device is still streaming
             restart_core_audio().unwrap();

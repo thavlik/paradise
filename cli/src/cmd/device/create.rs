@@ -19,7 +19,14 @@ mod macos {
     }
 
     fn device_exists(name: &str) -> Result<bool> {
-        Ok(Path::new(&driver_path(name)).exists())
+        match std::fs::metadata(&driver_path(name)) {
+            Ok(_) => Ok(true),
+            Err(e) => if e.kind() == std::io::ErrorKind::NotFound {
+                Ok(false)
+            } else {
+                Err(e.into())
+            },
+        }
     }
 
     fn install_device(device: &Device) -> Result<()> {

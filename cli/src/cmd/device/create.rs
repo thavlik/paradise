@@ -13,7 +13,6 @@ mod macos {
     //fn remove_device(uid: Uuid) -> Result<()> {
     //}
 
-    // TODO: run this shell script
     fn restart_core_audio() -> Result<()> {
         let status = Command::new("sudo")
             .arg("sh")

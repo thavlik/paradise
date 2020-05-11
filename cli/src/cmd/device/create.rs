@@ -16,7 +16,7 @@ mod macos {
     // TODO: run this shell script
     fn restart_core_audio() -> Result<()> {
         let status = Command::new("sudo")
-            .arg("bash")
+            .arg("sh")
             .arg("-c")
             .arg("launchctl kickstart -k system/com.apple.audio.coreaudiod")
             .status()?;

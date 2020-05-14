@@ -1764,6 +1764,7 @@ dependencies = [
  "serde",
  "serde_yaml",
  "structopt",
+ "tempfile",
  "term",
  "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
  "tracing",

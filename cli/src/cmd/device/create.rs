@@ -22,12 +22,14 @@ mod macos {
     mod fixtures {
         pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
         pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
+        pub const CODE_RESOURCES: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
     }
 
     #[cfg(not(debug_assertions))]
     mod fixtures {
         pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Info.plist");
         pub const LOCALIZABLE_STRINGS: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
+        pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
     }
 
     fn driver_path(name: &str) -> String {
@@ -54,6 +56,8 @@ mod macos {
         fs::create_dir(path.join("Contents/MacOS/Resources/English.lproj"))?;
         fs::File::create(path.join("Contents/Info.plist"))?
             .write_all(fixtures::INFO_PLIST.as_bytes())?;
+        fs::File::create(path.join("Contents/_CodeSignature/CodeResources"))?
+            .write_all(fixtures::CODE_RESOURCES.as_bytes())?;
         fs::File::create(path.join("Contents/Resources/English.lproj/Localizable.strings"))?
             .write_all(fixtures::LOCALIZABLE_STRINGS)?;
         Ok(path)

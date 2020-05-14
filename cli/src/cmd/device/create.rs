@@ -18,6 +18,11 @@ mod macos {
         format!("{}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name)
     }
 
+    fn generate_driver(device: &Device) -> Result<String> {
+        let path = String::new();
+        Ok(path)
+    }
+
     fn device_exists(name: &str) -> Result<bool> {
         match std::fs::metadata(&driver_path(name)) {
             Ok(_) => Ok(true),
@@ -29,15 +34,26 @@ mod macos {
         }
     }
 
+    fn install_driver_package(device: &Device, path: &str) -> Result<()> {
+        let status = Command::new("sudo")
+            .arg("sh")
+            .arg("-c")
+            .arg(format!("mv {} {}", path, driver_path(&device.name)))
+            .status()?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(Error::msg(format!("command failed with code {:?}", status.code())))
+        }
+    }
+
     // Generates and installs a driver package for the given Device.
     // Requires sudo.
     fn install_device(device: &Device) -> Result<()> {
         if device_exists(&device.name)? {
             return Err(Error::msg(format!("device '{}' already exists", &device.name)));
         }
-        // TODO: generate modified .driver package
-        // TODO: copy driver package to PLUGIN_PATH
-        Ok(())
+        install_driver_package(device, &generate_driver(device)?)
     }
 
     // Removes the driver from the system without restarting Core Audio.

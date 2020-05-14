@@ -1,7 +1,8 @@
 use anyhow::{Result, Error};
 use cpal::traits::{DeviceTrait, HostTrait};
 use std::process::Command;
-use std::path::Path;
+use std::path::PathBuf;
+use uuid::Uuid;
 
 pub struct Device {
     name: String,
@@ -10,16 +11,51 @@ pub struct Device {
 #[cfg(target_os = "macos")]
 mod macos {
     use super::*;
+    use std::fs;
+    use std::io::Write;
 
     const PLUGIN_PREFIX: &'static str = "paradise-";
     const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
 
-    fn driver_path(name: &str) -> String {
-        format!("{}/{}{}", PLUGIN_PATH, PLUGIN_PREFIX, name)
+
+    #[cfg(debug_assertions)]
+    mod fixtures {
+        pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
+        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
     }
 
-    fn generate_driver(device: &Device) -> Result<String> {
-        let path = String::new();
+    #[cfg(not(debug_assertions))]
+    mod fixtures {
+        pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Info.plist");
+        pub const LOCALIZABLE_STRINGS: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
+    }
+
+    fn driver_path(name: &str) -> String {
+        format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
+    }
+
+    fn generate_driver(device: &Device) -> Result<PathBuf> {
+        // ProxyAudioDevice.driver/Contents
+        // ProxyAudioDevice.driver/Contents/_CodeSignature
+        // ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources
+        // ProxyAudioDevice.driver/Contents/MacOS
+        // ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice
+        // ProxyAudioDevice.driver/Contents/Resources
+        // ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns
+        // ProxyAudioDevice.driver/Contents/Resources/English.lproj
+        // ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings
+        // ProxyAudioDevice.driver/Contents/Info.plist
+        let path = PathBuf::from(format!("/tmp/{}{}.driver-{}", PLUGIN_PREFIX, &device.name, Uuid::new_v4()));
+        fs::create_dir(&path)?;
+        fs::create_dir(path.join("Contents"))?;
+        fs::create_dir(path.join("Contents/MacOS/_CodeSignature"))?;
+        fs::create_dir(path.join("Contents/MacOS"))?;
+        fs::create_dir(path.join("Contents/MacOS/Resources"))?;
+        fs::create_dir(path.join("Contents/MacOS/Resources/English.lproj"))?;
+        fs::File::create(path.join("Contents/Info.plist"))?
+            .write_all(fixtures::INFO_PLIST.as_bytes())?;
+        fs::File::create(path.join("Contents/Resources/English.lproj/Localizable.strings"))?
+            .write_all(fixtures::LOCALIZABLE_STRINGS)?;
         Ok(path)
     }
 
@@ -34,11 +70,11 @@ mod macos {
         }
     }
 
-    fn install_driver_package(device: &Device, path: &str) -> Result<()> {
+    fn install_driver_package(device: &Device, path: &PathBuf) -> Result<()> {
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")
-            .arg(format!("mv {} {}", path, driver_path(&device.name)))
+            .arg(format!("mv {} {}", path.to_str().unwrap(), driver_path(&device.name)))
             .status()?;
         if status.success() {
             Ok(())

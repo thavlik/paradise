@@ -74,22 +74,23 @@ mod macos {
     }
 
     fn install_driver_package(device: &Device, path: &PathBuf) -> Result<()> {
-        let path = path.to_str().unwrap();
+        let dest = driver_path(&device.name);
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")
-            .arg(format!("mv {} {}", path, driver_path(&device.name)))
+            .arg(format!("mv {} {}", path.to_str().unwrap(), &dest))
             .status()?;
         if !status.success() {
-            return Err(Error::msg(format!("command failed with code {:?}", status.code())))
+            return Err(Error::msg(format!("mv command failed with code {:?}", status.code())))
         }
-        let status = Command::new("sudo")
-            .arg("chmod")
-            .arg("755")
-            .arg(format!("{}/Contents/MacOS/ProxyAudioDevice", path))
-            .status()?;
-        if !status.success() {
-            return Err(Error::msg(format!("command failed with code {:?}", status.code())))
+        let cmd = format!("chmod 755 {}/Contents/MacOS/ProxyAudioDevice", &dest);
+        let output = Command::new("sudo")
+            .arg("sh")
+            .arg("-c")
+            .arg(&cmd)
+            .output()?;
+        if !output.status.success() {
+            return Err(Error::msg(format!("command '{}' failed with code {:?}: {}", &cmd, output.status.code(), String::from_utf8(output.stdout).unwrap())))
         }
         Ok(())
     }
@@ -155,7 +156,7 @@ mod macos {
             let device = Device{
                 name,
             };
-            install_device(&device).unwrap();
+            install_device(&device).expect("device install");
             restart_core_audio().unwrap();
             //// TODO: verify device was installed correctly using cpal
             //// TODO: test streaming with UDP/QUIC

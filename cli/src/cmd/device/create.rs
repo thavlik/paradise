@@ -138,9 +138,6 @@ mod macos {
     }
 
     fn verify_device(device: &Device) -> Result<()> {
-        if !device_exists(&device.name)? {
-            return Err(Error::msg(format!("device '{}' does not exist", &device.name)));
-        }
         let available_hosts = cpal::available_hosts();
         let mut found = false;
         for host_id in available_hosts {
@@ -149,6 +146,8 @@ mod macos {
                 if let Ok(name) = d.name() {
                     if name == device.display_name {
                         // At least one device with the same display name was found.
+                        // TODO: verify input config
+                        // TODO: verify output config
                         found = true;
                         break;
                     }
@@ -179,18 +178,21 @@ mod macos {
             let name = test_device_name();
             // TODO: ensure device with this name does not already exist
             let device = Device{
+                display_name: String::from("Proxy Audio Device"),
                 name,
             };
             install_device(&device).unwrap();
+            assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             verify_device(&device).unwrap();
             //// TODO: test streaming with UDP/QUIC
             remove_device(&device.name).expect("remove");
+            verify_device(&device).expect("should still exist");
+            assert_eq!(false, device_exists(&device.name).unwrap());
             //// TODO: ensure device is still streaming
             restart_core_audio().unwrap();
             //// TODO: verify stream is stopped
-            assert!(!device_exists(&device.name)?);
-            verify_device(&device).expect_err("verify");
+            verify_device(&device).expect_err("should not exist");
         }
     }
 }

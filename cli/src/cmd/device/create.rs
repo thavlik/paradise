@@ -21,11 +21,11 @@ mod macos {
 
     #[cfg(debug_assertions)]
     mod fixtures {
-        pub const INFO_PLIST: &'static str = include_str!("../../../../../../ProxyAudioDevice.driver/Contents/Info.plist");
-        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../../../ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
-        pub const CODE_RESOURCES: &'static str = include_str!("../../../../../../ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
-        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../../../ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
-        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../../../ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
+        pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
+        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
+        pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
     }
 
     #[cfg(not(debug_assertions))]
@@ -188,9 +188,9 @@ mod macos {
         //}
 
         #[test]
-        fn install_uninstall_should_work() {
+        fn e2e() {
             let name = test_device_name();
-            // TODO: ensure device with this name does not already exist
+            assert!(!device_exists(&name).unwrap());
             let device = Device {
                 display_name: String::from("Proxy Audio Device"),
                 name,
@@ -199,7 +199,7 @@ mod macos {
             assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             verify_device(&device).unwrap();
-            //// TODO: test streaming with UDP/QUIC
+            // TODO: create output stream to ProxyAudioDevice and verify exact audio can be received
             remove_device(&device.name).expect("remove");
             verify_device(&device).expect("should still exist");
             assert_eq!(false, device_exists(&device.name).unwrap());

@@ -82,7 +82,7 @@ mod macos {
             .arg(format!("mv {} {}", path.to_str().unwrap(), &dest))
             .status()?;
         if !status.success() {
-            return Err(Error::msg(format!("mv command failed with code {:?}", status.code())))
+            return Err(Error::msg(format!("mv command failed with code {:?}", status.code())));
         }
         let cmd = format!("chmod 755 {}/Contents/MacOS/ProxyAudioDevice", &dest);
         let output = Command::new("sudo")
@@ -91,7 +91,7 @@ mod macos {
             .arg(&cmd)
             .output()?;
         if !output.status.success() {
-            return Err(Error::msg(format!("command '{}' failed with code {:?}", &cmd, output.status.code())))
+            return Err(Error::msg(format!("command '{}' failed with code {:?}", &cmd, output.status.code())));
         }
         Ok(())
     }
@@ -169,6 +169,20 @@ mod macos {
         }
 
         //#[test]
+        //fn verify_device_not_loaded() {
+        //    assert_eq!(
+        //        "device \'foobarbaz\' not loaded by CoreAudio",
+        //        verify_device(
+        //            &Device {
+        //                display_name: String::from("Foo"),
+        //                name: String::from("foobarbaz"),
+        //            })
+        //            .unwrap_err()
+        //            .to_string(),
+        //    );
+        //}
+
+        //#[test]
         //fn restart_core_audio_should_work() {
         //    restart_core_audio().unwrap();
         //}
@@ -177,7 +191,7 @@ mod macos {
         fn install_uninstall_should_work() {
             let name = test_device_name();
             // TODO: ensure device with this name does not already exist
-            let device = Device{
+            let device = Device {
                 display_name: String::from("Proxy Audio Device"),
                 name,
             };

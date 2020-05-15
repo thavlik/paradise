@@ -31,7 +31,7 @@
 		77CAB5812215405C0092B2B0 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77CAB5802215405C0092B2B0 /* Cocoa.framework */; };
 		77CE24F02375EF7B004556AD /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77CE24EE2375EF7B004556AD /* utilities.cpp */; };
 		77CE24F12375F011004556AD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DD7AA9915EC572000C67AE1 /* IOKit.framework */; };
-		798DEA63246902A000A2B0EF /* ProxyAudioDevice.driver in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2D7477A91578168D00412279 /* ProxyAudioDevice.driver */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7959009A246E45E300284728 /* ProxyAudioDevice.driver in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2D7477A91578168D00412279 /* ProxyAudioDevice.driver */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,7 +51,7 @@
 			dstPath = "${PROJECT_DIR}/build/${CONFIGURATION}";
 			dstSubfolderSpec = 0;
 			files = (
-				798DEA63246902A000A2B0EF /* ProxyAudioDevice.driver in CopyFiles */,
+				7959009A246E45E300284728 /* ProxyAudioDevice.driver in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -590,7 +590,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEVELOPMENT_TEAM = 9F38VUKBEB;
@@ -617,7 +617,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEVELOPMENT_TEAM = 9F38VUKBEB;
@@ -644,7 +644,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEVELOPMENT_TEAM = 9F38VUKBEB;

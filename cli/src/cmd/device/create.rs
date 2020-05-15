@@ -20,11 +20,11 @@ mod macos {
 
     #[cfg(debug_assertions)]
     mod fixtures {
-        pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
-        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
-        pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
-        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
-        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
+        pub const INFO_PLIST: &'static str = include_str!("../../../../../../ProxyAudioDevice.driver/Contents/Info.plist");
+        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../../../ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
+        pub const CODE_RESOURCES: &'static str = include_str!("../../../../../../ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../../../ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../../../ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
     }
 
     #[cfg(not(debug_assertions))]
@@ -42,17 +42,6 @@ mod macos {
     }
 
     fn generate_driver(device: &Device) -> Result<PathBuf> {
-        // ProxyAudioDevice.driver/Contents
-        // ProxyAudioDevice.driver/Contents/_CodeSignature
-        // ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources
-        // ProxyAudioDevice.driver/Contents/Resources
-        // ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns
-        // ProxyAudioDevice.driver/Contents/Resources/English.lproj
-        // ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings
-        // ProxyAudioDevice.driver/Contents/Info.plist
-
-        // ProxyAudioDevice.driver/Contents/MacOS
-        // ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice
         let path = PathBuf::from(format!("/tmp/{}{}.driver-{}", PLUGIN_PREFIX, &device.name, Uuid::new_v4()));
         fs::create_dir(&path)?;
         fs::create_dir(path.join("Contents"))?;
@@ -61,18 +50,15 @@ mod macos {
             .write_all(fixtures::CODE_RESOURCES.as_bytes())?;
         fs::File::create(path.join("Contents/Info.plist"))?
             .write_all(fixtures::INFO_PLIST.as_bytes())?;
+        fs::create_dir(path.join("Contents/MacOS"))?;
+        fs::File::create(path.join("Contents/MacOS/ProxyAudioDevice"))?
+            .write_all(fixtures::DRIVER_BINARY)?;
         fs::create_dir(path.join("Contents/Resources"))?;
-        fs::create_dir(path.join("Contents/Resources/English.lproj"))?;
         fs::File::create(path.join("Contents/Resources/DeviceIcon.icns"))?
             .write_all(fixtures::DEVICE_ICON)?;
+        fs::create_dir(path.join("Contents/Resources/English.lproj"))?;
         fs::File::create(path.join("Contents/Resources/English.lproj/Localizable.strings"))?
             .write_all(fixtures::LOCALIZABLE_STRINGS)?;
-        fs::create_dir(path.join("Contents/MacOS"))?;
-        let mut f = fs::File::create(path.join("Contents/MacOS/ProxyAudioDevice"))?;
-        f.write_all(fixtures::DRIVER_BINARY)?;
-        let mut perms = f.metadata()?.permissions();
-        perms.set_mode(755);
-        f.set_permissions(perms)?;
         Ok(path)
     }
 
@@ -88,16 +74,24 @@ mod macos {
     }
 
     fn install_driver_package(device: &Device, path: &PathBuf) -> Result<()> {
+        let path = path.to_str().unwrap();
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")
-            .arg(format!("mv {} {}", path.to_str().unwrap(), driver_path(&device.name)))
+            .arg(format!("mv {} {}", path, driver_path(&device.name)))
             .status()?;
-        if status.success() {
-            Ok(())
-        } else {
-            Err(Error::msg(format!("command failed with code {:?}", status.code())))
+        if !status.success() {
+            return Err(Error::msg(format!("command failed with code {:?}", status.code())))
         }
+        let status = Command::new("sudo")
+            .arg("chmod")
+            .arg("755")
+            .arg(format!("{}/Contents/MacOS/ProxyAudioDevice", path))
+            .status()?;
+        if !status.success() {
+            return Err(Error::msg(format!("command failed with code {:?}", status.code())))
+        }
+        Ok(())
     }
 
     // Generates and installs a driver package for the given Device.

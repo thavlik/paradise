@@ -38,8 +38,8 @@ mod macos {
     }
 
     fn driver_path(name: &str) -> String {
-        //format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
-        format!("{}/ProxyAudioDevice.driver", PLUGIN_PATH)
+        format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
+        //format!("{}/ProxyAudioDevice.driver", PLUGIN_PATH)
     }
 
     fn generate_driver(device: &Device) -> Result<PathBuf> {

@@ -9,6 +9,31 @@ pub struct Device {
     display_name: String,
 }
 
+impl Device {
+    fn verify(&self) -> Result<()> {
+        let available_hosts = cpal::available_hosts();
+        let mut found = false;
+        for host_id in available_hosts {
+            let host = cpal::host_from_id(host_id)?;
+            for (_, d) in host.devices()?.enumerate() {
+                if let Ok(name) = d.name() {
+                    if name == self.display_name {
+                        // At least one device with the same display name was found.
+                        // TODO: verify input config
+                        // TODO: verify output config
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if !found {
+            return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &self.name)));
+        }
+        Ok(())
+    }
+}
+
 #[cfg(target_os = "macos")]
 mod macos {
     use super::*;
@@ -168,25 +193,7 @@ mod macos {
             format!("test-{}", &Uuid::new_v4().to_string()[..8])
         }
 
-        //#[test]
-        //fn verify_device_not_loaded() {
-        //    assert_eq!(
-        //        "device \'foobarbaz\' not loaded by CoreAudio",
-        //        verify_device(
-        //            &Device {
-        //                display_name: String::from("Foo"),
-        //                name: String::from("foobarbaz"),
-        //            })
-        //            .unwrap_err()
-        //            .to_string(),
-        //    );
-        //}
-
-        //#[test]
-        //fn restart_core_audio_should_work() {
-        //    restart_core_audio().unwrap();
-        //}
-
+        // This is the only way you can test CoreAudio without using a mutex.
         #[test]
         fn e2e() {
             let name = test_device_name();

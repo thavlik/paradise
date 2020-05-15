@@ -90,7 +90,7 @@ mod macos {
             .arg(&cmd)
             .output()?;
         if !output.status.success() {
-            return Err(Error::msg(format!("command '{}' failed with code {:?}: {}", &cmd, output.status.code(), String::from_utf8(output.stdout).unwrap())))
+            return Err(Error::msg(format!("command '{}' failed with code {:?}", &cmd, output.status.code())))
         }
         Ok(())
     }
@@ -156,11 +156,11 @@ mod macos {
             let device = Device{
                 name,
             };
-            install_device(&device).expect("device install");
+            install_device(&device).expect("install");
             restart_core_audio().unwrap();
             //// TODO: verify device was installed correctly using cpal
             //// TODO: test streaming with UDP/QUIC
-            //remove_device(&device.name);
+            //remove_device(&device.name).expect("remove");
             //// TODO: ensure device is still streaming
             //restart_core_audio().unwrap();
             //// TODO: verify stream is stopped

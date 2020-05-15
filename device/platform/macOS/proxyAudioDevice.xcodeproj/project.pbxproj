@@ -354,7 +354,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "echo \"Building rust library\"\ncd ../../\nexport PATH=\"$HOME/.cargo/bin:$PATH\"\ncargo build\necho \"Rust library built successfully\"\n";
+			shellScript = "echo \"Building rust library\"\ncd ../../\nexport PATH=\"$HOME/.cargo/bin:$PATH\"\n\nextra_flags=\"\"\nif [ $CONFIGURATION == \"Release\" ]; then\n    extra_flags=\"--release ${extra_flags}\"\nfi\n\ncargo build $extra_flags\necho \"Rust library built successfully\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

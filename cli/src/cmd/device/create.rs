@@ -13,16 +13,18 @@ mod macos {
     use super::*;
     use std::fs;
     use std::io::Write;
+    use std::os::unix::fs::PermissionsExt;
 
     const PLUGIN_PREFIX: &'static str = "paradise-";
     const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
-
 
     #[cfg(debug_assertions)]
     mod fixtures {
         pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
         pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
         pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
     }
 
     #[cfg(not(debug_assertions))]
@@ -30,36 +32,47 @@ mod macos {
         pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Info.plist");
         pub const LOCALIZABLE_STRINGS: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
         pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
     }
 
     fn driver_path(name: &str) -> String {
-        format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
+        //format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
+        format!("{}/ProxyAudioDevice.driver", PLUGIN_PATH)
     }
 
     fn generate_driver(device: &Device) -> Result<PathBuf> {
         // ProxyAudioDevice.driver/Contents
         // ProxyAudioDevice.driver/Contents/_CodeSignature
         // ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources
-        // ProxyAudioDevice.driver/Contents/MacOS
-        // ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice
         // ProxyAudioDevice.driver/Contents/Resources
         // ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns
         // ProxyAudioDevice.driver/Contents/Resources/English.lproj
         // ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings
         // ProxyAudioDevice.driver/Contents/Info.plist
+
+        // ProxyAudioDevice.driver/Contents/MacOS
+        // ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice
         let path = PathBuf::from(format!("/tmp/{}{}.driver-{}", PLUGIN_PREFIX, &device.name, Uuid::new_v4()));
         fs::create_dir(&path)?;
         fs::create_dir(path.join("Contents"))?;
-        fs::create_dir(path.join("Contents/MacOS/_CodeSignature"))?;
-        fs::create_dir(path.join("Contents/MacOS"))?;
-        fs::create_dir(path.join("Contents/MacOS/Resources"))?;
-        fs::create_dir(path.join("Contents/MacOS/Resources/English.lproj"))?;
-        fs::File::create(path.join("Contents/Info.plist"))?
-            .write_all(fixtures::INFO_PLIST.as_bytes())?;
+        fs::create_dir(path.join("Contents/_CodeSignature"))?;
         fs::File::create(path.join("Contents/_CodeSignature/CodeResources"))?
             .write_all(fixtures::CODE_RESOURCES.as_bytes())?;
+        fs::File::create(path.join("Contents/Info.plist"))?
+            .write_all(fixtures::INFO_PLIST.as_bytes())?;
+        fs::create_dir(path.join("Contents/Resources"))?;
+        fs::create_dir(path.join("Contents/Resources/English.lproj"))?;
+        fs::File::create(path.join("Contents/Resources/DeviceIcon.icns"))?
+            .write_all(fixtures::DEVICE_ICON)?;
         fs::File::create(path.join("Contents/Resources/English.lproj/Localizable.strings"))?
             .write_all(fixtures::LOCALIZABLE_STRINGS)?;
+        fs::create_dir(path.join("Contents/MacOS"))?;
+        let mut f = fs::File::create(path.join("Contents/MacOS/ProxyAudioDevice"))?;
+        f.write_all(fixtures::DRIVER_BINARY)?;
+        let mut perms = f.metadata()?.permissions();
+        perms.set_mode(755);
+        f.set_permissions(perms)?;
         Ok(path)
     }
 
@@ -133,13 +146,13 @@ mod macos {
         use super::*;
 
         fn test_device_name() -> String {
-            format!("test-{}", Uuid::new_v4().to_string()[..8])
+            format!("test-{}", &Uuid::new_v4().to_string()[..8])
         }
 
-        #[test]
-        fn restart_core_audio_should_work() {
-            restart_core_audio().unwrap();
-        }
+        //#[test]
+        //fn restart_core_audio_should_work() {
+        //    restart_core_audio().unwrap();
+        //}
 
         #[test]
         fn install_uninstall_should_work() {
@@ -150,13 +163,13 @@ mod macos {
             };
             install_device(&device).unwrap();
             restart_core_audio().unwrap();
-            // TODO: verify device was installed correctly using cpal
-            // TODO: test streaming with UDP/QUIC
-            remove_device(&device.name);
-            // TODO: ensure device is still streaming
-            restart_core_audio().unwrap();
-            // TODO: verify stream is stopped
-            // TODO: verify device was removed correctly using cpal
+            //// TODO: verify device was installed correctly using cpal
+            //// TODO: test streaming with UDP/QUIC
+            //remove_device(&device.name);
+            //// TODO: ensure device is still streaming
+            //restart_core_audio().unwrap();
+            //// TODO: verify stream is stopped
+            //// TODO: verify device was removed correctly using cpal
         }
     }
 }

@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 pub struct Device {
     name: String,
+    display_name: String,
 }
 
 #[cfg(target_os = "macos")]
@@ -136,6 +137,30 @@ mod macos {
         }
     }
 
+    fn verify_device(device: &Device) -> Result<()> {
+        if !device_exists(&device.name)? {
+            return Err(Error::msg(format!("device '{}' does not exist", &device.name)));
+        }
+        let available_hosts = cpal::available_hosts();
+        let mut found = false;
+        for host_id in available_hosts {
+            let host = cpal::host_from_id(host_id)?;
+            for (_, d) in host.devices()?.enumerate() {
+                if let Ok(name) = d.name() {
+                    if name == device.display_name {
+                        // At least one device with the same display name was found.
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if !found {
+            return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &device.name)));
+        }
+        Ok(())
+    }
+
     #[cfg(test)]
     mod test {
         use super::*;
@@ -156,15 +181,16 @@ mod macos {
             let device = Device{
                 name,
             };
-            install_device(&device).expect("install");
+            install_device(&device).unwrap();
             restart_core_audio().unwrap();
-            //// TODO: verify device was installed correctly using cpal
+            verify_device(&device).unwrap();
             //// TODO: test streaming with UDP/QUIC
-            //remove_device(&device.name).expect("remove");
+            remove_device(&device.name).expect("remove");
             //// TODO: ensure device is still streaming
-            //restart_core_audio().unwrap();
+            restart_core_audio().unwrap();
             //// TODO: verify stream is stopped
-            //// TODO: verify device was removed correctly using cpal
+            assert!(!device_exists(&device.name)?);
+            verify_device(&device).expect_err("verify");
         }
     }
 }

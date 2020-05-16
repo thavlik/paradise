@@ -11,6 +11,4 @@ else
   exit 1
 fi
 xcodebuild -verbose \
-  -configuration $CONFIGURATION \
-  -scheme ${SCHEME:-ProxyAudioDevice} \
-  -target ${TARGET:-ProxyAudioDevice}
+  -configuration $CONFIGURATION

@@ -516,7 +516,7 @@ OSStatus ProxyAudioDevice::Initialize(AudioServerPlugInDriverRef inDriver, Audio
 
     //    declare the local variables
     OSStatus theAnswer = 0;
-    DebugMsg("ProxyAudio: ProxyAudio_Initialize");
+    DebugMsg("ProxyAudio: enter ProxyAudio_Initialize");
 
     //    check the arguments
     if (inDriver != gAudioServerPlugInDriverRef) {
@@ -583,6 +583,8 @@ OSStatus ProxyAudioDevice::Initialize(AudioServerPlugInDriverRef inDriver, Audio
 
     initializeOutputDevice();
 
+    DebugMsg("ProxyAudio: leaving ProxyAudio_Initialize");
+    
     return theAnswer;
 }
 
@@ -5567,7 +5569,7 @@ CFStringRef ProxyAudioDevice::copyConfigurationValue(ConfigType type) {
 
 CFStringRef ProxyAudioDevice::copyDeviceNameFromStorage()
 {
-    DebugMsg("ProxyAudio: copyDeviceNameFromStorage");
+    DebugMsg("ProxyAudio: enter copyDeviceNameFromStorage");
     
     if (!gPlugIn_Host) {
         DebugMsg("ProxyAudio: copyDeviceNameFromStorage no plugin host");
@@ -5580,16 +5582,19 @@ CFStringRef ProxyAudioDevice::copyDeviceNameFromStorage()
     gPlugIn_Host->CopyFromStorage(gPlugIn_Host, CFSTR("deviceName"), &data);
     
     if (data != NULL && CFGetTypeID(data) == CFStringGetTypeID()) {
+        DebugMsg("ProxyAudio: copied deviceName from pluginHost storage");
         result = CFStringCreateCopy(NULL, CFStringRef(CFPropertyListRef(data)));
     }
 
     if (result == NULL) {
+        DebugMsg("ProxyAudio: retrieving device name from bundle");
         CFBundleRef bundle = CFBundleGetBundleWithIdentifier(CFSTR(kPlugIn_BundleID));
         result = CFBundleCopyLocalizedString(
             bundle, CFSTR("DeviceName"), CFSTR("Proxy Audio Device"), CFSTR("Localizable"));
     }
 
     if (result == NULL) {
+        DebugMsg("ProxyAudio: using default device name 'Proxy Audio Device'");
         result = CFStringCreateCopy(NULL, CFSTR("Proxy Audio Device"));
     }
     

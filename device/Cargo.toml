@@ -4,10 +4,16 @@ version = "0.1.0"
 authors = ["Tom Havlik"]
 edition = "2018"
 
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+syslog = "5.0.0"
+
 [build-dependencies]
 cbindgen = "0.14.2"
 
 [lib]
 name = "paradise_device"
 crate-type = ["staticlib"]
+
+
+
 

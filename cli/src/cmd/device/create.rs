@@ -61,7 +61,7 @@ mod macos {
 
     lazy_static! {
         static ref CORE_AUDIO_LOCK: Mutex<()> = Mutex::new(());
-        static ref LAST_CORE_AUDIO_RESTART: Arc<Mutex<Option<SystemTime>>> = Arc::new(Mutex::new(None));
+        //static ref LAST_CORE_AUDIO_RESTART: Arc<Mutex<Option<SystemTime>>> = Arc::new(Mutex::new(None));
     }
 
     const PLUGIN_PREFIX: &'static str = "paradise-";
@@ -70,10 +70,14 @@ mod macos {
 
     #[cfg(debug_assertions)]
     mod fixtures {
-        pub const INFO_PLIST: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Info.plist");
-        pub const CODE_RESOURCES: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
-        pub const DEVICE_ICON: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
-        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
+        pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
+        pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
+        //pub const INFO_PLIST: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Info.plist");
+        //pub const CODE_RESOURCES: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        //pub const DEVICE_ICON: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        //pub const DRIVER_BINARY: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
     }
 
     #[cfg(not(debug_assertions))]
@@ -86,7 +90,6 @@ mod macos {
 
     fn driver_path(name: &str) -> String {
         format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
-        //format!("{}/ProxyAudioDevice.driver", PLUGIN_PATH)
     }
 
     fn generate_localizable_strings(device: &Device) -> String {

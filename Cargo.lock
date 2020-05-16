@@ -1768,6 +1768,7 @@ dependencies = [
  "env_logger",
  "futures 0.3.4",
  "lazy_static",
+ "paradise_device",
  "quinn",
  "rand",
  "rcgen",
@@ -1804,6 +1805,8 @@ name = "paradise_device"
 version = "0.1.0"
 dependencies = [
  "cbindgen",
+ "serde",
+ "serde_yaml",
  "syslog",
 ]
 

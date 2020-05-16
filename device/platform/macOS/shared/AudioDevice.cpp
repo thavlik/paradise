@@ -3,7 +3,6 @@
 #include "ProxyAudioDevice.h"
 #include "debugHelpers.h"
 #include "CFTypeHelpers.h"
-#include "../../../include/paradise.h"
 
 AudioDevice::AudioDevice(AudioObjectID inId, bool inIsOutput) {
     id = inId;
@@ -12,8 +11,6 @@ AudioDevice::AudioDevice(AudioObjectID inId, bool inIsOutput) {
     bufferFrameSize = 0;
     procId = nullptr;
     isStarted = false;
-
-    rust_function();
     
     initialize();
 }

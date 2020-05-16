@@ -1,7 +1,8 @@
 use syslog::{Facility, Formatter3164};
+use std::ffi::c_void;
 
 #[no_mangle]
-pub extern "C" fn rust_function() {
+pub extern "C" fn rust_initialize_vad(vad: *const c_void) -> i32 {
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
         hostname: None,
@@ -12,9 +13,14 @@ pub extern "C" fn rust_function() {
     match syslog::unix(formatter) {
         Err(e) => println!("impossible to connect to syslog: {:?}", e),
         Ok(mut writer) => {
-            writer.err("hello world").expect("could not write error message");
+            match std::fs::read_to_string("../Resources/config.yaml") {
+                Ok(config) => writer.info(&config).unwrap(),
+                Err(e) => writer.err(format!("failed to load config: {:?}", e)).unwrap(),
+            }
         }
     }
+
+    0
 }
 
 #[cfg(test)]

@@ -31,7 +31,7 @@ unwrap = "1.2.1"
 url = "2"
 uuid = { version = "0.8", features = ["v4"] }
 lazy_static = "1.4.0"
-
+paradise_device = { path = "../device" }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 xml-rs = "0.8.3"

@@ -10,6 +10,7 @@
 #include "CFTypeHelpers.h"
 #include "debugHelpers.h"
 #include "utilities.h"
+#include "../../../include/paradise.h"
 
 #pragma mark Utility Functions
 
@@ -131,8 +132,13 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
     if (!device) {
         return kAudioHardwareBadObjectError;
     }
-
-    return device->Initialize(inDriver, inHost);
+    
+    OSStatus result = device->Initialize(inDriver, inHost);
+    if (result != 0) {
+        return result;
+    }
+    
+    return rust_initialize_vad(device);
 }
 
 OSStatus ProxyAudioDevice::ProxyAudio_CreateDevice(AudioServerPlugInDriverRef inDriver,
@@ -516,7 +522,7 @@ OSStatus ProxyAudioDevice::Initialize(AudioServerPlugInDriverRef inDriver, Audio
 
     //    declare the local variables
     OSStatus theAnswer = 0;
-    DebugMsg("ProxyAudio: enter ProxyAudio_Initialize");
+    DebugMsg("ProxyAudio: ProxyAudio_Initialize");
 
     //    check the arguments
     if (inDriver != gAudioServerPlugInDriverRef) {
@@ -582,8 +588,6 @@ OSStatus ProxyAudioDevice::Initialize(AudioServerPlugInDriverRef inDriver, Audio
     workBuffer = new Byte[gDevice_BytesPerFrameInChannel * gDevice_ChannelsPerFrame * kDevice_RingBufferSize * 2];
 
     initializeOutputDevice();
-
-    DebugMsg("ProxyAudio: leaving ProxyAudio_Initialize");
     
     return theAnswer;
 }

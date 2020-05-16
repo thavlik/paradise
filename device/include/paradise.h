@@ -5,6 +5,6 @@
 
 extern "C" {
 
-void rust_function();
+int32_t rust_initialize_vad(const void *vad);
 
 } // extern "C"

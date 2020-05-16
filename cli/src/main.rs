@@ -1,5 +1,8 @@
 #[macro_use]
 extern crate lazy_static;
+//#[macro_use]
+//extern crate serde;
+
 use clap::Clap;
 use anyhow::{Error, Result};
 

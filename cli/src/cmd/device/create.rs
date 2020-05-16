@@ -3,11 +3,17 @@ use cpal::traits::{DeviceTrait, HostTrait};
 use std::process::Command;
 use std::path::PathBuf;
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 
+#[derive(Serialize, Deserialize)]
 pub struct Device {
     name: String,
+
+    #[serde(rename = "displayName")]
     display_name: String,
+
     inputs: u16,
+
     outputs: u16,
 }
 
@@ -113,6 +119,9 @@ ManufacturerName = "{}";
         fs::create_dir(path.join("Contents/Resources/English.lproj"))?;
         fs::File::create(path.join("Contents/Resources/English.lproj/Localizable.strings"))?
             .write_all(&generate_localizable_strings(device).into_bytes()[..])?;
+        let config: String = serde_yaml::to_string(device)?;
+        fs::File::create(path.join("Contents/Resources/config.yaml"))?
+            .write_all(&config.into_bytes()[..]);
         Ok(path)
     }
 

@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Tom Havlik"]
 edition = "2018"
 
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 syslog = "5.0.0"
 

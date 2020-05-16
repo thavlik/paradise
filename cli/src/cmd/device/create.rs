@@ -12,25 +12,22 @@ pub struct Device {
 impl Device {
     fn verify(&self) -> Result<()> {
         let available_hosts = cpal::available_hosts();
-        let mut found = false;
         for host_id in available_hosts {
             let host = cpal::host_from_id(host_id)?;
             for (_, d) in host.devices()?.enumerate() {
                 if let Ok(name) = d.name() {
+                    println!("{}", name);
                     if name == self.display_name {
+                        panic!("But it was found!");
                         // At least one device with the same display name was found.
                         // TODO: verify input config
                         // TODO: verify output config
-                        found = true;
-                        break;
+                        return Ok(());
                     }
                 }
             }
         }
-        if !found {
-            return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &self.name)));
-        }
-        Ok(())
+        return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &self.name)));
     }
 }
 
@@ -40,6 +37,11 @@ mod macos {
     use std::fs;
     use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
+    use std::sync::Mutex;
+
+    lazy_static! {
+        static ref CORE_AUDIO_LOCK: Mutex<()> = Mutex::new(());
+    }
 
     const PLUGIN_PREFIX: &'static str = "paradise-";
     const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
@@ -185,12 +187,12 @@ mod macos {
             device.verify().unwrap();
             // TODO: create output stream to ProxyAudioDevice and verify exact audio can be received
             remove_device(&device.name).expect("remove");
-            verify_device(&device).expect("should still exist");
+            device.verify().unwrap();
             assert_eq!(false, device_exists(&device.name).unwrap());
             //// TODO: ensure device is still streaming
             restart_core_audio().unwrap();
             //// TODO: verify stream is stopped
-            verify_device(&device).expect_err("should not exist");
+            device.verify().expect_err("should not exist");
         }
     }
 }

@@ -7,6 +7,8 @@ use uuid::Uuid;
 pub struct Device {
     name: String,
     display_name: String,
+    inputs: u16,
+    outputs: u16,
 }
 
 impl Device {
@@ -19,9 +21,32 @@ impl Device {
                 // paradise device with rust lib does not
                 if let Ok(name) = d.name() {
                     if name == self.display_name {
-                        // At least one device with the same display name was found.
-                        // TODO: verify input config
-                        // TODO: verify output config
+                        match (self.inputs > 0, d.default_input_config()) {
+                            (true, Ok(conf)) => {
+                                if conf.channels() != self.inputs {
+                                    return Err(Error::msg(format!("mismatch number of input channels (got {}, expected {})", conf.channels(), self.inputs)));
+                                }
+                            },
+                            (false, Ok(_)) => return Err(Error::msg("device has unexpected input config")),
+                            (true, Err(e)) => return Err(Error::msg("device is missing input config")),
+                            (false, Err(e)) => match e {
+                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {},
+                                _ => return Err(e.into())
+                            },
+                        }
+                        match (self.outputs > 0, d.default_output_config()) {
+                            (true, Ok(conf)) => {
+                                if conf.channels() != self.outputs {
+                                    return Err(Error::msg(format!("mismatch number of output channels (got {}, expected {})", conf.channels(), self.outputs)));
+                                }
+                            },
+                            (false, Ok(_)) => return Err(Error::msg("device has unexpected output config")),
+                            (true, Err(e)) => return Err(Error::msg("device is missing output config")),
+                            (false, Err(e)) => match e {
+                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {},
+                                _ => return Err(e.into())
+                            },
+                        }
                         return Ok(());
                     }
                 }
@@ -212,6 +237,8 @@ ManufacturerName = "{}";
             let device = Device {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
+                inputs: 0,
+                outputs: 2,
             };
             install_device(&device).unwrap();
             assert!(device_exists(&device.name).unwrap());
@@ -233,6 +260,8 @@ ManufacturerName = "{}";
             let device = Device {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
+                inputs: 0,
+                outputs: 2,
             };
             install_device(&device).unwrap();
             assert!(device_exists(&device.name).unwrap());

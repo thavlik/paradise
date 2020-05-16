@@ -14,11 +14,9 @@ impl Device {
         let available_hosts = cpal::available_hosts();
         for host_id in available_hosts {
             let host = cpal::host_from_id(host_id)?;
-            println!("host {:?}", host_id);
-            for (i, d) in host.devices()?.enumerate() {
+            for (_, d) in host.devices()?.enumerate() {
                 // custom built proxy-audio-device works
                 // paradise device with rust lib does not
-                println!("  {}. {:?}", i, d.name());
                 if let Ok(name) = d.name() {
                     if name == self.display_name {
                         // At least one device with the same display name was found.
@@ -39,10 +37,12 @@ mod macos {
     use std::fs;
     use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
-    use std::sync::Mutex;
+    use std::sync::{Mutex, Arc};
+    use std::time::{SystemTime, Duration};
 
     lazy_static! {
         static ref CORE_AUDIO_LOCK: Mutex<()> = Mutex::new(());
+        static ref LAST_CORE_AUDIO_RESTART: Arc<Mutex<Option<SystemTime>>> = Arc::new(Mutex::new(None));
     }
 
     const PLUGIN_PREFIX: &'static str = "paradise-";
@@ -160,13 +160,22 @@ ManufacturerName = "{}";
 
     // Restarts core audio. Requires sudo.
     fn restart_core_audio() -> Result<()> {
+        //let mut last_restart = LAST_CORE_AUDIO_RESTART.lock().unwrap();
+        //if let Some(last_restart) = *last_restart {
+        //    let elapsed = SystemTime::now().duration_since(last_restart)?;
+        //    let diff = Duration::from_secs(15) - elapsed;
+        //    if diff.as_nanos() > 0 {
+        //        //std::thread::sleep(diff);
+        //    }
+        //}
         let status = Command::new("sudo")
             .arg("sh")
             .arg("-c")
             .arg("launchctl kickstart -k system/com.apple.audio.coreaudiod")
             .status()?;
         if status.success() {
-            std::thread::sleep(std::time::Duration::from_secs(10));
+            //*last_restart = Some(SystemTime::now());
+            std::thread::sleep(Duration::from_secs(10));
             Ok(())
         } else {
             Err(Error::msg(format!("command failed with code {:?}", status.code())))

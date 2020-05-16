@@ -17,31 +17,25 @@ impl Device {
         for host_id in available_hosts {
             let host = cpal::host_from_id(host_id)?;
             for (_, d) in host.devices()?.enumerate() {
-                // custom built proxy-audio-device works
-                // paradise device with rust lib does not
                 if let Ok(name) = d.name() {
                     if name == self.display_name {
                         match (self.inputs > 0, d.default_input_config()) {
-                            (true, Ok(conf)) => {
-                                if conf.channels() != self.inputs {
-                                    return Err(Error::msg(format!("mismatch number of input channels (got {}, expected {})", conf.channels(), self.inputs)));
-                                }
+                            (true, Ok(conf)) => if conf.channels() != self.inputs {
+                                return Err(Error::msg(format!("mismatch number of input channels (got {}, expected {})", conf.channels(), self.inputs)));
                             },
-                            (false, Ok(_)) => return Err(Error::msg("device has unexpected input config")),
                             (true, Err(e)) => return Err(Error::msg("device is missing input config")),
+                            (false, Ok(_)) => return Err(Error::msg("device has unexpected input config")),
                             (false, Err(e)) => match e {
                                 cpal::DefaultStreamConfigError::StreamTypeNotSupported => {},
                                 _ => return Err(e.into())
                             },
                         }
                         match (self.outputs > 0, d.default_output_config()) {
-                            (true, Ok(conf)) => {
-                                if conf.channels() != self.outputs {
-                                    return Err(Error::msg(format!("mismatch number of output channels (got {}, expected {})", conf.channels(), self.outputs)));
-                                }
+                            (true, Ok(conf)) => if conf.channels() != self.outputs {
+                                return Err(Error::msg(format!("mismatch number of output channels (got {}, expected {})", conf.channels(), self.outputs)));
                             },
-                            (false, Ok(_)) => return Err(Error::msg("device has unexpected output config")),
                             (true, Err(e)) => return Err(Error::msg("device is missing output config")),
+                            (false, Ok(_)) => return Err(Error::msg("device has unexpected output config")),
                             (false, Err(e)) => match e {
                                 cpal::DefaultStreamConfigError::StreamTypeNotSupported => {},
                                 _ => return Err(e.into())

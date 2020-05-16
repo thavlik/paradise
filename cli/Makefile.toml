@@ -1,4 +1,17 @@
+[env]
+PROFILE = "$CARGO_MAKE_CARGO_PROFILE"
+LIBRARY_EXTENSION = { source = "${CARGO_MAKE_RUST_TARGET_OS}", default_value = "unknown", mapping = {"linux" = "so", "macos" = "dylib", "windows" = "dll", "openbsd" = "so" } }
+
+[env.development]
+PROFILE = "debug"
+
+[env.production]
+PROFILE = "Release"
+
 [tasks.format]
 install_crate = "rustfmt"
 command = "cargo"
 args = ["fmt", "--", "--emit=files"]
+
+[tasks.device]
+command = "../device/platform/macOS/build.sh"

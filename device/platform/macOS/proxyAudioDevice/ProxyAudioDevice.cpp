@@ -138,8 +138,16 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
         return result;
     }
     
-    // Get the driver path
     CFBundleRef bundle = CFBundleGetBundleWithIdentifier(CFSTR(kPlugIn_BundleID));
+    
+    CFStringRef driverName = CFBundleCopyLocalizedString(
+        bundle, CFSTR("DriverName"), NULL, CFSTR("Localizable"));
+    if (driverName == NULL || CFStringCompare(driverName, CFSTR("DriverName"), 0) != kCFCompareEqualTo) {
+        syslog(LOG_ERR,
+               "ProxyAudio error: missing DriverName form Localizable.strings");
+        return 8;
+    }
+    
     CFStringRef driverPath = CFBundleCopyLocalizedString(
         bundle, CFSTR("DriverPath"), NULL, CFSTR("Localizable"));
     if (driverPath == NULL || CFStringCompare(driverPath, CFSTR("DriverPath"), 0) != kCFCompareEqualTo) {
@@ -149,7 +157,9 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
     }
     
     // Initialize rust
-    result = rust_initialize_vad(device, (const uint8_t*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
+    result = rust_initialize_vad(device,
+                                 (const char*)CFStringGetCStringPtr(driverName, kCFStringEncodingUTF8),
+                                 (const char*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
     
     // Don't leak memory
     CFRelease(driverPath);

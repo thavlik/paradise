@@ -192,7 +192,7 @@ ManufacturerName = "{}";
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
             let device = Device {
-                display_name: String::from("Proxy Audio Device"),
+                display_name: format!("Test Virtual Device ({})", &name),
                 name,
             };
             install_device(&device).unwrap();

@@ -175,6 +175,7 @@ mod macos {
         // This is the only way you can test CoreAudio without using a mutex.
         #[test]
         fn e2e() {
+            let _ = CORE_AUDIO_LOCK.lock()?;
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
             let device = Device {

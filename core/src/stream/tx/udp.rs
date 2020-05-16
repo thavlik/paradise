@@ -1,5 +1,6 @@
 use super::*;
 use crate::stream::buffer::Buffer;
+use std::marker::PhatomData;
 
 pub struct UdpTxStream<B, T>
 where
@@ -10,7 +11,7 @@ where
     buf: std::sync::Arc<B>,
     clock: std::sync::Arc<std::sync::atomic::AtomicU64>,
     status: std::sync::Arc<std::sync::atomic::AtomicU64>,
-    phantom: std::marker::PhatomData<T>,
+    phantom: PhatomData<T>,
 }
 
 impl<B, T> std::ops::Drop for UdpTxStream<B, T>
@@ -39,6 +40,7 @@ where
             buf: std::sync::Arc::new(B::new()),
             clock: status.clone(),
             status: status.clone(),
+            phantom: PhantomData,
         });
         tokio::task::spawn(Self::entry(
             stream.buf.clone(),
@@ -106,9 +108,8 @@ where
     B: 'static + Buffer<T>,
     T: Clone,
 {
-    fn process(&self, input_buffer: &[T], clock: u64) {
+    fn send(&self, payload: &[T]) {
         // Accumulate the samples in the send buffer
-        self.buf.accumulate(input_buffer);
-        self.clock.store(clock, std::sync::atomic::Ordering::SeqCst);
+        self.buf.accumulate(payload);
     }
 }

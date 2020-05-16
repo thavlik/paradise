@@ -2,8 +2,8 @@ use super::*;
 
 pub mod udp;
 
-pub trait TxStream {
-    fn process(&self, input_buffer: &[f32], clock: u64);
+pub trait TxStream<T> {
+    fn send(&self, payload: &[T]);
 }
 
 pub fn write_message_header(

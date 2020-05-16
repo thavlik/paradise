@@ -20,4 +20,4 @@ extern crate lazy_static;
 
 pub mod editor;
 pub mod runtime;
-pub mod stream;
+//pub mod stream;

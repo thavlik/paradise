@@ -1,15 +1,17 @@
 use super::*;
 use crate::stream::buffer::Buffer;
+use std::marker::PhatomData;
 
 pub struct UdpRxStream<B, T>
 where
     B: Buffer<T>,
+T: Clone,
 {
     clock: std::sync::atomic::AtomicU64,
     stop: crossbeam::crossbeam_channel::Sender<()>,
     buf: std::sync::Arc<B>,
     sync: std::sync::Arc<std::sync::atomic::AtomicU64>,
-    phantom: std::marker::PhatomData<T>,
+    phantom: PhatomData<T>,
 }
 
 impl<B, T> UdpRxStream<B, T>
@@ -27,6 +29,7 @@ where
             clock: std::default::Default::default(),
             buf: std::sync::Arc::new(B::new()),
             sync: sync.clone(),
+            phantom: PhantomData,
         });
         tokio::task::spawn(Self::entry(stream.buf.clone(), sock, sync, stop_recv));
         Ok(stream)
@@ -104,9 +107,8 @@ where
     B: 'static + Buffer<T>,
     T: Clone,
 {
-    fn process(&self, output_buffer: &mut [f32]) -> u64 {
+    fn process(&self, output_buffer: &mut [T]) -> usize {
         // Swap out the current receive buffer
-        self.buf.flush(output_buffer);
-        self.sync.load(std::sync::atomic::Ordering::SeqCst)
+        self.buf.flush(output_buffer)
     }
 }

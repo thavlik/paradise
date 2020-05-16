@@ -4,23 +4,26 @@ extern crate log;
 use std::ffi::{c_void, CStr};
 use std::path::PathBuf;
 use std::os::raw::c_char;
-use syslog::{Facility, Formatter3164, BasicLogger};
-use log::{SetLoggerError, LevelFilter};
 use anyhow::{Result, Error};
 
 fn init_logger() -> Result<()> {
-    let formatter = Formatter3164 {
-        facility: Facility::LOG_USER,
-        hostname: None,
-        process: "proxyaudio".into(),
-        pid: std::process::id() as _,
-    };
-    let mut writer = match syslog::unix(formatter) {
-        Ok(writer) => writer,
-        Err(e) => return Err(Error::msg(format!("{:?}", e))),
-    };
-    log::set_boxed_logger(Box::new(BasicLogger::new(writer)))
-        .map(|()| log::set_max_level(LevelFilter::max()));
+    #[cfg(target_os = "macos")]
+        {
+            use syslog::{Facility, Formatter3164, BasicLogger};
+            use log::{SetLoggerError, LevelFilter};
+            let formatter = Formatter3164 {
+                facility: Facility::LOG_USER,
+                hostname: None,
+                process: "proxyaudio".into(),
+                pid: std::process::id() as _,
+            };
+            let mut writer = match syslog::unix(formatter) {
+                Ok(writer) => writer,
+                Err(e) => return Err(Error::msg(format!("{:?}", e))),
+            };
+            log::set_boxed_logger(Box::new(BasicLogger::new(writer)))
+                .map(|()| log::set_max_level(LevelFilter::max()));
+        }
     Ok(())
 }
 

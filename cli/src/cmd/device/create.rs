@@ -182,12 +182,20 @@ ManufacturerName = "{}";
 
         // Deletes any residual test drivers in /Library/Audio/Plug-Ins/HAL
         fn cleanup() {
+            let status = Command::new("sudo")
+                .arg("bash")
+                .arg("-c")
+                .arg(format!("rm -rf {}/{}*", PLUGIN_PATH, PLUGIN_PREFIX))
+                .status()
+                .expect("command failed");
+            if !status.success() {
+                panic!(format!("cleanup failed with code {:?}", status.code()));
+            }
         }
 
-        // This is the only way you can test CoreAudio without using a mutex.
         #[test]
-        fn e2e() {
-            let _ = CORE_AUDIO_LOCK.lock().unwrap();
+        fn install_uninstall() {
+            let _l = CORE_AUDIO_LOCK.lock().unwrap();
             cleanup();
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
@@ -199,7 +207,7 @@ ManufacturerName = "{}";
             assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             device.verify().unwrap();
-            // TODO: create output stream to ProxyAudioDevice and verify exact audio can be received
+            //// TODO: create output stream to ProxyAudioDevice and verify exact audio can be received
             remove_device(&device.name).expect("remove");
             device.verify().unwrap();
             assert_eq!(false, device_exists(&device.name).unwrap());
@@ -208,6 +216,30 @@ ManufacturerName = "{}";
             //// TODO: verify stream is stopped
             device.verify().expect_err("should not exist");
         }
+
+        /*#[test]
+        fn basic_stream() {
+            let _l = CORE_AUDIO_LOCK.lock().unwrap();
+            cleanup();
+            let name = test_device_name();
+            assert!(!device_exists(&name).unwrap());
+            let device = Device {
+                display_name: format!("Test Virtual Device ({})", &name),
+                name,
+            };
+            install_device(&device).unwrap();
+            assert!(device_exists(&device.name).unwrap());
+            restart_core_audio().unwrap();
+            device.verify().unwrap();
+            //// TODO: create output stream to ProxyAudioDevice and verify exact audio can be received
+            remove_device(&device.name).expect("remove");
+            device.verify().unwrap();
+            assert_eq!(false, device_exists(&device.name).unwrap());
+            //// TODO: ensure device is still streaming
+            restart_core_audio().unwrap();
+            //// TODO: verify stream is stopped
+            device.verify().expect_err("should not exist");
+        }*/
     }
 }
 

@@ -1758,6 +1758,7 @@ dependencies = [
  "directories",
  "env_logger",
  "futures 0.3.4",
+ "lazy_static",
  "quinn",
  "rand",
  "rcgen",

@@ -14,17 +14,18 @@ impl Device {
         let available_hosts = cpal::available_hosts();
         for host_id in available_hosts {
             let host = cpal::host_from_id(host_id)?;
-            for (_, d) in host.devices()?.enumerate() {
-                if let Ok(name) = d.name() {
-                    println!("{}", name);
-                    if name == self.display_name {
-                        panic!("But it was found!");
-                        // At least one device with the same display name was found.
-                        // TODO: verify input config
-                        // TODO: verify output config
-                        return Ok(());
-                    }
-                }
+            println!("host {:?}", host_id);
+            for (i, d) in host.devices()?.enumerate() {
+                println!("  {}. {:?}", i, d.name());
+                // if let Ok(name) = d.name() {
+                //     println!("  {}. {}", i, name);
+                //     if name == self.display_name {
+                //         // At least one device with the same display name was found.
+                //         // TODO: verify input config
+                //         // TODO: verify output config
+                //         return Ok(());
+                //     }
+                // }
             }
         }
         return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &self.name)));
@@ -172,10 +173,15 @@ mod macos {
             format!("test-{}", &Uuid::new_v4().to_string()[..8])
         }
 
+        // Deletes any residual test drivers in /Library/Audio/Plug-Ins/HAL
+        fn cleanup() {
+        }
+
         // This is the only way you can test CoreAudio without using a mutex.
         #[test]
         fn e2e() {
-            let _ = CORE_AUDIO_LOCK.lock()?;
+            let _ = CORE_AUDIO_LOCK.lock().unwrap();
+            cleanup();
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
             let device = Device {

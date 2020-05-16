@@ -33,6 +33,7 @@ pub const ALPN_QUIC_HTTP: &[&[u8]] = &[b"hq-27"];
 
 #[test]
 fn socket() {
+    tokio::spawn(async move {});
     tokio::runtime::Builder::new()
         .threaded_scheduler()
         .build()

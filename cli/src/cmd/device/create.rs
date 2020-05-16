@@ -166,6 +166,7 @@ ManufacturerName = "{}";
             .arg("launchctl kickstart -k system/com.apple.audio.coreaudiod")
             .status()?;
         if status.success() {
+            std::thread::sleep(std::time::Duration::from_secs(10));
             Ok(())
         } else {
             Err(Error::msg(format!("command failed with code {:?}", status.code())))
@@ -217,7 +218,7 @@ ManufacturerName = "{}";
             device.verify().expect_err("should not exist");
         }
 
-        /*#[test]
+        #[test]
         fn basic_stream() {
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
             cleanup();
@@ -239,7 +240,7 @@ ManufacturerName = "{}";
             restart_core_audio().unwrap();
             //// TODO: verify stream is stopped
             device.verify().expect_err("should not exist");
-        }*/
+        }
     }
 }
 

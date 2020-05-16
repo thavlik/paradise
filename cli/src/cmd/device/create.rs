@@ -119,17 +119,17 @@ mod macos {
 
     fn generate_localizable_strings(device: &Device) -> String {
         format!(
-            r#"DeviceName = "{}";
+            r#"DriverName = "{}";
+DriverPath = "{}";
+DeviceName = "{}";
 BoxName = "{}";
 ManufacturerName = "{}";
-DriverName = "{}";
-DriverPath = "{}";
 "#,
+            &device.name,
+            &driver_path(&device.name),
             &device.display_name,
             &device.display_name,
             DEVICE_MANUFACTURER,
-            &device.name,
-            &driver_path(&device.name),
         )
     }
 

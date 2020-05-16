@@ -5,12 +5,10 @@ use std::os::raw::c_char;
 
 #[no_mangle]
 pub extern "C" fn rust_initialize_vad(vad: *const c_void, driver_name: *const c_char, driver_path: *const c_char) -> i32 {
-    let driver_name = unsafe { CStr::from_ptr(driver_name) }.to_str().unwrap();
-    let driver_path = PathBuf::from(unsafe { CStr::from_ptr(driver_path) }.to_str().unwrap());
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
         hostname: None,
-        process: driver_name.into(),
+        process: "rust_proxy_audio".into(),
         pid: 0,
     };
     let mut writer = match syslog::unix(formatter) {
@@ -20,7 +18,12 @@ pub extern "C" fn rust_initialize_vad(vad: *const c_void, driver_name: *const c_
             return 1;
         },
     };
+    writer.info("initializing").unwrap();
+    /*
+    let driver_name = unsafe { CStr::from_ptr(driver_name) }.to_str().unwrap();
+    let driver_path = PathBuf::from(unsafe { CStr::from_ptr(driver_path) }.to_str().unwrap());
     let config_path = driver_path.join("Contents/Resources/config.yaml");
+    writer.info(format!("loading config {}", &config_path.to_str().unwrap()));
     let config = match std::fs::read_to_string(&config_path) {
         Ok(config) => config,
         Err(e) => {
@@ -29,6 +32,7 @@ pub extern "C" fn rust_initialize_vad(vad: *const c_void, driver_name: *const c_
         },
     };
     writer.info(&config);
+    */
     0
 }
 

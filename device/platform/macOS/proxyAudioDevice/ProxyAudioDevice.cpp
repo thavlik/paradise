@@ -141,20 +141,23 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
     CFBundleRef bundle = CFBundleGetBundleWithIdentifier(CFSTR(kPlugIn_BundleID));
     
     CFStringRef driverName = CFBundleCopyLocalizedString(
-        bundle, CFSTR("DriverName"), NULL, CFSTR("Localizable"));
-    if (driverName == NULL || CFStringCompare(driverName, CFSTR("DriverName"), 0) != kCFCompareEqualTo) {
+        bundle, CFSTR("DriverName"), CFSTR("DriverName"), CFSTR("Localizable"));
+    if (CFStringCompare(driverName, CFSTR("DriverName"), 0) == kCFCompareEqualTo) {
         syslog(LOG_ERR,
-               "ProxyAudio error: missing DriverName form Localizable.strings");
+               "ProxyAudio error: missing DriverName from Localizable.strings");
         return 8;
     }
     
     CFStringRef driverPath = CFBundleCopyLocalizedString(
-        bundle, CFSTR("DriverPath"), NULL, CFSTR("Localizable"));
-    if (driverPath == NULL || CFStringCompare(driverPath, CFSTR("DriverPath"), 0) != kCFCompareEqualTo) {
+        bundle, CFSTR("DriverPath"), CFSTR("DriverPath"), CFSTR("Localizable"));
+    if (CFStringCompare(driverPath, CFSTR("DriverPath"), 0) == kCFCompareEqualTo) {
         syslog(LOG_ERR,
-               "ProxyAudio error: missing DriverPath form Localizable.strings");
+               "ProxyAudio error: missing DriverPath from Localizable.strings");
         return 9;
     }
+    
+    syslog(LOG_WARNING,
+           "ProxyAudio: initializing rust components");
     
     // Initialize rust
     result = rust_initialize_vad(device,

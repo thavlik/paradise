@@ -14,4 +14,4 @@ command = "cargo"
 args = ["fmt", "--", "--emit=files"]
 
 [tasks.device]
-command = "../device/platform/macOS/build.sh"
+command = "../device/platform/build.sh"

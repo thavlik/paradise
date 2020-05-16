@@ -16,16 +16,17 @@ impl Device {
             let host = cpal::host_from_id(host_id)?;
             println!("host {:?}", host_id);
             for (i, d) in host.devices()?.enumerate() {
+                // custom built proxy-audio-device works
+                // paradise device with rust lib does not
                 println!("  {}. {:?}", i, d.name());
-                // if let Ok(name) = d.name() {
-                //     println!("  {}. {}", i, name);
-                //     if name == self.display_name {
-                //         // At least one device with the same display name was found.
-                //         // TODO: verify input config
-                //         // TODO: verify output config
-                //         return Ok(());
-                //     }
-                // }
+                if let Ok(name) = d.name() {
+                    if name == self.display_name {
+                        // At least one device with the same display name was found.
+                        // TODO: verify input config
+                        // TODO: verify output config
+                        return Ok(());
+                    }
+                }
             }
         }
         return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &self.name)));
@@ -49,11 +50,11 @@ mod macos {
 
     #[cfg(debug_assertions)]
     mod fixtures {
-        pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Info.plist");
-        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
-        pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
-        pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
-        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Debug/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
+        pub const INFO_PLIST: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Info.plist");
+        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
+        pub const CODE_RESOURCES: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
+        pub const DEVICE_ICON: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
+        pub const DRIVER_BINARY: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
     }
 
     #[cfg(not(debug_assertions))]

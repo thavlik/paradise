@@ -33,12 +33,14 @@ pub const ALPN_QUIC_HTTP: &[&[u8]] = &[b"hq-27"];
 
 #[test]
 fn socket() {
-    tokio::spawn(async move {});
     tokio::runtime::Builder::new()
         .threaded_scheduler()
         .build()
         .unwrap()
         .block_on(async move {
+            // No panic - can find runtime
+            tokio::spawn(async move {});
+
             let mut transport_config = TransportConfig::default();
             transport_config.stream_window_uni(0);
             let mut server_config = ServerConfig::default();
@@ -71,10 +73,10 @@ fn socket() {
             let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
             let mut endpoint = Endpoint::builder();
             endpoint.listen(server_config.build());
-            //let mut incoming = {
-            //    let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
-            //    incoming
-            //};
+            let mut incoming = {
+                let (endpoint, incoming) = endpoint.bind(&addr).unwrap(); // PANIC - cannot find runtime
+                incoming
+            };
         });
 }
 

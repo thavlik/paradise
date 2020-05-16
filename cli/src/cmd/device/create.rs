@@ -47,6 +47,7 @@ mod macos {
 
     const PLUGIN_PREFIX: &'static str = "paradise-";
     const PLUGIN_PATH: &'static str = "/Library/Audio/Plug-Ins/HAL";
+    const DEVICE_MANUFACTURER: &'static str = "Paradise Project";
 
     #[cfg(debug_assertions)]
     mod fixtures {
@@ -71,6 +72,13 @@ mod macos {
         //format!("{}/ProxyAudioDevice.driver", PLUGIN_PATH)
     }
 
+    fn generate_localizable_strings(device: &Device) -> String {
+        format!(r#"DeviceName = "{}";
+BoxName = "{}";
+ManufacturerName = "{}";
+"#, &device.display_name, &device.display_name, DEVICE_MANUFACTURER)
+    }
+
     fn generate_driver(device: &Device) -> Result<PathBuf> {
         let path = PathBuf::from(format!("/tmp/{}{}.driver-{}", PLUGIN_PREFIX, &device.name, Uuid::new_v4()));
         fs::create_dir(&path)?;
@@ -88,7 +96,7 @@ mod macos {
             .write_all(fixtures::DEVICE_ICON)?;
         fs::create_dir(path.join("Contents/Resources/English.lproj"))?;
         fs::File::create(path.join("Contents/Resources/English.lproj/Localizable.strings"))?
-            .write_all(fixtures::LOCALIZABLE_STRINGS)?;
+            .write_all(&generate_localizable_strings(device).into_bytes()[..])?;
         Ok(path)
     }
 

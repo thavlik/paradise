@@ -52,7 +52,6 @@ mod macos {
     #[cfg(debug_assertions)]
     mod fixtures {
         pub const INFO_PLIST: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Info.plist");
-        pub const LOCALIZABLE_STRINGS: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
         pub const CODE_RESOURCES: &'static str = include_str!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
         pub const DEVICE_ICON: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
         pub const DRIVER_BINARY: &'static [u8] = include_bytes!("/Users/thomashavlik/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");
@@ -61,7 +60,6 @@ mod macos {
     #[cfg(not(debug_assertions))]
     mod fixtures {
         pub const INFO_PLIST: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Info.plist");
-        pub const LOCALIZABLE_STRINGS: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Resources/English.lproj/Localizable.strings");
         pub const CODE_RESOURCES: &'static str = include_str!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/_CodeSignature/CodeResources");
         pub const DEVICE_ICON: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/Resources/DeviceIcon.icns");
         pub const DRIVER_BINARY: &'static [u8] = include_bytes!("../../../../device/platform/macOS/build/Release/ProxyAudioDevice.driver/Contents/MacOS/ProxyAudioDevice");

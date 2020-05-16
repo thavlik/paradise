@@ -1,12 +1,12 @@
 [env]
 PROFILE = "$CARGO_MAKE_CARGO_PROFILE"
-LIBRARY_EXTENSION = { source = "${CARGO_MAKE_RUST_TARGET_OS}", default_value = "unknown", mapping = {"linux" = "so", "macos" = "dylib", "windows" = "dll", "openbsd" = "so" } }
+#LIBRARY_EXTENSION = { source = "${CARGO_MAKE_RUST_TARGET_OS}", default_value = "unknown", mapping = {"linux" = "so", "macos" = "dylib", "windows" = "dll", "openbsd" = "so" } }
 
 [env.development]
 PROFILE = "debug"
 
 [env.production]
-PROFILE = "Release"
+PROFILE = "release"
 
 [tasks.format]
 install_crate = "rustfmt"

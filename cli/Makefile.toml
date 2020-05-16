@@ -15,3 +15,8 @@ args = ["fmt", "--", "--emit=files"]
 
 [tasks.device]
 command = "../device/platform/build.sh"
+
+[tasks.test]
+command = "cargo"
+args = ["test", "--", "--nocapture"]
+dependencies = ["device"]

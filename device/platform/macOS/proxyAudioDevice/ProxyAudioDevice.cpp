@@ -1,5 +1,5 @@
 #include "ProxyAudioDevice.h"
-
+#include "CADebugMacros.h"
 #include <algorithm>
 #include <string>
 #include <dispatch/dispatch.h>
@@ -138,7 +138,23 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
         return result;
     }
     
-    return rust_initialize_vad(device);
+    // Get the driver path
+    CFBundleRef bundle = CFBundleGetBundleWithIdentifier(CFSTR(kPlugIn_BundleID));
+    CFStringRef driverPath = CFBundleCopyLocalizedString(
+        bundle, CFSTR("DriverPath"), NULL, CFSTR("Localizable"));
+    if (driverPath == NULL || CFStringCompare(driverPath, CFSTR("DriverPath"), 0) != kCFCompareEqualTo) {
+        syslog(LOG_ERR,
+               "ProxyAudio error: missing DriverPath form Localizable.strings");
+        return 9;
+    }
+    
+    // Initialize rust
+    result = rust_initialize_vad(device, (const uint8_t*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
+    
+    // Don't leak memory
+    CFRelease(driverPath);
+    
+    return result;
 }
 
 OSStatus ProxyAudioDevice::ProxyAudio_CreateDevice(AudioServerPlugInDriverRef inDriver,

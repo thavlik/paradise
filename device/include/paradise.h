@@ -5,6 +5,6 @@
 
 extern "C" {
 
-int32_t rust_initialize_vad(const void *vad);
+int32_t rust_initialize_vad(const void *vad, const uint8_t *driver_path);
 
 } // extern "C"

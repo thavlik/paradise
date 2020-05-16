@@ -2,7 +2,7 @@ use syslog::{Facility, Formatter3164};
 use std::ffi::c_void;
 
 #[no_mangle]
-pub extern "C" fn rust_initialize_vad(vad: *const c_void) -> i32 {
+pub extern "C" fn rust_initialize_vad(vad: *const c_void, driver_path: *const u8) -> i32 {
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
         hostname: None,

@@ -122,8 +122,12 @@ mod macos {
             r#"DeviceName = "{}";
 BoxName = "{}";
 ManufacturerName = "{}";
+DriverPath = "{}";
 "#,
-            &device.display_name, &device.display_name, DEVICE_MANUFACTURER
+            &device.display_name,
+            &device.display_name,
+            DEVICE_MANUFACTURER,
+            &driver_path(&device.name),
         )
     }
 

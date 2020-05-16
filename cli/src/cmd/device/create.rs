@@ -308,6 +308,7 @@ ManufacturerName = "{}";
             device.verify().expect_err("should not exist");
         }
 
+        /*
         #[test]
         fn basic_stream() {
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
@@ -332,7 +333,7 @@ ManufacturerName = "{}";
             restart_core_audio().unwrap();
             //// TODO: verify stream is stopped
             device.verify().expect_err("should not exist");
-        }
+        }*/
     }
 }
 

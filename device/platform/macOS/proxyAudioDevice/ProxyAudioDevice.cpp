@@ -140,6 +140,7 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
     
     CFBundleRef bundle = CFBundleGetBundleWithIdentifier(CFSTR(kPlugIn_BundleID));
     
+    /*
     CFStringRef driverName = CFBundleCopyLocalizedString(
         bundle, CFSTR("DriverName"), CFSTR("DriverName"), CFSTR("Localizable"));
     if (CFStringCompare(driverName, CFSTR("DriverName"), 0) == kCFCompareEqualTo) {
@@ -154,18 +155,21 @@ OSStatus ProxyAudioDevice::ProxyAudio_Initialize(AudioServerPlugInDriverRef inDr
         syslog(LOG_ERR,
                "ProxyAudio error: missing DriverPath from Localizable.strings");
         return 9;
-    }
+    }*/
     
     syslog(LOG_WARNING,
            "ProxyAudio: initializing rust components");
     
     // Initialize rust
-    result = rust_initialize_vad(device,
-                                 (const char*)CFStringGetCStringPtr(driverName, kCFStringEncodingUTF8),
+    result = rust_initialize_vad((const char*)CFStringGetCStringPtr(driverName, kCFStringEncodingUTF8),
                                  (const char*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
     
+    syslog(LOG_WARNING,
+           "ProxyAudio: rust components initialized successfully");
+    
     // Don't leak memory
-    CFRelease(driverPath);
+    //CFRelease(driverPath);
+    //CFRelease(driverPath);
     
     return result;
 }

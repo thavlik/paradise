@@ -1,9 +1,9 @@
-use anyhow::{Result, Error};
+use anyhow::{Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait};
-use std::process::Command;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::process::Command;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {
@@ -26,25 +26,45 @@ impl Device {
                 if let Ok(name) = d.name() {
                     if name == self.display_name {
                         match (self.inputs > 0, d.default_input_config()) {
-                            (true, Ok(conf)) => if conf.channels() != self.inputs {
-                                return Err(Error::msg(format!("mismatch number of input channels (got {}, expected {})", conf.channels(), self.inputs)));
-                            },
-                            (true, Err(e)) => return Err(Error::msg("device is missing input config")),
-                            (false, Ok(_)) => return Err(Error::msg("device has unexpected input config")),
+                            (true, Ok(conf)) => {
+                                if conf.channels() != self.inputs {
+                                    return Err(Error::msg(format!(
+                                        "mismatch number of input channels (got {}, expected {})",
+                                        conf.channels(),
+                                        self.inputs
+                                    )));
+                                }
+                            }
+                            (true, Err(e)) => {
+                                return Err(Error::msg("device is missing input config"))
+                            }
+                            (false, Ok(_)) => {
+                                return Err(Error::msg("device has unexpected input config"))
+                            }
                             (false, Err(e)) => match e {
-                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {},
-                                _ => return Err(e.into())
+                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {}
+                                _ => return Err(e.into()),
                             },
                         }
                         match (self.outputs > 0, d.default_output_config()) {
-                            (true, Ok(conf)) => if conf.channels() != self.outputs {
-                                return Err(Error::msg(format!("mismatch number of output channels (got {}, expected {})", conf.channels(), self.outputs)));
-                            },
-                            (true, Err(e)) => return Err(Error::msg("device is missing output config")),
-                            (false, Ok(_)) => return Err(Error::msg("device has unexpected output config")),
+                            (true, Ok(conf)) => {
+                                if conf.channels() != self.outputs {
+                                    return Err(Error::msg(format!(
+                                        "mismatch number of output channels (got {}, expected {})",
+                                        conf.channels(),
+                                        self.outputs
+                                    )));
+                                }
+                            }
+                            (true, Err(e)) => {
+                                return Err(Error::msg("device is missing output config"))
+                            }
+                            (false, Ok(_)) => {
+                                return Err(Error::msg("device has unexpected output config"))
+                            }
                             (false, Err(e)) => match e {
-                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {},
-                                _ => return Err(e.into())
+                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {}
+                                _ => return Err(e.into()),
                             },
                         }
                         return Ok(());
@@ -52,7 +72,10 @@ impl Device {
                 }
             }
         }
-        return Err(Error::msg(format!("device '{}' not loaded by CoreAudio", &self.name)));
+        return Err(Error::msg(format!(
+            "device '{}' not loaded by CoreAudio",
+            &self.name
+        )));
     }
 }
 
@@ -62,8 +85,8 @@ mod macos {
     use std::fs;
     use std::io::Write;
     use std::os::unix::fs::PermissionsExt;
-    use std::sync::{Mutex, Arc};
-    use std::time::{SystemTime, Duration};
+    use std::sync::{Arc, Mutex};
+    use std::time::{Duration, SystemTime};
 
     lazy_static! {
         static ref CORE_AUDIO_LOCK: Mutex<()> = Mutex::new(());
@@ -95,14 +118,22 @@ mod macos {
     }
 
     fn generate_localizable_strings(device: &Device) -> String {
-        format!(r#"DeviceName = "{}";
+        format!(
+            r#"DeviceName = "{}";
 BoxName = "{}";
 ManufacturerName = "{}";
-"#, &device.display_name, &device.display_name, DEVICE_MANUFACTURER)
+"#,
+            &device.display_name, &device.display_name, DEVICE_MANUFACTURER
+        )
     }
 
     fn generate_driver(device: &Device) -> Result<PathBuf> {
-        let path = PathBuf::from(format!("/tmp/{}{}.driver-{}", PLUGIN_PREFIX, &device.name, Uuid::new_v4()));
+        let path = PathBuf::from(format!(
+            "/tmp/{}{}.driver-{}",
+            PLUGIN_PREFIX,
+            &device.name,
+            Uuid::new_v4()
+        ));
         fs::create_dir(&path)?;
         fs::create_dir(path.join("Contents"))?;
         fs::create_dir(path.join("Contents/_CodeSignature"))?;
@@ -128,11 +159,13 @@ ManufacturerName = "{}";
     fn device_exists(name: &str) -> Result<bool> {
         match std::fs::metadata(&driver_path(name)) {
             Ok(_) => Ok(true),
-            Err(e) => if e.kind() == std::io::ErrorKind::NotFound {
-                Ok(false)
-            } else {
-                Err(e.into())
-            },
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    Ok(false)
+                } else {
+                    Err(e.into())
+                }
+            }
         }
     }
 
@@ -144,7 +177,10 @@ ManufacturerName = "{}";
             .arg(format!("mv {} {}", path.to_str().unwrap(), &dest))
             .status()?;
         if !status.success() {
-            return Err(Error::msg(format!("mv command failed with code {:?}", status.code())));
+            return Err(Error::msg(format!(
+                "mv command failed with code {:?}",
+                status.code()
+            )));
         }
         let cmd = format!("chmod 755 {}/Contents/MacOS/ProxyAudioDevice", &dest);
         let output = Command::new("sudo")
@@ -153,7 +189,11 @@ ManufacturerName = "{}";
             .arg(&cmd)
             .output()?;
         if !output.status.success() {
-            return Err(Error::msg(format!("command '{}' failed with code {:?}", &cmd, output.status.code())));
+            return Err(Error::msg(format!(
+                "command '{}' failed with code {:?}",
+                &cmd,
+                output.status.code()
+            )));
         }
         Ok(())
     }
@@ -162,7 +202,10 @@ ManufacturerName = "{}";
     // Requires sudo.
     fn install_device(device: &Device) -> Result<()> {
         if device_exists(&device.name)? {
-            return Err(Error::msg(format!("device '{}' already exists", &device.name)));
+            return Err(Error::msg(format!(
+                "device '{}' already exists",
+                &device.name
+            )));
         }
         install_driver_package(device, &generate_driver(device)?)
     }
@@ -181,7 +224,10 @@ ManufacturerName = "{}";
         if status.success() {
             Ok(())
         } else {
-            Err(Error::msg(format!("command failed with code {:?}", status.code())))
+            Err(Error::msg(format!(
+                "command failed with code {:?}",
+                status.code()
+            )))
         }
     }
 
@@ -205,7 +251,10 @@ ManufacturerName = "{}";
             std::thread::sleep(Duration::from_secs(10));
             Ok(())
         } else {
-            Err(Error::msg(format!("command failed with code {:?}", status.code())))
+            Err(Error::msg(format!(
+                "command failed with code {:?}",
+                status.code()
+            )))
         }
     }
 

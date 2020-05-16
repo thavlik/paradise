@@ -3,8 +3,8 @@ extern crate lazy_static;
 //#[macro_use]
 //extern crate serde;
 
-use clap::Clap;
 use anyhow::{Error, Result};
+use clap::Clap;
 
 //type Result<T> = std::result::Result<T, anyhow::Error>;
 //

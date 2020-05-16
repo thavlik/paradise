@@ -19,4 +19,5 @@ fn main() {
     if !status.success() {
         panic!(format!("xcodebuild failed with code {:?}", status.code()));
     }
+    println!("cargo:rerun-if-changed=\"{}\"", platform_dir.join(format!("build/{}", configuration)).to_str().unwrap());
 }

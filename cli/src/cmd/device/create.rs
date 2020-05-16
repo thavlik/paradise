@@ -70,12 +70,10 @@ fn socket() {
             let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
             let mut endpoint = Endpoint::builder();
             endpoint.listen(server_config.build());
-            /*
-            let mut incoming = {
-    let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
-    incoming
-};
- */
+            //let mut incoming = {
+            //    let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
+            //    incoming
+            //};
         });
 }
 

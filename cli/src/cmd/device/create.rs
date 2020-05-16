@@ -208,13 +208,10 @@ ManufacturerName = "{}";
             assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             device.verify().unwrap();
-            //// TODO: create output stream to ProxyAudioDevice and verify exact audio can be received
             remove_device(&device.name).expect("remove");
             device.verify().unwrap();
             assert_eq!(false, device_exists(&device.name).unwrap());
-            //// TODO: ensure device is still streaming
             restart_core_audio().unwrap();
-            //// TODO: verify stream is stopped
             device.verify().expect_err("should not exist");
         }
 

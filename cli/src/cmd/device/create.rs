@@ -330,13 +330,6 @@ ManufacturerName = "{}";
     #[cfg(test)]
     mod test {
         use super::*;
-        use futures::{
-            future::{Fuse, FusedFuture, FutureExt},
-            stream::{FusedStream, FuturesUnordered, Stream, StreamExt},
-            pin_mut,
-            select,
-        };
-
 
         fn test_device_name() -> String {
             format!("test-{}", &Uuid::new_v4().to_string()[..8])
@@ -387,7 +380,7 @@ ManufacturerName = "{}";
 
         #[tokio::test(threaded_scheduler)]
         async fn basic_stream() {
-            let (mut send_stop, recv_stop) = futures::channel::oneshot::channel();
+            let (mut send_stop, recv_stop) = crossbeam::channel::unbounded();
             tokio::spawn(async move {
                 let mut transport_config = TransportConfig::default();
                 transport_config.stream_window_uni(0);
@@ -433,10 +426,9 @@ ManufacturerName = "{}";
                 //        }),
                 //    );
                 //}
-                let stop = receive_stop(recv_stop).fuse();
                 //let next = incoming.next().fuse();
                 select! {
-                    _ = stop => {},
+                    recv(recv_stop) -> _ => {},
                 }
                 //next = conn => {
                 //let Some(conn) = conn {

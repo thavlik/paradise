@@ -33,6 +33,7 @@
 		77CE24F12375F011004556AD /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DD7AA9915EC572000C67AE1 /* IOKit.framework */; };
 		792C664C2470F71400E0425D /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 792C664B2470F71400E0425D /* Security.framework */; };
 		792C66502470F7A300E0425D /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 792C664F2470F7A300E0425D /* AudioUnit.framework */; };
+		792C66522471001300E0425D /* Network.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 792C66512471001300E0425D /* Network.framework */; };
 		7959009A246E45E300284728 /* ProxyAudioDevice.driver in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2D7477A91578168D00412279 /* ProxyAudioDevice.driver */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -106,6 +107,7 @@
 		792C664B2470F71400E0425D /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		792C664D2470F74900E0425D /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		792C664F2470F7A300E0425D /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		792C66512471001300E0425D /* Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
 		793AF436245BC6D900AB419D /* libparadise_device.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libparadise_device.a; path = ../../../target/debug/libparadise_device.a; sourceTree = "<group>"; };
 		793AF438245BC6F000AB419D /* libparadise_device.d */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.dtrace; name = libparadise_device.d; path = ../../../target/debug/libparadise_device.d; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -122,6 +124,7 @@
 				776E4F5E2208138E00AE0417 /* Carbon.framework in Frameworks */,
 				776E4F5D2208138B00AE0417 /* CoreAudio.framework in Frameworks */,
 				2D7477AD1578168D00412279 /* CoreFoundation.framework in Frameworks */,
+				792C66522471001300E0425D /* Network.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -179,6 +182,7 @@
 		2D7477AB1578168D00412279 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				792C66512471001300E0425D /* Network.framework */,
 				792C664F2470F7A300E0425D /* AudioUnit.framework */,
 				792C664D2470F74900E0425D /* AudioToolbox.framework */,
 				792C664B2470F71400E0425D /* Security.framework */,

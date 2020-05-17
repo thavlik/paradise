@@ -560,11 +560,14 @@ mod test {
         #[tokio::test]
         async fn create_stream_error() {
             assert_eq!(
-                MockAudioInterface::error("hello from MockAudioInterface")
-                    .create_stream(CreateStreamRequest::new())
-                    .await
-                    .err()
-                    .unwrap(),
+                format!(
+                    "{}",
+                    MockAudioInterface::error("hello from MockAudioInterface")
+                        .create_stream(CreateStreamRequest::new())
+                        .await
+                        .err()
+                        .unwrap()
+                ),
                 "hello from MockAudioInterface"
             );
         }
@@ -580,11 +583,14 @@ mod test {
         #[tokio::test]
         async fn delete_stream_error() {
             assert_eq!(
-                MockAudioInterface::error("hello from MockAudioInterface")
-                    .delete_stream(DeleteStreamRequest::new())
-                    .await
-                    .err()
-                    .unwrap(),
+                format!(
+                    "{}",
+                    MockAudioInterface::error("hello from MockAudioInterface")
+                        .delete_stream(DeleteStreamRequest::new())
+                        .await
+                        .err()
+                        .unwrap()
+                ),
                 "hello from MockAudioInterface"
             );
         }
@@ -600,11 +606,14 @@ mod test {
         #[tokio::test]
         async fn get_device_info_error() {
             assert_eq!(
-                MockAudioInterface::error("hello from MockAudioInterface")
-                    .get_device_info(GetDeviceInfoRequest::new())
-                    .await
-                    .err()
-                    .unwrap(),
+                format!(
+                    "{}",
+                    MockAudioInterface::error("hello from MockAudioInterface")
+                        .get_device_info(GetDeviceInfoRequest::new())
+                        .await
+                        .err()
+                        .unwrap()
+                ),
                 "hello from MockAudioInterface"
             );
         }
@@ -620,11 +629,14 @@ mod test {
         #[tokio::test]
         async fn list_streams_error() {
             assert_eq!(
-                MockAudioInterface::error("hello from MockAudioInterface")
-                    .list_streams(ListStreamsRequest::new())
-                    .await
-                    .err()
-                    .unwrap(),
+                format!(
+                    "{}",
+                    MockAudioInterface::error("hello from MockAudioInterface")
+                        .list_streams(ListStreamsRequest::new())
+                        .await
+                        .err()
+                        .unwrap()
+                ),
                 "hello from MockAudioInterface"
             );
         }

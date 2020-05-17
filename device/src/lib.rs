@@ -121,6 +121,9 @@ async fn driver_entry(device: Device, ready: Sender<Result<()>>) -> Result<()> {
     }
     let server_addr: SocketAddr = device.endpoints[0].addr.parse()?;
     ready.send(Ok(()));
+
+    // TODO: retry logic
+
     run_client(server_addr).await?;
     Ok(())
 }
@@ -152,7 +155,7 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
     warn!("{:?}", &device);
 
     warn!("initializing runtime");
-    // TODO: retry logic
+
     // TODO: expose C function for stopping the runtime
 
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
@@ -163,11 +166,11 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
             tokio::spawn(async move {
                 match driver_entry(device, ready_send).await {
                     Ok(()) => {
-                        error!("driver entrypoint exited prematurely");
+                        error!("driver exited prematurely");
                         // TODO
                     },
                     Err(e) => {
-                        error!("client error: {:?}", e);
+                        error!("driver exited with error: {:?}", e);
                         // TODO
                     },
                 }

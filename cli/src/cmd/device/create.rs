@@ -372,7 +372,6 @@ ManufacturerName = "{}";
             restart_core_audio().unwrap();
             device.verify().unwrap();
 
-            //// TODO: The audio driver should connect to the endpoint automatically
             recv_conn.recv_timeout(Duration::from_secs(3))
                 .expect("did not receive connection");
 

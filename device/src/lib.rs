@@ -3,6 +3,7 @@
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
+use crossbeam::channel::{Sender, Receiver};
 
 
 use std::ffi::{c_void, CStr};
@@ -114,11 +115,12 @@ lazy_static! {
         .unwrap()));
 }
 
-async fn driver_entry(device: Device) -> Result<()> {
+async fn driver_entry(device: Device, ready: Sender<Result<()>>) -> Result<()> {
     if device.endpoints.len() == 0 {
         return Err(Error::msg("no endpoints"));
     }
     let server_addr: SocketAddr = device.endpoints[0].addr.parse()?;
+    ready.send(Ok(()));
     run_client(server_addr).await?;
     Ok(())
 }
@@ -152,12 +154,14 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
     warn!("initializing runtime");
     // TODO: retry logic
     // TODO: expose C function for stopping the runtime
+
+    let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
     RUNTIME.clone()
         .lock()
         .unwrap()
         .block_on(async move {
             tokio::spawn(async move {
-                match driver_entry(device).await {
+                match driver_entry(device, ready_send).await {
                     Ok(()) => {
                         error!("driver entrypoint exited prematurely");
                         // TODO
@@ -169,7 +173,22 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
                 }
             });
         });
-    0
+    match ready_recv.recv() {
+        Ok(result) => match result {
+            Ok(()) => {
+                warn!("device has signaled ready state");
+                0
+            },
+            Err(e) => {
+                error!("failed to initialize: {:?}", e);
+                1
+            },
+        },
+        Err(e) => {
+            error!("ready channel error: {:?}", e);
+            1
+        },
+    }
 }
 
 #[cfg(test)]

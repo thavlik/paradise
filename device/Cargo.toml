@@ -17,6 +17,7 @@ paradise_core = { path = "../core" }
 rustls = { version = "0.17", features = ["quic", "dangerous_configuration"] }
 webpki = { version = "0.21" }
 lazy_static = "1.4.0"
+crossbeam = "0.7.3"
 
 [dependencies.log]
 features = ["std"]

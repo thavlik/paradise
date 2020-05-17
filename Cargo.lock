@@ -1826,6 +1826,7 @@ dependencies = [
  "cbindgen",
  "cpal",
  "futures 0.3.4",
+ "lazy_static",
  "log",
  "paradise_core",
  "quinn",

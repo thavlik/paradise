@@ -1,6 +1,9 @@
 #![feature(panic_info_message)]
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
+
 
 use std::ffi::{c_void, CStr};
 use std::path::PathBuf;
@@ -8,7 +11,7 @@ use std::os::raw::c_char;
 use anyhow::{Result, Error};
 use paradise_core::device::Device;
 use futures::StreamExt;
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, sync::{Arc, Mutex}};
 use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
 
 /// Dummy certificate verifier that treats any certificate as valid.
@@ -103,6 +106,22 @@ fn configure_client() -> ClientConfig {
     cfg
 }
 
+lazy_static! {
+    static ref RUNTIME: Arc<Mutex<tokio::runtime::Runtime>> = Arc::new(Mutex::new(tokio::runtime::Builder::new()
+        .threaded_scheduler()
+        .enable_all()
+        .build()
+        .unwrap()));
+}
+
+async fn driver_entry(device: Device) -> Result<()> {
+    if device.endpoints.len() == 0 {
+        return Err(Error::msg("no endpoints"));
+    }
+    let server_addr: SocketAddr = device.endpoints[0].addr.parse()?;
+    run_client(server_addr).await?;
+    Ok(())
+}
 
 #[no_mangle]
 pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *const c_char) -> i32 {
@@ -130,34 +149,26 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
     let device: Device = serde_yaml::from_str(&config).unwrap();
     warn!("{:?}", &device);
 
-    if device.endpoints.len() == 0 {
-        error!("no endpoints");
-        return 1;
-    }
-
-    let server_addr: SocketAddr = match device.endpoints[0].addr.parse() {
-        Ok(addr) => addr,
-        Err(e) => {
-            error!("parse addr: {:?}", e);
-            return 1;
-        },
-    };
-
     warn!("initializing runtime");
-
-    tokio::runtime::Builder::new()
-        .threaded_scheduler()
-        .enable_all()
-        .build()
+    // TODO: retry logic
+    // TODO: expose C function for stopping the runtime
+    RUNTIME.clone()
+        .lock()
         .unwrap()
         .block_on(async move {
-            warn!("running client");
-            match run_client(server_addr).await {
-                Ok(()) => warn!("client executed successfully"),
-                Err(e) => error!("client error: {:?}", e),
-            }
+            tokio::spawn(async move {
+                match driver_entry(device).await {
+                    Ok(()) => {
+                        error!("driver entrypoint exited prematurely");
+                        // TODO
+                    },
+                    Err(e) => {
+                        error!("client error: {:?}", e);
+                        // TODO
+                    },
+                }
+            });
         });
-
     0
 }
 

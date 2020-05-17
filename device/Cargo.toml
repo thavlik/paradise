@@ -16,6 +16,7 @@ quinn = { git = "https://github.com/djc/quinn", features = ["tls-rustls"] }
 paradise_core = { path = "../core" }
 rustls = { version = "0.17", features = ["quic", "dangerous_configuration"] }
 webpki = { version = "0.21" }
+lazy_static = "1.4.0"
 
 [dependencies.log]
 features = ["std"]

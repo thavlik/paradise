@@ -1,13 +1,4 @@
 [workspace]
-default-members = [
-  "types",
-  "core",
-  "device",
-  "scout",
-  "cli",
-   "vst2",
-   "vst3",
-]
 members = [
   "types",
   "core",

@@ -10,6 +10,8 @@
 //! Quality can be improved a lot by oversampling a bit.
 //! Feedback is clipped independently of the input, so it doesn't disappear at high gains.
 #[macro_use]
+extern crate serde;
+#[macro_use]
 extern crate log;
 #[macro_use]
 extern crate tokio;
@@ -18,6 +20,7 @@ extern crate crossbeam;
 #[macro_use]
 extern crate lazy_static;
 
-pub mod editor;
-pub mod runtime;
+//pub mod editor;
+//pub mod runtime;
+pub mod device;
 //pub mod stream;

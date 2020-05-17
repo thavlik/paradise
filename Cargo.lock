@@ -1781,7 +1781,7 @@ dependencies = [
  "env_logger",
  "futures 0.3.4",
  "lazy_static",
- "paradise_device",
+ "paradise_core",
  "portpicker",
  "quinn",
  "rand 0.7.3",
@@ -1805,13 +1805,17 @@ dependencies = [
 name = "paradise_core"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "cpal",
  "crossbeam",
  "env_logger",
  "lazy_static",
  "log",
  "log4rs",
+ "quinn",
+ "serde",
+ "serde_yaml",
  "tokio 0.2.19 (git+https://github.com/tokio-rs/tokio.git)",
- "vst",
 ]
 
 [[package]]
@@ -1820,7 +1824,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cbindgen",
+ "cpal",
  "log",
+ "quinn",
  "serde",
  "serde_yaml",
  "syslog",

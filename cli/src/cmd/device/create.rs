@@ -19,6 +19,7 @@ use std::{
     sync::{Arc, mpsc},
     fs,
 };
+use paradise_core::device::Device;
 
 use anyhow::Context;
 use tracing::{error, info, info_span};
@@ -65,104 +66,6 @@ async fn socket() {
         let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
         incoming
     };
-}
-
-#[derive(Default, Serialize, Deserialize)]
-pub struct Endpoint {
-    addr: String,
-
-    insecure: bool,
-}
-
-#[derive(Default, Serialize, Deserialize)]
-pub struct Device {
-    name: String,
-
-    #[serde(rename = "displayName")]
-    display_name: String,
-
-    inputs: u16,
-
-    outputs: u16,
-
-    endpoints: Vec<Endpoint>,
-}
-
-impl Device {
-    fn get_handle(&self) -> Result<cpal::Device> {
-        let available_hosts = cpal::available_hosts();
-        for host_id in available_hosts {
-            let host = cpal::host_from_id(host_id)?;
-            for (_, d) in host.devices()?.enumerate() {
-                if let Ok(name) = d.name() {
-                    if name == self.display_name {
-                        return Ok(d);
-                    }
-                }
-            }
-        }
-        Err(Error::msg(format!("device '{}' not found", &self.name)))
-    }
-
-    fn verify(&self) -> Result<()> {
-        let available_hosts = cpal::available_hosts();
-        for host_id in available_hosts {
-            let host = cpal::host_from_id(host_id)?;
-            for (_, d) in host.devices()?.enumerate() {
-                if let Ok(name) = d.name() {
-                    if name == self.display_name {
-                        match (self.inputs > 0, d.default_input_config()) {
-                            (true, Ok(conf)) => {
-                                if conf.channels() != self.inputs {
-                                    return Err(Error::msg(format!(
-                                        "mismatch number of input channels (got {}, expected {})",
-                                        conf.channels(),
-                                        self.inputs
-                                    )));
-                                }
-                            }
-                            (true, Err(e)) => {
-                                return Err(Error::msg("device is missing input config"))
-                            }
-                            (false, Ok(_)) => {
-                                return Err(Error::msg("device has unexpected input config"))
-                            }
-                            (false, Err(e)) => match e {
-                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {}
-                                _ => return Err(e.into()),
-                            },
-                        }
-                        match (self.outputs > 0, d.default_output_config()) {
-                            (true, Ok(conf)) => {
-                                if conf.channels() != self.outputs {
-                                    return Err(Error::msg(format!(
-                                        "mismatch number of output channels (got {}, expected {})",
-                                        conf.channels(),
-                                        self.outputs
-                                    )));
-                                }
-                            }
-                            (true, Err(e)) => {
-                                return Err(Error::msg("device is missing output config"))
-                            }
-                            (false, Ok(_)) => {
-                                return Err(Error::msg("device has unexpected output config"))
-                            }
-                            (false, Err(e)) => match e {
-                                cpal::DefaultStreamConfigError::StreamTypeNotSupported => {}
-                                _ => return Err(e.into()),
-                            },
-                        }
-                        return Ok(());
-                    }
-                }
-            }
-        }
-        return Err(Error::msg(format!(
-            "device '{}' not loaded by CoreAudio",
-            &self.name
-        )));
-    }
 }
 
 #[cfg(target_os = "macos")]

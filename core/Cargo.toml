@@ -2,16 +2,19 @@
 name = "paradise_core"
 version = "0.1.0"
 authors = ["Tom Havlik <thavlik@protonmail.com>"]
+repository = "git@github.com:thavlik/paradise.git"
+workspace = ".."
 edition = "2018"
 
 [dependencies]
-vst = { git = "https://github.com/rustaudio/vst-rs" }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
 env_logger = "0.7.1"
-#flutter-engine = { path = "../../flutter-rs/flutter-engine" }
-#flutter-winit = { path = "../../flutter-rs/flutter-winit" }
 log = "0.4.8"
 log4rs = "0.11.0"
 crossbeam = "0.7.3"
-#glutin = { git = "https://github.com/rust-windowing/glutin" }
 tokio = { git = "https://github.com/tokio-rs/tokio.git", features = ["rt-core", "rt-threaded"] }
 lazy_static = "1.4.0"
+anyhow = "1.0.12"
+cpal = { git = "https://github.com/rustaudio/cpal" }
+quinn = { git = "https://github.com/djc/quinn", features = ["tls-rustls"] }

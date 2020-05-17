@@ -2,6 +2,8 @@
 name = "paradise_cli"
 version = "0.1.0"
 authors = ["Tom Havlik <thavlik@protonmail.com>"]
+repository = "git@github.com:thavlik/paradise.git"
+workspace = ".."
 edition = "2018"
 
 [dependencies]
@@ -11,7 +13,6 @@ anyhow = "1.0.12"
 env_logger = "0.7.1"
 clap = { git = "https://github.com/clap-rs/clap/" }
 tokio = { version = "0.2.6", features = ["rt-core", "rt-threaded", "io-driver", "time", "macros"] }
-#paradise_core = { path = "../core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 difference = "2.0"
@@ -31,8 +32,8 @@ unwrap = "1.2.1"
 url = "2"
 uuid = { version = "0.8", features = ["v4"] }
 lazy_static = "1.4.0"
-paradise_device = { path = "../device" }
 crossbeam = "0.7.3"
+paradise_core = { path = "../core" }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 xml-rs = "0.8.3"

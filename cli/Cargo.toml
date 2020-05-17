@@ -18,7 +18,7 @@ difference = "2.0"
 futures = "0.3.1"
 term = "0.5"
 tracing = "0.1.10"
-quinn = { git = "https://github.com/djc/quinn" }
+quinn = { git = "https://github.com/djc/quinn", features = ["tls-rustls"] }
 crc = "1.8.1"
 bencher = "0.1.5"
 directories = "2.0.0"

@@ -1826,6 +1826,7 @@ dependencies = [
  "cbindgen",
  "cpal",
  "log",
+ "paradise_core",
  "quinn",
  "serde",
  "serde_yaml",

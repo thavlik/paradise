@@ -11,6 +11,7 @@ serde_yaml = "0.8"
 anyhow = "1.0.12"
 cpal = { git = "https://github.com/rustaudio/cpal" }
 quinn = { git = "https://github.com/djc/quinn", features = ["tls-rustls"] }
+paradise_core = { path = "../core" }
 
 [dependencies.log]
 features = ["std"]

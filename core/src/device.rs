@@ -20,14 +20,14 @@ use std::{
 };
 use anyhow::Context;
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Endpoint {
     pub addr: String,
 
     pub insecure: bool,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Device {
     pub name: String,
 

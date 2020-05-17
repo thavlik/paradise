@@ -5,6 +5,7 @@ use std::ffi::{c_void, CStr};
 use std::path::PathBuf;
 use std::os::raw::c_char;
 use anyhow::{Result, Error};
+use paradise_core::device::Device;
 
 fn init_logger() -> Result<()> {
     #[cfg(target_os = "macos")]
@@ -33,8 +34,6 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
         return 1;
     }
 
-    warn!("hello from a macro, getting driver name");
-
     let driver_name = unsafe { CStr::from_ptr(driver_name) }.to_str().unwrap();
 
     warn!("driver name is {}", driver_name);
@@ -52,7 +51,11 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
             return 1;
         },
     };
-    warn!("{}", &config);
+    let device: Device = serde_yaml::from_str(&config).unwrap();
+    warn!("{:?}", &device);
+
+    // TODO: init connection to endpoints
+
     0
 }
 

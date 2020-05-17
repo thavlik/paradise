@@ -378,6 +378,7 @@ ManufacturerName = "{}";
         #[tokio::test(threaded_scheduler)]
         async fn basic_stream() {
             let (mut send_stop, recv_stop) = crossbeam::channel::unbounded();
+            let (mut send_conn, recv_conn) = crossbeam::channel::unbounded();
             tokio::spawn(async move {
                 let mut transport_config = TransportConfig::default();
                 transport_config.stream_window_uni(0);
@@ -416,12 +417,8 @@ ManufacturerName = "{}";
                     incoming
                 };
                 while let Some(conn) = incoming.next().await {
-                    info!("connection incoming");
-                    tokio::spawn(
-                        handle_connection(conn).unwrap_or_else(move |e| {
-                            error!("connection failed: {reason}", reason = e.to_string())
-                        }),
-                    );
+                    send_conn.send(());
+                    return;
                 }
             });
             let _l = CORE_AUDIO_LOCK.lock().unwrap();

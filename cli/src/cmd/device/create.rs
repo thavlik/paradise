@@ -1,5 +1,5 @@
 use anyhow::{Error, Result};
-use cpal::traits::{DeviceTrait, HostTrait};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
@@ -80,6 +80,21 @@ pub struct Device {
 }
 
 impl Device {
+    fn get_handle(&self) -> Result<cpal::Device> {
+        let available_hosts = cpal::available_hosts();
+        for host_id in available_hosts {
+            let host = cpal::host_from_id(host_id)?;
+            for (_, d) in host.devices()?.enumerate() {
+                if let Ok(name) = d.name() {
+                    if name == self.display_name {
+                        return Ok(d);
+                    }
+                }
+            }
+        }
+        Err(Error::msg(format!("device '{}' not found", &self.name)))
+    }
+
     fn verify(&self) -> Result<()> {
         let available_hosts = cpal::available_hosts();
         for host_id in available_hosts {
@@ -435,14 +450,38 @@ ManufacturerName = "{}";
             assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             device.verify().unwrap();
-            /// TODO: play audio through device using cpal
+            recv_conn.recv_timeout(Duration::from_secs(3)).expect("did not receive connection");
+
+            // Initialize an output stream on the device and play some audio
+            let handle = device.get_handle().unwrap();
+            let output_data_fn = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+            };
+            let err_fn = |err: cpal::StreamError| {
+                panic!("an error occurred on stream: {}", err);
+            };
+            let stream_config: cpal::StreamConfig = handle.default_output_config().unwrap().into();
+            let output_stream = handle.build_output_stream(&stream_config, output_data_fn, err_fn).unwrap();
+            output_stream.play().unwrap();
+
+            std::thread::sleep(Duration::from_secs(1));
+            // TODO: verify device is streaming
+
+            // Remove the driver folder.
             remove_device(&device.name).expect("remove");
+
+            // The device should still be visible to cpal until CoreAudio is restarted
             device.verify().unwrap();
+
+            // The driver directory shouldn't exist anymore
             assert_eq!(false, device_exists(&device.name).unwrap());
+
             //// TODO: ensure device is still streaming
+
+            // Restarting CoreAudio causes the stream to stop and device to be fully removed
             restart_core_audio().unwrap();
             //// TODO: verify stream is stopped
             device.verify().expect_err("should not exist");
+
             send_stop.send(());
         }
     }

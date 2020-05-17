@@ -285,6 +285,10 @@ ManufacturerName = "{}";
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
                 outputs: 2,
+                endpoints: vec![Endpoint{
+                    addr: "127.0.0.1:5000".into(),
+                    insecure: true,
+                }],
                 ..Default::default()
             };
             install_device(&device).unwrap();

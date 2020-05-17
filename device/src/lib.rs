@@ -37,14 +37,15 @@ async fn run_client(server_addr: SocketAddr) -> Result<()> {
     warn!("configuring client");
     let client_cfg = configure_client();
 
-    warn!("building endpoint");
+    warn!("building endpoint...");
     let mut endpoint_builder = Endpoint::builder();
     endpoint_builder.default_client_config(client_cfg);
 
-    warn!("binding endpoint");
-    let (endpoint, _) = endpoint_builder.bind(&"127.0.0.1:0".parse()?)?;
+    let addr = "127.0.0.1:0".parse()?;
+    warn!("binding endpoint {}", &addr);
+    let (endpoint, _) = endpoint_builder.bind(&addr)?;
 
-    warn!("connecting to server");
+    warn!("connecting to server...");
     let quinn::NewConnection { connection, .. } = endpoint
         .connect(&server_addr, "localhost")?
         .await?;

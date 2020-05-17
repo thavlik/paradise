@@ -330,6 +330,13 @@ ManufacturerName = "{}";
     #[cfg(test)]
     mod test {
         use super::*;
+        use futures::{
+            future::{Fuse, FusedFuture, FutureExt},
+            stream::{FusedStream, FuturesUnordered, Stream, StreamExt},
+            pin_mut,
+            select,
+        };
+
 
         fn test_device_name() -> String {
             format!("test-{}", &Uuid::new_v4().to_string()[..8])
@@ -375,9 +382,12 @@ ManufacturerName = "{}";
             Ok(())
         }
 
+        async fn receive_stop(r: futures::channel::oneshot::Receiver<()>) {
+        }
+
         #[tokio::test(threaded_scheduler)]
         async fn basic_stream() {
-            let (mut send_stop, recv_stop) = mpsc::channel::<()>();
+            let (mut send_stop, recv_stop) = futures::channel::oneshot::channel();
             tokio::spawn(async move {
                 let mut transport_config = TransportConfig::default();
                 transport_config.stream_window_uni(0);
@@ -415,14 +425,28 @@ ManufacturerName = "{}";
                     let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
                     incoming
                 };
-                while let Some(conn) = incoming.next().await {
-                    info!("connection incoming");
-                    tokio::spawn(
-                        handle_connection(conn).unwrap_or_else(move |e| {
-                            error!("connection failed: {reason}", reason = e.to_string())
-                        }),
-                    );
+                //while let Some(conn) = incoming.next().await {
+                //    info!("connection incoming");
+                //    tokio::spawn(
+                //        handle_connection(conn).unwrap_or_else(move |e| {
+                //            error!("connection failed: {reason}", reason = e.to_string())
+                //        }),
+                //    );
+                //}
+                let stop = receive_stop(recv_stop).fuse();
+                //let next = incoming.next().fuse();
+                select! {
+                    _ = stop => {},
                 }
+                //next = conn => {
+                //let Some(conn) = conn {
+                //    tokio::spawn(
+                //        handle_connection(conn).unwrap_or_else(move |e| {
+                //            error!("connection failed: {reason}", reason = e.to_string())
+                //        }),
+                //    );
+                //}
+                //},
             });
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
             cleanup();

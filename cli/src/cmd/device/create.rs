@@ -1,13 +1,13 @@
 use anyhow::{Error, Result};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use serde::{Deserialize, Serialize};
+use std::default::Default;
 use std::path::PathBuf;
 use std::process::Command;
 use uuid::Uuid;
 use quinn::{
     ServerConfig,
     ServerConfigBuilder,
-    Endpoint,
     TransportConfig,
     CertificateChain,
     PrivateKey,
@@ -59,7 +59,7 @@ async fn socket() {
     server_config.certificate(CertificateChain::from_certs(vec![cert]), key).unwrap();
     let port = portpicker::pick_unused_port().expect("pick port");
     let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
-    let mut endpoint = Endpoint::builder();
+    let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
     let mut incoming = {
         let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
@@ -67,7 +67,14 @@ async fn socket() {
     };
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
+pub struct Endpoint {
+    addr: String,
+
+    insecure: bool,
+}
+
+#[derive(Default, Serialize, Deserialize)]
 pub struct Device {
     name: String,
 
@@ -77,6 +84,8 @@ pub struct Device {
     inputs: u16,
 
     outputs: u16,
+
+    endpoints: Vec<Endpoint>,
 }
 
 impl Device {
@@ -372,8 +381,8 @@ ManufacturerName = "{}";
             let device = Device {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
-                inputs: 0,
                 outputs: 2,
+                ..Default::default()
             };
             install_device(&device).unwrap();
             assert!(device_exists(&device.name).unwrap());
@@ -392,6 +401,8 @@ ManufacturerName = "{}";
 
         #[tokio::test(threaded_scheduler)]
         async fn basic_stream() {
+            let port = portpicker::pick_unused_port().expect("pick port");
+            let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
             let (mut send_stop, recv_stop) = crossbeam::channel::unbounded();
             let (mut send_conn, recv_conn) = crossbeam::channel::unbounded();
             tokio::spawn(async move {
@@ -423,9 +434,7 @@ ManufacturerName = "{}";
                 let key = PrivateKey::from_der(&key).unwrap();
                 let cert = Certificate::from_der(&cert).unwrap();
                 server_config.certificate(CertificateChain::from_certs(vec![cert]), key).unwrap();
-                let port = portpicker::pick_unused_port().expect("pick port");
-                let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
-                let mut endpoint = Endpoint::builder();
+                let mut endpoint = quinn::Endpoint::builder();
                 endpoint.listen(server_config.build());
                 let mut incoming = {
                     let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
@@ -444,9 +453,12 @@ ManufacturerName = "{}";
             let device = Device {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
-                inputs: 0,
                 outputs: 2,
-                // TODO: destination address
+                endpoints: vec![Endpoint{
+                    addr: addr.to_string(),
+                    insecure: true,
+                }],
+                ..Default::default()
             };
             install_device(&device).unwrap();
             assert!(device_exists(&device.name).unwrap());

@@ -450,7 +450,8 @@ ManufacturerName = "{}";
             assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             device.verify().unwrap();
-            recv_conn.recv_timeout(Duration::from_secs(3)).expect("did not receive connection");
+            recv_conn.recv_timeout(Duration::from_secs(3))
+                .expect("did not receive connection");
 
             // Initialize an output stream on the device and play some audio
             let handle = device.get_handle().unwrap();

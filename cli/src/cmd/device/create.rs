@@ -307,6 +307,91 @@ ManufacturerName = "{}";
         }
 
         #[tokio::test(threaded_scheduler)]
+        async fn should_connect() {
+            /// The device should automatically connect to the output endpoints
+            let port = portpicker::pick_unused_port().expect("pick port");
+            let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
+            let (mut send_conn, recv_conn) = crossbeam::channel::unbounded();
+            tokio::spawn(async move {
+                let mut transport_config = TransportConfig::default();
+                transport_config.stream_window_uni(0);
+                let mut server_config = ServerConfig::default();
+                server_config.transport = Arc::new(transport_config);
+                let mut server_config = ServerConfigBuilder::new(server_config);
+                server_config.protocols(ALPN_QUIC_HTTP);
+                let dirs = directories::ProjectDirs::from("org", "quinn", "quinn-examples").unwrap();
+                let path = dirs.data_local_dir();
+                let cert_path = path.join("cert.der");
+                let key_path = path.join("key.der");
+                let (cert, key) = match fs::read(&cert_path).and_then(|x| Ok((x, fs::read(&key_path).unwrap()))) {
+                    Ok(x) => x,
+                    Err(ref e) if e.kind() == io::ErrorKind::NotFound => {
+                        let cert = rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
+                        let key = cert.serialize_private_key_der();
+                        let cert = cert.serialize_der().unwrap();
+                        fs::create_dir_all(&path).context("failed to create certificate directory").unwrap();
+                        fs::write(&cert_path, &cert).context("failed to write certificate").unwrap();
+                        fs::write(&key_path, &key).context("failed to write private key").unwrap();
+                        (cert, key)
+                    }
+                    Err(e) => {
+                        panic!("failed to read certificate: {}", e);
+                    }
+                };
+                let key = PrivateKey::from_der(&key).unwrap();
+                let cert = Certificate::from_der(&cert).unwrap();
+                server_config.certificate(CertificateChain::from_certs(vec![cert]), key).unwrap();
+                let mut endpoint = quinn::Endpoint::builder();
+                endpoint.listen(server_config.build());
+                let mut incoming = {
+                    let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
+                    incoming
+                };
+                while let Some(conn) = incoming.next().await {
+                    let new_conn = conn.await.expect("failed to accept incoming connection");
+                    send_conn.send(());
+                }
+            });
+            // Install a virtual audio device that connects to the server
+            let _l = CORE_AUDIO_LOCK.lock().unwrap();
+            cleanup();
+            let name = test_device_name();
+            assert!(!device_exists(&name).unwrap());
+            let device = Device {
+                display_name: format!("Test Virtual Device ({})", &name),
+                name,
+                outputs: 2,
+                endpoints: vec![Endpoint{
+                    addr: addr.to_string(),
+                    insecure: true,
+                }],
+                ..Default::default()
+            };
+            install_device(&device).unwrap();
+            assert!(device_exists(&device.name).unwrap());
+            restart_core_audio().unwrap();
+            device.verify().unwrap();
+
+            // Make sure the device automatically connects the test server
+            recv_conn.recv_timeout(Duration::from_secs(3))
+                .expect("did not receive connection");
+
+            // Remove the driver folder.
+            remove_device(&device.name).expect("remove");
+
+            // The device should still be visible to cpal until CoreAudio is restarted
+            device.verify().unwrap();
+
+            // The driver directory shouldn't exist anymore
+            assert_eq!(false, device_exists(&device.name).unwrap());
+
+            // Restarting CoreAudio causes the stream to stop and device to be fully removed
+            restart_core_audio().unwrap();
+
+            device.verify().expect_err("should not exist");
+        }
+
+        #[tokio::test(threaded_scheduler)]
         async fn basic_stream() {
             let port = portpicker::pick_unused_port().expect("pick port");
             let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
@@ -348,10 +433,10 @@ ManufacturerName = "{}";
                     incoming
                 };
                 while let Some(conn) = incoming.next().await {
+                    let new_conn = conn.await.expect("failed to accept incoming connection");
                     send_conn.send(());
                 }
             });
-
             // Install a virtual audio device that connects to the server
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
             cleanup();
@@ -372,6 +457,7 @@ ManufacturerName = "{}";
             restart_core_audio().unwrap();
             device.verify().unwrap();
 
+            // Make sure the device automatically connects the test server
             recv_conn.recv_timeout(Duration::from_secs(3))
                 .expect("did not receive connection");
 

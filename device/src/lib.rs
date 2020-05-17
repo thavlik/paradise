@@ -125,6 +125,7 @@ async fn driver_entry(device: Device, ready: Sender<Result<()>>) -> Result<()> {
     // TODO: retry logic
 
     run_client(server_addr).await?;
+
     Ok(())
 }
 

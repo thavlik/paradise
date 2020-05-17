@@ -147,6 +147,7 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
 
     tokio::runtime::Builder::new()
         .threaded_scheduler()
+        .enable_all()
         .build()
         .unwrap()
         .block_on(async move {

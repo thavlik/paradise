@@ -1,3 +1,4 @@
+#![feature(panic_info_message)]
 #[macro_use]
 extern crate log;
 
@@ -59,6 +60,19 @@ async fn run_client(server_addr: SocketAddr) -> Result<()> {
 }
 
 fn init_logger() -> Result<()> {
+    std::panic::set_hook(Box::new(|panic_info| {
+        let location = if let Some(location) = panic_info.location() {
+            format!("{}", location)
+        } else {
+            format!("unknown")
+        };
+        let message = if let Some(message) = panic_info.message() {
+            format!("{}", message)
+        } else {
+            format!("no message available")
+        };
+        error!("panic occurred [{}]: {}", location, message);
+    }));
     #[cfg(target_os = "macos")]
         {
             use syslog::{Facility, Formatter3164, BasicLogger};
@@ -142,6 +156,7 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
                 Err(e) => error!("client error: {:?}", e),
             }
         });
+
     0
 }
 

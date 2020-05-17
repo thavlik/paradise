@@ -375,9 +375,6 @@ ManufacturerName = "{}";
             Ok(())
         }
 
-        async fn receive_stop(r: futures::channel::oneshot::Receiver<()>) {
-        }
-
         #[tokio::test(threaded_scheduler)]
         async fn basic_stream() {
             let (mut send_stop, recv_stop) = crossbeam::channel::unbounded();
@@ -418,27 +415,14 @@ ManufacturerName = "{}";
                     let (endpoint, incoming) = endpoint.bind(&addr).unwrap();
                     incoming
                 };
-                //while let Some(conn) = incoming.next().await {
-                //    info!("connection incoming");
-                //    tokio::spawn(
-                //        handle_connection(conn).unwrap_or_else(move |e| {
-                //            error!("connection failed: {reason}", reason = e.to_string())
-                //        }),
-                //    );
-                //}
-                //let next = incoming.next().fuse();
-                select! {
-                    recv(recv_stop) -> _ => {},
+                while let Some(conn) = incoming.next().await {
+                    info!("connection incoming");
+                    tokio::spawn(
+                        handle_connection(conn).unwrap_or_else(move |e| {
+                            error!("connection failed: {reason}", reason = e.to_string())
+                        }),
+                    );
                 }
-                //next = conn => {
-                //let Some(conn) = conn {
-                //    tokio::spawn(
-                //        handle_connection(conn).unwrap_or_else(move |e| {
-                //            error!("connection failed: {reason}", reason = e.to_string())
-                //        }),
-                //    );
-                //}
-                //},
             });
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
             cleanup();

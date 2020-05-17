@@ -42,12 +42,11 @@ async fn run_client(server_addr: SocketAddr) -> Result<()> {
     endpoint_builder.default_client_config(client_cfg);
 
     warn!("binding endpoint");
-    let (endpoint, _) = endpoint_builder.bind(&"127.0.0.1:0".parse().unwrap())?;
+    let (endpoint, _) = endpoint_builder.bind(&"127.0.0.1:0".parse()?)?;
 
     warn!("connecting to server");
     let quinn::NewConnection { connection, .. } = endpoint
-        .connect(&server_addr, "localhost")
-        .unwrap()
+        .connect(&server_addr, "localhost")?
         .await?;
     warn!("[client] connected: addr={}", connection.remote_address());
     // Dropping handles allows the corresponding objects to automatically shut down
@@ -116,13 +115,27 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
     let device: Device = serde_yaml::from_str(&config).unwrap();
     warn!("{:?}", &device);
 
-    warn!("initializing connection");
-    let server_addr: SocketAddr = device.endpoints[0].addr.parse().unwrap();
+    if device.endpoints.len() == 0 {
+        error!("no endpoints");
+        return 1;
+    }
+
+    let server_addr: SocketAddr = match device.endpoints[0].addr.parse() {
+        Ok(addr) => addr,
+        Err(e) => {
+            error!("parse addr: {:?}", e);
+            return 1;
+        },
+    };
+
+    warn!("initializing runtime");
+
     tokio::runtime::Builder::new()
         .threaded_scheduler()
         .build()
         .unwrap()
         .block_on(async move {
+            warn!("running client");
             match run_client(server_addr).await {
                 Ok(()) => warn!("client executed successfully"),
                 Err(e) => error!("client error: {:?}", e),

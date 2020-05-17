@@ -433,9 +433,10 @@ ManufacturerName = "{}";
                 };
                 while let Some(conn) = incoming.next().await {
                     send_conn.send(());
-                    return;
                 }
             });
+
+            // Install a virtual audio device that connects to the server
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
             cleanup();
             let name = test_device_name();
@@ -450,6 +451,8 @@ ManufacturerName = "{}";
             assert!(device_exists(&device.name).unwrap());
             restart_core_audio().unwrap();
             device.verify().unwrap();
+
+            // The audio driver should connect to the endpoint automatically
             recv_conn.recv_timeout(Duration::from_secs(3))
                 .expect("did not receive connection");
 

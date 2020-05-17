@@ -369,8 +369,8 @@ ManufacturerName = "{}";
             device.verify().unwrap();
 
             //// TODO: The audio driver should connect to the endpoint automatically
-            //recv_conn.recv_timeout(Duration::from_secs(3))
-            //    .expect("did not receive connection");
+            recv_conn.recv_timeout(Duration::from_secs(3))
+                .expect("did not receive connection");
 
             // Initialize an output stream on the device and play some audio
             let handle = device.get_handle().unwrap();

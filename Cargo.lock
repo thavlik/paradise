@@ -1825,12 +1825,16 @@ dependencies = [
  "anyhow",
  "cbindgen",
  "cpal",
+ "futures 0.3.4",
  "log",
  "paradise_core",
  "quinn",
+ "rustls",
  "serde",
  "serde_yaml",
  "syslog",
+ "tokio 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
+ "webpki",
 ]
 
 [[package]]

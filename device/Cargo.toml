@@ -6,12 +6,16 @@ workspace = ".."
 edition = "2018"
 
 [dependencies]
+futures = "0.3.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 anyhow = "1.0.12"
+tokio = { version = "0.2.6", features = ["rt-core", "rt-threaded", "io-driver", "time", "macros"] }
 cpal = { git = "https://github.com/rustaudio/cpal" }
 quinn = { git = "https://github.com/djc/quinn", features = ["tls-rustls"] }
 paradise_core = { path = "../core" }
+rustls = { version = "0.17", features = ["quic", "dangerous_configuration"] }
+webpki = { version = "0.21" }
 
 [dependencies.log]
 features = ["std"]

@@ -446,6 +446,7 @@ ManufacturerName = "{}";
                 name,
                 inputs: 0,
                 outputs: 2,
+                // TODO: destination address
             };
             install_device(&device).unwrap();
             assert!(device_exists(&device.name).unwrap());

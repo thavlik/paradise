@@ -69,7 +69,7 @@ fn init_logger() -> Result<()> {
         let message = if let Some(message) = panic_info.message() {
             format!("{}", message)
         } else {
-            format!("no message available")
+            format!("(no message available)")
         };
         error!("panic occurred [{}]: {}", location, message);
     }));

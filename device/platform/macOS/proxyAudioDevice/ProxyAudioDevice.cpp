@@ -5294,7 +5294,7 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
                                          const AudioServerPlugInIOCycleInfo *inIOCycleInfo,
                                          void *ioMainBuffer,
                                          void *ioSecondaryBuffer) {
-    //    This is called to actuall perform a given operation. For this device, all we need to do is
+    //    This is called to actually perform a given operation. For this device, all we need to do is
     //    clear the buffer for the ReadInput operation.
 
 #pragma unused(inClientID, ioSecondaryBuffer)
@@ -5323,6 +5323,12 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
     } else if (inOperationID == kAudioServerPlugInIOOperationWriteMix) {
         if (inputBuffer) {
             CAMutex::Locker locker(IOMutex);
+            
+            //const float first = ((const float*)ioMainBuffer)[0];
+            //DebugMsg("first element is %f", first);
+            
+            // TODO: implement handle for rust code
+            // TODO: pass audio to rust
 
             inputBuffer->Store((const Byte *)ioMainBuffer, inIOBufferFrameSize, inIOCycleInfo->mOutputTime.mSampleTime);
             

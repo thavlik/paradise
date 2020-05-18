@@ -16,7 +16,7 @@ use quinn::{
 use std::{
     io,
     net::SocketAddr,
-    sync::{Arc, mpsc},
+    sync::{Arc, mpsc, Mutex},
     fs,
 };
 use paradise_core::device::{Device, Endpoint};
@@ -463,7 +463,11 @@ ManufacturerName = "{}";
 
             // Initialize an output stream on the device and play some audio
             let handle = device.get_handle().unwrap();
+            let counter: Mutex<usize> = Mutex::new(0);
             let output_data_fn = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                let mut v = counter.lock().unwrap();
+                *v = *v + 1;
+                data[0] = *v as _;
             };
             let err_fn = |err: cpal::StreamError| {
                 panic!("an error occurred on stream: {}", err);

@@ -5341,6 +5341,7 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
             // TODO: implement handle for rust code
             // TODO: pass audio to rust
             // TODO: audio ring buffer in rust
+            rust_io_proc(rust_driver);
 
             inputBuffer->Store((const Byte *)ioMainBuffer, inIOBufferFrameSize, inIOCycleInfo->mOutputTime.mSampleTime);
             

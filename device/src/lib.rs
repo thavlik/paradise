@@ -129,14 +129,14 @@ async fn driver_entry(driver: Arc<Driver>, ready: Sender<Result<()>>) -> Result<
     Ok(())
 }
 
-#[no_mangle]
-pub extern "C" fn rust_io_proc(frame: *const c_void, frame_size: u32) -> i32 {
-    0
-}
-
 pub struct Driver {
     spec: DeviceSpec,
     ring: RingBuffer<f32>,
+}
+
+#[no_mangle]
+pub extern "C" fn rust_io_proc(driver: *mut c_void) {
+    let driver: Box<Arc<Driver>> = unsafe { Box::from_raw(driver as _) };
 }
 
 #[no_mangle]

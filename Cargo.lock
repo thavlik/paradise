@@ -1831,6 +1831,7 @@ dependencies = [
  "log",
  "paradise_core",
  "quinn",
+ "ringbuf",
  "rustls",
  "serde",
  "serde_yaml",
@@ -2445,6 +2446,15 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi 0.3.8",
+]
+
+[[package]]
+name = "ringbuf"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4c5bcca9bef534aff8343fd8026bf8ddbc375edf3f20abf7e559729bf8b1c41"
+dependencies = [
+ "rustc_version",
 ]
 
 [[package]]

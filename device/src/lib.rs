@@ -130,6 +130,11 @@ async fn driver_entry(device: Device, ready: Sender<Result<()>>) -> Result<()> {
 }
 
 #[no_mangle]
+pub extern "C" fn rust_io_proc(frame: *const c_void, frame_size: u32) -> i32 {
+    0
+}
+
+#[no_mangle]
 pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *const c_char) -> i32 {
     if init_logger().is_err() {
         return 1;

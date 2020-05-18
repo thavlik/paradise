@@ -5324,11 +5324,12 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
         if (inputBuffer) {
             CAMutex::Locker locker(IOMutex);
             
+            // This is audio played from cpal
             //const float first = ((const float*)ioMainBuffer)[0];
             //DebugMsg("first element is %f", first);
-            
             // TODO: implement handle for rust code
             // TODO: pass audio to rust
+            // TODO: audio ring buffer in rust
 
             inputBuffer->Store((const Byte *)ioMainBuffer, inIOBufferFrameSize, inIOCycleInfo->mOutputTime.mSampleTime);
             

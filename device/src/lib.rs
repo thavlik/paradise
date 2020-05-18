@@ -6,7 +6,6 @@ extern crate log;
 extern crate lazy_static;
 use crossbeam::channel::{Sender, Receiver};
 use ringbuf::RingBuffer;
-
 use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
 use std::os::raw::c_char;
@@ -116,16 +115,28 @@ lazy_static! {
         .unwrap()));
 }
 
+async fn endpoint_entry(server_addr: SocketAddr) -> Result<()> {
+    run_client(server_addr).await
+}
+
 async fn driver_entry(driver: Arc<Driver>, ready: Sender<Result<()>>) -> Result<()> {
     if driver.spec.endpoints.len() == 0 {
         return Err(Error::msg("no endpoints"));
     }
-    let server_addr: SocketAddr = driver.spec.endpoints[0].addr.parse()?;
-    ready.send(Ok(()));
 
-    // TODO: retry logic
+    let mut endpoints = vec![];
+    for endpoint in &driver.spec.endpoints {
+        let server_addr = match endpoint.addr.parse() {
+            Ok(server_addr) => server_addr,
+            Err(e) => {
+                ready.send(Err(Error::msg(format!("{:?}", e))));
+                return Err(Error::msg(format!("{:?}", e)));
+            },
+        };
+        endpoints.push(endpoint_entry(server_addr));
+    }
 
-    run_client(server_addr).await?;
+    futures::future::join_all(endpoints).await;
 
     Ok(())
 }
@@ -192,11 +203,9 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
                 match driver_entry(driver, ready_send).await {
                     Ok(()) => {
                         error!("driver exited prematurely");
-                        // TODO
                     },
                     Err(e) => {
                         error!("driver exited with error: {:?}", e);
-                        // TODO
                     },
                 }
             });

@@ -4,6 +4,8 @@
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate futures;
 use crossbeam::channel::{Sender, Receiver};
 use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
@@ -114,23 +116,40 @@ lazy_static! {
         .unwrap()));
 }
 
-async fn endpoint_entry(server_addr: SocketAddr) {
+async fn endpoint_entry(server_addr: SocketAddr, stop: Receiver<()>) -> Result<()> {
     run_client(server_addr).await;
+    Err(Error::msg("exited prematurely"))
 }
 
-async fn driver_entry(driver: Arc<Driver>) -> Result<()> {
+async fn listen_for_stop(stop: Receiver<()>) -> Result<()> {
+    stop.recv().unwrap();
+    Err(Error::msg("exited prematurely"))
+}
+
+async fn driver_entry(driver: Arc<Driver>, stop: Receiver<()>) -> Result<()> {
     if driver.spec.endpoints.len() == 0 {
         return Err(Error::msg("no endpoints"));
     }
 
-    let mut endpoints = vec![];
+    let mut f = vec![];
+    let mut stops = vec![];
     for endpoint in &driver.spec.endpoints {
         let server_addr = endpoint.addr.parse()?;
-        endpoints.push(endpoint_entry(server_addr));
+        let (s, r) = crossbeam::channel::bounded(1);
+        f.push(endpoint_entry(server_addr, r));
+        stops.push(s);
     }
 
     tokio::spawn(async move {
-        futures::future::join_all(endpoints).await;
+        stop.recv().unwrap();
+        stops.into_iter()
+            .for_each(|s| {
+                s.send(()).unwrap()
+            });
+    });
+
+    tokio::spawn(async move {
+        futures::future::try_join_all(f).await;
     });
 
     Ok(())
@@ -138,6 +157,7 @@ async fn driver_entry(driver: Arc<Driver>) -> Result<()> {
 
 pub struct Driver {
     spec: DeviceSpec,
+    stop: Mutex<Sender<()>>,
 }
 
 #[no_mangle]
@@ -178,11 +198,11 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
     };
     let spec: DeviceSpec = serde_yaml::from_str(&config).unwrap();
     warn!("{:?}", &spec);
-
     warn!("initializing runtime");
-
+    let (stop_send, stop_recv) = crossbeam::channel::bounded(1);
     let driver = Arc::new(Driver {
         spec,
+        stop: Mutex::new(stop_send),
     });
     let retval = Weak::into_raw(Arc::downgrade(&driver));
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
@@ -190,7 +210,7 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
         .lock()
         .unwrap()
         .block_on(async move {
-            ready_send.send(driver_entry(driver).await);
+            ready_send.send(driver_entry(driver, stop_recv).await);
         });
     match ready_recv.recv() {
         Ok(result) => match result {
@@ -221,10 +241,8 @@ pub extern "C" fn rust_release_driver(driver: *mut c_void) {
             return;
         },
     };
-
-    // TODO: send stop signal
-
-    info!("releasing driver for '{}'", &driver.spec.name);
+    info!("stopping driver for '{}'", &driver.spec.name);
+    driver.stop.lock().unwrap().send(());
 }
 
 #[cfg(test)]

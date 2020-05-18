@@ -1,4 +1,5 @@
 #![feature(panic_info_message)]
+#![feature(weak_into_raw)]
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -12,7 +13,7 @@ use std::os::raw::c_char;
 use anyhow::{Result, Error};
 use paradise_core::device::DeviceSpec;
 use futures::StreamExt;
-use std::{net::SocketAddr, sync::{Arc, Mutex}};
+use std::{net::SocketAddr, sync::{Arc, Weak, Mutex}};
 use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
 
 /// Dummy certificate verifier that treats any certificate as valid.
@@ -136,7 +137,15 @@ pub struct Driver {
 
 #[no_mangle]
 pub extern "C" fn rust_io_proc(driver: *mut c_void) {
-    let driver: Box<Arc<Driver>> = unsafe { Box::from_raw(driver as _) };
+    let driver: Arc<Driver> = match unsafe {
+        Weak::from_raw(driver as _)
+    }.upgrade() {
+        Some(driver) => driver,
+        None => {
+            error!("ioproc: driver was deallocated");
+            return;
+        },
+    };
 }
 
 #[no_mangle]
@@ -172,7 +181,7 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
         ring: RingBuffer::new(8192),
     });
 
-    let retval = Box::into_raw(Box::new(driver.clone()));
+    let retval = Weak::into_raw(Arc::downgrade(&driver));
 
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
     RUNTIME.clone()
@@ -212,8 +221,18 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
 
 #[no_mangle]
 pub extern "C" fn rust_release_driver(driver: *mut c_void) {
-    let driver: Box<Arc<Driver>> = unsafe { Box::from_raw(driver as _) };
+    let driver: Arc<Driver> = match unsafe {
+        Weak::from_raw(driver as _)
+    }.upgrade() {
+        Some(driver) => driver,
+        None => {
+            error!("rust_release_driver: driver is already deallocated");
+            return;
+        },
+    };
+
     // TODO: send stop signal
+
     info!("releasing driver for '{}'", &driver.spec.name);
 }
 

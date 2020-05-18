@@ -19,7 +19,7 @@ use std::{
     sync::{Arc, mpsc, Mutex},
     fs,
 };
-use paradise_core::device::{Device, Endpoint};
+use paradise_core::device::{DeviceSpec, Endpoint};
 
 use anyhow::Context;
 use tracing::{error, info, info_span};
@@ -107,7 +107,7 @@ mod macos {
         format!("{}/{}{}.driver", PLUGIN_PATH, PLUGIN_PREFIX, name)
     }
 
-    fn generate_localizable_strings(device: &Device) -> String {
+    fn generate_localizable_strings(device: &DeviceSpec) -> String {
         format!(
             r#"DriverName = "{}";
 DriverPath = "{}";
@@ -123,7 +123,7 @@ ManufacturerName = "{}";
         )
     }
 
-    fn generate_driver(device: &Device) -> Result<PathBuf> {
+    fn generate_driver(device: &DeviceSpec) -> Result<PathBuf> {
         let path = PathBuf::from(format!(
             "/tmp/{}{}.driver-{}",
             PLUGIN_PREFIX,
@@ -165,7 +165,7 @@ ManufacturerName = "{}";
         }
     }
 
-    fn install_driver_package(device: &Device, path: &PathBuf) -> Result<()> {
+    fn install_driver_package(device: &DeviceSpec, path: &PathBuf) -> Result<()> {
         let dest = driver_path(&device.name);
         let status = Command::new("sudo")
             .arg("sh")
@@ -196,7 +196,7 @@ ManufacturerName = "{}";
 
     // Generates and installs a driver package for the given Device.
     // Requires sudo.
-    fn install_device(device: &Device) -> Result<()> {
+    fn install_device(device: &DeviceSpec) -> Result<()> {
         if device_exists(&device.name)? {
             return Err(Error::msg(format!(
                 "device '{}' already exists",
@@ -281,7 +281,7 @@ ManufacturerName = "{}";
             cleanup();
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
-            let device = Device {
+            let device = DeviceSpec {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
                 outputs: 2,
@@ -357,7 +357,7 @@ ManufacturerName = "{}";
             cleanup();
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
-            let device = Device {
+            let device = DeviceSpec {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
                 outputs: 2,
@@ -442,7 +442,7 @@ ManufacturerName = "{}";
             cleanup();
             let name = test_device_name();
             assert!(!device_exists(&name).unwrap());
-            let device = Device {
+            let device = DeviceSpec {
                 display_name: format!("Test Virtual Device ({})", &name),
                 name,
                 outputs: 2,

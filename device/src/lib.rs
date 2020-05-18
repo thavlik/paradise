@@ -10,7 +10,7 @@ use std::ffi::{c_void, CStr};
 use std::path::PathBuf;
 use std::os::raw::c_char;
 use anyhow::{Result, Error};
-use paradise_core::device::Device;
+use paradise_core::device::DeviceSpec;
 use futures::StreamExt;
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
 use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
@@ -115,7 +115,7 @@ lazy_static! {
         .unwrap()));
 }
 
-async fn driver_entry(device: Device, ready: Sender<Result<()>>) -> Result<()> {
+async fn driver_entry(device: DeviceSpec, ready: Sender<Result<()>>) -> Result<()> {
     if device.endpoints.len() == 0 {
         return Err(Error::msg("no endpoints"));
     }
@@ -157,7 +157,7 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
             return 1;
         },
     };
-    let device: Device = serde_yaml::from_str(&config).unwrap();
+    let device: DeviceSpec = serde_yaml::from_str(&config).unwrap();
     warn!("{:?}", &device);
 
     warn!("initializing runtime");

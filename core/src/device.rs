@@ -28,7 +28,7 @@ pub struct Endpoint {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct Device {
+pub struct DeviceSpec {
     pub name: String,
 
     #[serde(rename = "displayName")]
@@ -41,7 +41,7 @@ pub struct Device {
     pub endpoints: Vec<Endpoint>,
 }
 
-impl Device {
+impl DeviceSpec {
     pub fn get_handle(&self) -> Result<cpal::Device> {
         let available_hosts = cpal::available_hosts();
         for host_id in available_hosts {

@@ -142,7 +142,7 @@ pub extern "C" fn rust_io_proc(driver: *mut c_void) {
     }.upgrade() {
         Some(driver) => driver,
         None => {
-            error!("ioproc: driver was deallocated");
+            error!("ioproc: driver is deallocated");
             return;
         },
     };

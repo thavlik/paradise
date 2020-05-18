@@ -140,7 +140,7 @@ pub struct Driver {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *const c_char) -> *mut c_void {
+pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *const c_char) -> *mut c_void {
     if init_logger().is_err() {
         return ptr::null_mut();
     }
@@ -166,8 +166,6 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
     warn!("{:?}", &spec);
 
     warn!("initializing runtime");
-
-    // TODO: expose C function for stopping the runtime
 
     let driver = Arc::new(Driver {
         spec,
@@ -210,6 +208,13 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
             ptr::null_mut()
         },
     }
+}
+
+#[no_mangle]
+pub extern "C" fn rust_release_driver(driver: *mut c_void) {
+    let driver: Box<Arc<Driver>> = unsafe { Box::from_raw(driver as _) };
+    // TODO: send stop signal
+    info!("releasing driver for '{}'", &driver.spec.name);
 }
 
 #[cfg(test)]

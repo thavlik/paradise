@@ -35,7 +35,8 @@ class ProxyAudioDevice {
     enum class ConfigType { none, outputDevice, outputDeviceBufferFrameSize, deviceName, deviceActiveCondition };
     enum class ActiveCondition { proxiedDeviceActive = 0, userActive = 1, always = 2 };
 
-    ProxyAudioDevice() : inputIOIsActive(false) {};
+    ProxyAudioDevice();
+    ~ProxyAudioDevice();
     AudioDevice findTargetOutputAudioDevice();
     static int outputDeviceAliveListenerStatic(AudioObjectID inObjectID,
                                                UInt32 inNumberAddresses,
@@ -479,6 +480,7 @@ class ProxyAudioDevice {
     dispatch_source_t inputMonitoringTimer = NULL;
     AudioRingBuffer *inputBuffer = NULL;
     Byte *workBuffer = NULL;
+    void* rust_driver = NULL;
     AudioDevice outputDevice;
     bool outputDeviceReady = false;
     std::atomic_bool inputIOIsActive;

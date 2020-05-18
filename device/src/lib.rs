@@ -136,7 +136,7 @@ pub struct Driver {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_io_proc(driver: *mut c_void) {
+pub extern "C" fn rust_io_proc(driver: *mut c_void, buffer: *const u8, buffer_size: u32, sample_time: f64) {
     let driver: Arc<Driver> = match unsafe {
         Weak::from_raw(driver as _)
     }.upgrade() {

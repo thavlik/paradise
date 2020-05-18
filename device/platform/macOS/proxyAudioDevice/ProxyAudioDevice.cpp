@@ -5338,10 +5338,11 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
             // This is audio played from cpal
             //const float first = ((const float*)ioMainBuffer)[0];
             //DebugMsg("first element is %f", first);
-            // TODO: implement handle for rust code
-            // TODO: pass audio to rust
-            // TODO: audio ring buffer in rust
-            rust_io_proc(rust_driver);
+            
+            rust_io_proc(rust_driver,
+                         (const Byte *)ioMainBuffer,
+                         inIOBufferFrameSize,
+                         inIOCycleInfo->mOutputTime.mSampleTime);
 
             inputBuffer->Store((const Byte *)ioMainBuffer, inIOBufferFrameSize, inIOCycleInfo->mOutputTime.mSampleTime);
             

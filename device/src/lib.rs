@@ -4,9 +4,9 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 use crossbeam::channel::{Sender, Receiver};
+use ringbuf::RingBuffer;
 
-
-use std::ffi::{c_void, CStr};
+use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
 use std::os::raw::c_char;
 use anyhow::{Result, Error};
@@ -115,11 +115,11 @@ lazy_static! {
         .unwrap()));
 }
 
-async fn driver_entry(device: DeviceSpec, ready: Sender<Result<()>>) -> Result<()> {
-    if device.endpoints.len() == 0 {
+async fn driver_entry(driver: Arc<Driver>, ready: Sender<Result<()>>) -> Result<()> {
+    if driver.spec.endpoints.len() == 0 {
         return Err(Error::msg("no endpoints"));
     }
-    let server_addr: SocketAddr = device.endpoints[0].addr.parse()?;
+    let server_addr: SocketAddr = driver.spec.endpoints[0].addr.parse()?;
     ready.send(Ok(()));
 
     // TODO: retry logic
@@ -134,10 +134,15 @@ pub extern "C" fn rust_io_proc(frame: *const c_void, frame_size: u32) -> i32 {
     0
 }
 
+pub struct Driver {
+    spec: DeviceSpec,
+    ring: RingBuffer<f32>,
+}
+
 #[no_mangle]
-pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *const c_char) -> i32 {
+pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *const c_char) -> *mut c_void {
     if init_logger().is_err() {
-        return 1;
+        return ptr::null_mut();
     }
 
     let driver_name = unsafe { CStr::from_ptr(driver_name) }.to_str().unwrap();
@@ -154,15 +159,22 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
         Ok(config) => config,
         Err(e) => {
             error!("failed to load config '{:?}': {:?}", &config_path, e);
-            return 1;
+            return ptr::null_mut();
         },
     };
-    let device: DeviceSpec = serde_yaml::from_str(&config).unwrap();
-    warn!("{:?}", &device);
+    let spec: DeviceSpec = serde_yaml::from_str(&config).unwrap();
+    warn!("{:?}", &spec);
 
     warn!("initializing runtime");
 
     // TODO: expose C function for stopping the runtime
+
+    let driver = Arc::new(Driver {
+        spec,
+        ring: RingBuffer::new(8192),
+    });
+
+    let retval = Box::into_raw(Box::new(driver.clone()));
 
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
     RUNTIME.clone()
@@ -170,7 +182,7 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
         .unwrap()
         .block_on(async move {
             tokio::spawn(async move {
-                match driver_entry(device, ready_send).await {
+                match driver_entry(driver, ready_send).await {
                     Ok(()) => {
                         error!("driver exited prematurely");
                         // TODO
@@ -186,16 +198,16 @@ pub extern "C" fn rust_initialize_vad(driver_name: *const c_char, driver_path: *
         Ok(result) => match result {
             Ok(()) => {
                 warn!("device has signaled ready state");
-                0
+                retval as _
             },
             Err(e) => {
                 error!("failed to initialize: {:?}", e);
-                1
+                ptr::null_mut()
             },
         },
         Err(e) => {
             error!("ready channel error: {:?}", e);
-            1
+            ptr::null_mut()
         },
     }
 }

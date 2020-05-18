@@ -5,7 +5,6 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 use crossbeam::channel::{Sender, Receiver};
-use ringbuf::RingBuffer;
 use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
 use std::os::raw::c_char;
@@ -115,35 +114,30 @@ lazy_static! {
         .unwrap()));
 }
 
-async fn endpoint_entry(server_addr: SocketAddr) -> Result<()> {
-    run_client(server_addr).await
+async fn endpoint_entry(server_addr: SocketAddr) {
+    run_client(server_addr).await;
 }
 
-async fn driver_entry(driver: Arc<Driver>, ready: Sender<Result<()>>) -> Result<()> {
+async fn driver_entry(driver: Arc<Driver>) -> Result<()> {
     if driver.spec.endpoints.len() == 0 {
         return Err(Error::msg("no endpoints"));
     }
 
     let mut endpoints = vec![];
     for endpoint in &driver.spec.endpoints {
-        let server_addr = match endpoint.addr.parse() {
-            Ok(server_addr) => server_addr,
-            Err(e) => {
-                ready.send(Err(Error::msg(format!("{:?}", e))));
-                return Err(Error::msg(format!("{:?}", e)));
-            },
-        };
+        let server_addr = endpoint.addr.parse()?;
         endpoints.push(endpoint_entry(server_addr));
     }
 
-    futures::future::join_all(endpoints).await;
+    tokio::spawn(async move {
+        futures::future::join_all(endpoints).await;
+    });
 
     Ok(())
 }
 
 pub struct Driver {
     spec: DeviceSpec,
-    ring: RingBuffer<f32>,
 }
 
 #[no_mangle]
@@ -189,26 +183,14 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
 
     let driver = Arc::new(Driver {
         spec,
-        ring: RingBuffer::new(8192),
     });
-
     let retval = Weak::into_raw(Arc::downgrade(&driver));
-
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
     RUNTIME.clone()
         .lock()
         .unwrap()
         .block_on(async move {
-            tokio::spawn(async move {
-                match driver_entry(driver, ready_send).await {
-                    Ok(()) => {
-                        error!("driver exited prematurely");
-                    },
-                    Err(e) => {
-                        error!("driver exited with error: {:?}", e);
-                    },
-                }
-            });
+            ready_send.send(driver_entry(driver).await);
         });
     match ready_recv.recv() {
         Ok(result) => match result {

@@ -211,8 +211,7 @@ pub struct Driver {
 }
 
 impl Driver {
-    /// Attempt to connect to the output. If this method fails
-    /// with an error, it will be immediately retried.
+    /// "Fire and forget" connect method
     /// TODO: conceptualize retry config, backoff
     fn connect_with_retry(&self, server_addr: SocketAddr) {
         loop {

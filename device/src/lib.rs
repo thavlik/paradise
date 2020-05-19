@@ -215,11 +215,22 @@ impl Driver {
     /// with an error, it will be immediately retried.
     /// TODO: conceptualize retry config, backoff
     fn connect_with_retry(&self, server_addr: SocketAddr) {
-        let results = tokio::spawn(async move {
-            connect(server_addr).await
-        });
-        // TODO: lock self.outputs connections vec and add the item
-        Ok(())
+        loop {
+            let (s, r) = crossbeam::channel::unbounded();
+            tokio::spawn(async move {
+                s.send(connect(server_addr).await);
+            });
+            match r.recv().unwrap() {
+                Ok(v) => {
+                    // TODO: lock self.outputs connections vec and add the item
+                    return;
+                },
+                Err(e) => {
+                    error!("error connecting to {}: {}", &server_addr, e);
+                    std::thread::sleep(std::time::Duration::from_secs(5));
+                },
+            }
+        }
     }
 
     fn io_proc(&self, buffer: &[u8], sample_time: f64) -> Result<()> {

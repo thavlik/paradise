@@ -69,17 +69,6 @@ async fn run_client(server_addr: SocketAddr) -> Result<()> {
     Ok(())
 }
 
-async fn connect_with_retry(server_addr: SocketAddr) -> Result<(quinn::Endpoint, quinn::Connection)> {
-    loop {
-        match connect(server_addr.clone()).await {
-            Ok(v) => return Ok(v),
-            Err(e) => {
-                error!("error connecting to {}: {}", &server_addr, e);
-            }
-        }
-    }
-}
-
 async fn connect(server_addr: SocketAddr) -> Result<(quinn::Endpoint, quinn::Connection)> {
     warn!("configuring client");
     let client_cfg = configure_client();
@@ -173,8 +162,8 @@ async fn driver_entry(driver: Arc<Driver>, stop: Receiver<()>) -> Result<()> {
     //let mut f = vec![];
     //let mut stops = vec![];
     for endpoint in &driver.spec.endpoints {
-        let server_addr = endpoint.addr.parse()?;
-        connect_with_retry(server_addr);
+        //let server_addr = endpoint.addr.parse()?;
+        //connect_with_retry(server_addr);
 
         //f.push(connect(server_addr));
         //f.push(endpoint_entry(server_addr, r));
@@ -213,8 +202,7 @@ pub struct Driver {
 
 impl Driver {
     /// "Fire and forget" connect method
-    /// TODO: conceptualize retry config, backoff
-    fn connect_with_retry(&self, server_addr: SocketAddr) {
+    fn connect_with_retry(&self, name: String, server_addr: SocketAddr) {
         loop {
             let (s, r) = crossbeam::channel::unbounded();
             tokio::spawn(async move {
@@ -222,12 +210,16 @@ impl Driver {
             });
             match r.recv().unwrap() {
                 Ok((endpoint, conn)) => {
-                    // TODO: lock self.outputs connections vec and add the item
-                    self.outputs.lock().unwrap().push(Output {
-                        name: String::from("TODO"),
+                    match self.add_output(Output {
+                        name,
                         endpoint,
                         conn,
-                    });
+                    }) {
+                        Err(e) => {
+                            error!("failed to add output: {}", e);
+                        },
+                        _ => {},
+                    }
                     return;
                 }
                 Err(e) => {
@@ -236,6 +228,15 @@ impl Driver {
                 }
             }
         }
+    }
+
+    fn add_output(&self, output: Output) -> Result<()> {
+        let mut outputs = self.outputs.lock().unwrap();
+        if let Some(_) = outputs.iter().find(|o| o.name == output.name) {
+            return Err(Error::msg(format!("an output with the name '{}' already exists", output.name)));
+        }
+        outputs.push(output);
+        Ok(())
     }
 
     fn io_proc(&self, buffer: &[u8], sample_time: f64) -> Result<()> {

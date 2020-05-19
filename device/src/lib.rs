@@ -211,9 +211,15 @@ pub struct Driver {
 }
 
 impl Driver {
-    async fn connect(&self, server_addr: Output) {
-        // TODO: connect with quinn
-        // TODO: lock connections vec and add it
+    /// Attempt to connect to the output. If this method fails
+    /// with an error, it will be immediately retried.
+    /// TODO: conceptualize retry config, backoff
+    fn connect_with_retry(&self, server_addr: SocketAddr) {
+        let results = tokio::spawn(async move {
+            connect(server_addr).await
+        });
+        // TODO: lock self.outputs connections vec and add the item
+        Ok(())
     }
 
     fn io_proc(&self, buffer: &[u8], sample_time: f64) -> Result<()> {

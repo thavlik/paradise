@@ -6,6 +6,7 @@ extern crate log;
 extern crate lazy_static;
 #[macro_use]
 extern crate futures;
+
 use crossbeam::channel::{Sender, Receiver};
 use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
@@ -205,7 +206,7 @@ pub struct Output {
 
 pub struct Driver {
     // TODO: spec for inputs and outputs
-    outputs: Vec<Output>,
+    outputs: Mutex<Vec<Output>>,
     spec: DeviceSpec,
     stop: Mutex<Sender<()>>,
 }
@@ -220,24 +221,35 @@ impl Driver {
                 s.send(connect(server_addr).await);
             });
             match r.recv().unwrap() {
-                Ok(v) => {
+                Ok((endpoint, conn)) => {
                     // TODO: lock self.outputs connections vec and add the item
+                    self.outputs.lock().unwrap().push(Output {
+                        name: String::from("TODO"),
+                        endpoint,
+                        conn,
+                    });
                     return;
-                },
+                }
                 Err(e) => {
                     error!("error connecting to {}: {}", &server_addr, e);
                     std::thread::sleep(std::time::Duration::from_secs(5));
-                },
+                }
             }
         }
     }
 
     fn io_proc(&self, buffer: &[u8], sample_time: f64) -> Result<()> {
         // TODO: package up buffer and sample_time into message
-        // TODO: send packaged message over QUIC clients
-        //for output in &self.outputs {
-        //    output.conn.send_datagram(data)?;
-        //}
+        let outputs = self.outputs.lock().unwrap();
+        for output in &*outputs {
+            match output.conn.send_datagram(bytes::Bytes::new()) {
+                Ok(()) => {}
+                Err(e) => {
+                    error!("failed to send datagram to '{}': {}", &output.name, e);
+                    // TODO: decide if reconnect is appropriate here
+                }
+            }
+        }
         Ok(())
     }
 
@@ -258,15 +270,15 @@ pub extern "C" fn rust_io_proc(driver: *mut c_void, buffer: *const u8, buffer_si
         None => {
             error!("ioproc: driver is deallocated");
             return;
-        },
+        }
     };
     match driver.io_proc(unsafe {
         std::slice::from_raw_parts(buffer, buffer_size as _)
     }, sample_time) {
         Err(e) => {
             error!("ioproc: {:?}", e)
-        },
-        _ => {},
+        }
+        _ => {}
     }
 }
 
@@ -291,7 +303,7 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
         Err(e) => {
             error!("failed to load config '{:?}': {:?}", &config_path, e);
             return ptr::null_mut();
-        },
+        }
     };
     let spec: DeviceSpec = serde_yaml::from_str(&config).unwrap();
     warn!("{:?}", &spec);
@@ -300,7 +312,7 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
     let driver = Arc::new(Driver {
         spec,
         stop: Mutex::new(stop_send),
-        outputs: vec![],
+        outputs: Mutex::new(vec![]),
     });
     let retval = Weak::into_raw(Arc::downgrade(&driver));
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
@@ -315,16 +327,16 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
             Ok(()) => {
                 warn!("device has signaled ready state");
                 retval as _
-            },
+            }
             Err(e) => {
                 error!("failed to initialize: {:?}", e);
                 ptr::null_mut()
-            },
+            }
         },
         Err(e) => {
             error!("ready channel error: {:?}", e);
             ptr::null_mut()
-        },
+        }
     }
 }
 
@@ -337,7 +349,7 @@ pub extern "C" fn rust_stop_driver(driver: *mut c_void) {
         None => {
             error!("rust_release_driver: driver is already deallocated");
             return;
-        },
+        }
     };
     info!("stopping driver for '{}'", &driver.spec.name);
     driver.stop()

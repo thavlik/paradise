@@ -124,7 +124,7 @@ ProxyAudioDevice::ProxyAudioDevice()
 
 ProxyAudioDevice::~ProxyAudioDevice() {
     if (rust_driver != NULL) {
-        rust_release_driver(rust_driver);
+        rust_stop_driver(rust_driver);
     }
 }
 

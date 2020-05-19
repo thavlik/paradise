@@ -9,6 +9,6 @@ void rust_io_proc(void *driver, const uint8_t *buffer, uint32_t buffer_size, dou
 
 void *rust_new_driver(const char *driver_name, const char *driver_path);
 
-void rust_release_driver(void *driver);
+void rust_stop_driver(void *driver);
 
 } // extern "C"

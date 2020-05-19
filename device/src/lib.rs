@@ -12,10 +12,10 @@ use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
 use std::os::raw::c_char;
 use anyhow::{Result, Error};
-use paradise_core::device::DeviceSpec;
+use paradise_core::device::{DeviceSpec, Endpoint};
 use futures::StreamExt;
 use std::{net::SocketAddr, sync::{Arc, Weak, Mutex}};
-use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
+use quinn::{ClientConfig, ClientConfigBuilder};
 
 /// Dummy certificate verifier that treats any certificate as valid.
 /// NOTE, such verification is vulnerable to MITM attacks, but convenient for testing.
@@ -45,7 +45,7 @@ async fn run_client(server_addr: SocketAddr) -> Result<()> {
     let client_cfg = configure_client();
 
     warn!("building endpoint...");
-    let mut endpoint_builder = Endpoint::builder();
+    let mut endpoint_builder = quinn::Endpoint::builder();
     endpoint_builder.default_client_config(client_cfg);
 
     let addr = "127.0.0.1:0".parse()?;
@@ -74,7 +74,7 @@ async fn connect(server_addr: SocketAddr) -> Result<(quinn::Endpoint, quinn::Con
     let client_cfg = configure_client();
 
     warn!("building endpoint...");
-    let mut endpoint_builder = Endpoint::builder();
+    let mut endpoint_builder = quinn::Endpoint::builder();
     endpoint_builder.default_client_config(client_cfg);
 
     let addr = "127.0.0.1:0".parse()?;
@@ -162,7 +162,11 @@ async fn driver_entry(driver: Arc<Driver>, stop: Receiver<()>) -> Result<()> {
     //let mut f = vec![];
     //let mut stops = vec![];
     for endpoint in &driver.spec.endpoints {
-        //let server_addr = endpoint.addr.parse()?;
+        let driver = driver.clone();
+        let endpoint = endpoint.clone();
+        tokio::spawn(async move {
+            driver.connect_with_retry(endpoint);
+        });
         //connect_with_retry(server_addr);
 
         //f.push(connect(server_addr));
@@ -188,7 +192,7 @@ async fn driver_entry(driver: Arc<Driver>, stop: Receiver<()>) -> Result<()> {
 }
 
 pub struct Output {
-    pub name: String,
+    pub spec: Endpoint,
     pub conn: quinn::Connection,
     pub endpoint: quinn::Endpoint,
 }
@@ -202,17 +206,24 @@ pub struct Driver {
 
 impl Driver {
     /// "Fire and forget" connect method
-    fn connect_with_retry(&self, name: String, server_addr: SocketAddr) {
+    fn connect_with_retry(&self, endpoint: Endpoint) {
+        let server_addr: SocketAddr = match endpoint.addr.parse() {
+            Ok(v) => v,
+            Err(e) => {
+                error!("error parsing addr '{}' for endpoint '{}': {}", &endpoint.addr, &endpoint.name, e);
+                return;
+            }
+        };
         loop {
             let (s, r) = crossbeam::channel::unbounded();
             tokio::spawn(async move {
-                s.send(connect(server_addr).await);
+                s.send(connect(server_addr.clone()).await);
             });
             match r.recv().unwrap() {
-                Ok((endpoint, conn)) => {
+                Ok((e, conn)) => {
                     match self.add_output(Output {
-                        name,
-                        endpoint,
+                        spec: endpoint,
+                        endpoint: e,
                         conn,
                     }) {
                         Err(e) => {
@@ -232,8 +243,8 @@ impl Driver {
 
     fn add_output(&self, output: Output) -> Result<()> {
         let mut outputs = self.outputs.lock().unwrap();
-        if let Some(_) = outputs.iter().find(|o| o.name == output.name) {
-            return Err(Error::msg(format!("an output with the name '{}' already exists", output.name)));
+        if let Some(_) = outputs.iter().find(|o| o.spec.name == output.spec.name) {
+            return Err(Error::msg(format!("an output with the name '{}' already exists", output.spec.name)));
         }
         outputs.push(output);
         Ok(())
@@ -246,7 +257,7 @@ impl Driver {
             match output.conn.send_datagram(bytes::Bytes::new()) {
                 Ok(()) => {}
                 Err(e) => {
-                    error!("failed to send datagram to '{}': {}", &output.name, e);
+                    error!("failed to send datagram to '{}': {}", &output.spec.name, e);
                     // TODO: decide if reconnect is appropriate here
                 }
             }

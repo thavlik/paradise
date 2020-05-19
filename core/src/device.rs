@@ -31,14 +31,14 @@ pub struct Endpoint {
 pub struct DeviceSpec {
     pub name: String,
 
-    #[serde(rename = "displaEndpointyName")]
+    #[serde(rename = "displayName")]
     pub display_name: String,
 
     pub inputs: u16,
 
     pub outputs: u16,
 
-    pub endpoints: Vec<>,
+    pub endpoints: Vec<Endpoint>,
 }
 
 impl DeviceSpec {

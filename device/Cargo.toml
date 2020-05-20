@@ -20,6 +20,7 @@ lazy_static = "1.4.0"
 crossbeam = "0.7.3"
 ringbuf = "0.1.6"
 bytes = "0.5.2"
+bincode = { git = "https://github.com/servo/bincode.git" }
 
 [dependencies.log]
 features = ["std"]

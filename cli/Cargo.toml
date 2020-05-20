@@ -34,6 +34,7 @@ uuid = { version = "0.8", features = ["v4"] }
 lazy_static = "1.4.0"
 crossbeam = "0.7.3"
 paradise_core = { path = "../core" }
+bincode = { git = "https://github.com/servo/bincode.git" }
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 xml-rs = "0.8.3"

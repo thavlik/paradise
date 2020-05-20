@@ -428,6 +428,15 @@ checksum = "7dfdb4953a096c551ce9ace855a604d702e6e62d77fac690575ae347571717f5"
 [[package]]
 name = "bincode"
 version = "1.2.1"
+source = "git+https://github.com/servo/bincode.git#7382ec446a52de82af25a72804fed7ad6a850c64"
+dependencies = [
+ "byteorder",
+ "serde",
+]
+
+[[package]]
+name = "bincode"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5753e2a71534719bf3f4e57006c3a4f0d2c672a4b676eec84161f763eca87dbf"
 dependencies = [
@@ -1772,6 +1781,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bencher",
+ "bincode 1.2.1 (git+https://github.com/servo/bincode.git)",
  "clap 3.0.0-beta.1",
  "cpal",
  "crc",
@@ -1823,6 +1833,7 @@ name = "paradise_device"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bincode 1.2.1 (git+https://github.com/servo/bincode.git)",
  "bytes 0.5.4",
  "cbindgen",
  "cpal",
@@ -2569,7 +2580,7 @@ name = "scout"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bincode",
+ "bincode 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pathfinding",
  "r2d2",
  "r2d2_redis",

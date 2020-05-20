@@ -16,7 +16,7 @@ use quinn::{
 use std::{
     io,
     net::SocketAddr,
-    sync::{Arc, mpsc, Mutex},
+    sync::{Arc, mpsc, Mutex, atomic::{AtomicU64, Ordering}},
     fs,
 };
 use paradise_core::device::{DeviceSpec, Endpoint};
@@ -286,6 +286,7 @@ ManufacturerName = "{}";
                 name,
                 outputs: 2,
                 endpoints: vec![Endpoint{
+                    name: String::from("test"),
                     addr: "127.0.0.1:5000".into(),
                     insecure: true,
                 }],
@@ -362,6 +363,7 @@ ManufacturerName = "{}";
                 name,
                 outputs: 2,
                 endpoints: vec![Endpoint{
+                    name: String::from("test"),
                     addr: addr.to_string(),
                     insecure: true,
                 }],
@@ -397,7 +399,10 @@ ManufacturerName = "{}";
             let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
             let (mut send_stop, recv_stop) = crossbeam::channel::unbounded();
             let (mut send_conn, recv_conn) = crossbeam::channel::unbounded();
+            let last_data: Arc<Mutex<Option<SystemTime>>> = Arc::new(Mutex::new(None));
+            let _last_data = last_data.clone();
             tokio::spawn(async move {
+                let last_data = _last_data;
                 let mut transport_config = TransportConfig::default();
                 transport_config.stream_window_uni(0);
                 let mut server_config = ServerConfig::default();
@@ -436,6 +441,9 @@ ManufacturerName = "{}";
                     let new_conn = conn.await.expect("failed to accept incoming connection");
                     send_conn.send(());
                 }
+                // TODO: receive dummy Frame datagram
+                // TODO: verify payload
+                *last_data.lock().unwrap() = Some(SystemTime::now());
             });
             // Install a virtual audio device that connects to the server
             let _l = CORE_AUDIO_LOCK.lock().unwrap();
@@ -447,6 +455,7 @@ ManufacturerName = "{}";
                 name,
                 outputs: 2,
                 endpoints: vec![Endpoint{
+                    name: String::from("test"),
                     addr: addr.to_string(),
                     insecure: true,
                 }],
@@ -477,7 +486,10 @@ ManufacturerName = "{}";
             output_stream.play().unwrap();
 
             std::thread::sleep(Duration::from_secs(1));
-            // TODO: verify device is streaming
+
+            // Verify the device is still streaming
+            let dur_since_last_data = SystemTime::now().duration_since(*last_data.lock().unwrap().expect("no stream data")).unwrap();
+            assert!(dur_since_last_data.as_millis() < 10);
 
             // Remove the driver folder.
             remove_device(&device.name).expect("remove");
@@ -488,13 +500,19 @@ ManufacturerName = "{}";
             // The driver directory shouldn't exist anymore
             assert_eq!(false, device_exists(&device.name).unwrap());
 
-            //// TODO: ensure device is still streaming
+            // Verify the device is, yet again, still streaming
+            let dur_since_last_data = SystemTime::now().duration_since(*last_data.lock().unwrap().expect("no stream data")).unwrap();
+            assert!(dur_since_last_data.as_millis() < 10);
 
             // Restarting CoreAudio causes the stream to stop and device to be fully removed
             restart_core_audio().unwrap();
             //// TODO: expect error from stream
 
             device.verify().expect_err("should not exist");
+
+            // Verify the device is no longer streaming
+            let dur_since_last_data = SystemTime::now().duration_since(*last_data.lock().unwrap().expect("no stream data")).unwrap();
+            assert!(dur_since_last_data.as_millis() > 10);
 
             send_stop.send(());
         }

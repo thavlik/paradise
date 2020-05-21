@@ -240,9 +240,10 @@ pub extern "C" fn rust_io_proc(driver: *const c_void, buffer: *const u8, buffer_
             return;
         }
     };
-    match driver.io_proc(unsafe {
+    let buffer = unsafe {
         std::slice::from_raw_parts(buffer, buffer_size as _)
-    }, sample_time) {
+    };
+    match driver.io_proc(buffer, sample_time) {
         Err(e) => {
             error!("ioproc: {:?}", e)
         }

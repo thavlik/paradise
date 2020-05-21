@@ -509,6 +509,8 @@ ManufacturerName = "{}";
                         ..
                     } = conn.await.expect("failed to accept incoming connection");
                     send_conn.send(()).unwrap();
+                    recv_stop.recv().unwrap();
+                    return;
                     let span = info_span!(
                         "connection",
                         remote = %connection.remote_address(),
@@ -527,18 +529,16 @@ ManufacturerName = "{}";
                             }
                             Ok(s) => s,
                         };
-                        loop {
-                            if let Ok(()) = recv_stop.try_recv() {
-                                return;
-                            }
-                            let (body, offset) = recv
-                                .read_unordered()
-                                .await
-                                .map_err(|e| anyhow!("failed reading request: {}", e))
-                                .unwrap()
-                                .unwrap();
-                            *last_data.lock().unwrap() = Some(SystemTime::now());
-                        }
+                        //loop {
+                        //    let (body, offset) = recv
+                        //        .read_unordered()
+                        //        .await
+                        //        .map_err(|e| anyhow!("failed reading request: {}", e))
+                        //        .unwrap()
+                        //        .unwrap();
+                        //    *last_data.lock().unwrap() = Some(SystemTime::now());
+                        //    break;
+                        //}
                     }
                 }
             });

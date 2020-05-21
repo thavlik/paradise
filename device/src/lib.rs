@@ -8,6 +8,8 @@ extern crate lazy_static;
 extern crate futures;
 #[macro_use]
 extern crate serde;
+#[macro_use]
+extern crate anyhow;
 use crossbeam::channel::{Sender, Receiver};
 use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
@@ -112,6 +114,7 @@ lazy_static! {
         .enable_all()
         .build()
         .unwrap()));
+    static ref DRIVER: Mutex<Option<Arc<Driver>>> = Mutex::new(None);
 }
 
 async fn driver_entry(driver: Arc<Driver>, stop: Receiver<()>) -> Result<()> {
@@ -150,6 +153,10 @@ struct Frame {
 impl Driver {
     /// "Fire and forget" connect method
     async fn connect_with_retry(&self, endpoint: Endpoint) {
+        warn!("connecting to '{}' ({}, insecure={})",
+              &endpoint.name,
+              &endpoint.addr,
+              &endpoint.insecure);
         let server_addr: SocketAddr = match endpoint.addr.parse() {
             Ok(v) => v,
             Err(e) => {
@@ -185,7 +192,12 @@ impl Driver {
         if let Some(_) = outputs.iter().find(|o| o.spec.name == output.spec.name) {
             return Err(Error::msg(format!("an output with the name '{}' already exists", output.spec.name)));
         }
+        warn!("Adding output '{}' ({}, insecure={})",
+              &output.spec.name,
+              &output.spec.addr,
+              &output.spec.insecure);
         outputs.push(output);
+        warn!("{} total outputs", outputs.len());
         Ok(())
     }
 
@@ -194,7 +206,10 @@ impl Driver {
             buffer: Vec::from(buffer),
             sample_time,
         })?);
-        let outputs = self.outputs.lock().unwrap();
+        let outputs = match self.outputs.try_lock() {
+            Ok(l) => l,
+            Err(e) => return Err(anyhow!("{:?}", e)),
+        };
         for output in &*outputs {
             match output.conn.send_datagram(payload.clone()) {
                 Ok(()) => {}
@@ -260,13 +275,14 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
     };
     let spec: DeviceSpec = serde_yaml::from_str(&config).unwrap();
     warn!("{:?}", &spec);
-    warn!("initializing runtime");
+    warn!("initializing tokio runtime");
     let (stop_send, stop_recv) = crossbeam::channel::bounded(1);
     let driver = Arc::new(Driver {
         spec,
         stop: Mutex::new(stop_send),
         outputs: Mutex::new(vec![]),
     });
+    *DRIVER.lock().unwrap() = Some(driver.clone());
     let retval = Weak::into_raw(Arc::downgrade(&driver));
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
     RUNTIME.clone()
@@ -304,8 +320,9 @@ pub extern "C" fn rust_stop_driver(driver: *mut c_void) {
             return;
         }
     };
-    info!("stopping driver for '{}'", &driver.spec.name);
-    driver.stop()
+    warn!("stopping driver for '{}'", &driver.spec.name);
+    driver.stop();
+    *DRIVER.lock().unwrap() = None;
 }
 
 #[cfg(test)]

@@ -114,7 +114,6 @@ lazy_static! {
         .enable_all()
         .build()
         .unwrap()));
-    static ref DRIVER: Mutex<Option<Arc<Driver>>> = Mutex::new(None);
 }
 
 async fn driver_entry(driver: Arc<Driver>, stop: Receiver<()>) -> Result<()> {
@@ -222,6 +221,7 @@ impl Driver {
     }
 
     fn stop(&self) {
+        // TODO: wait for stoppage
         self.stop.lock()
             .unwrap()
             .send(())
@@ -230,7 +230,7 @@ impl Driver {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_io_proc(driver: *mut c_void, buffer: *const u8, buffer_size: u32, sample_time: f64) {
+pub extern "C" fn rust_io_proc(driver: *const c_void, buffer: *const u8, buffer_size: u32, sample_time: f64) {
     let driver: Arc<Driver> = match unsafe {
         Weak::from_raw(driver as _)
     }.upgrade() {
@@ -250,10 +250,25 @@ pub extern "C" fn rust_io_proc(driver: *mut c_void, buffer: *const u8, buffer_si
     }
 }
 
+#[repr(C)]
+pub struct DriverHandle {
+    pub strong: *const c_void,
+    pub weak: *const c_void,
+}
+
+impl DriverHandle {
+    fn null() -> Self {
+        DriverHandle {
+            strong: ptr::null(),
+            weak: ptr::null(),
+        }
+    }
+}
+
 #[no_mangle]
-pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *const c_char) -> *mut c_void {
+pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *const c_char) -> DriverHandle {
     if init_logger().is_err() {
-        return ptr::null_mut();
+        return DriverHandle::null();
     }
 
     let driver_name = unsafe { CStr::from_ptr(driver_name) }.to_str().unwrap();
@@ -270,7 +285,7 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
         Ok(config) => config,
         Err(e) => {
             error!("failed to load config '{:?}': {:?}", &config_path, e);
-            return ptr::null_mut();
+            return DriverHandle::null();
         }
     };
     let spec: DeviceSpec = serde_yaml::from_str(&config).unwrap();
@@ -282,8 +297,8 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
         stop: Mutex::new(stop_send),
         outputs: Mutex::new(vec![]),
     });
-    *DRIVER.lock().unwrap() = Some(driver.clone());
-    let retval = Weak::into_raw(Arc::downgrade(&driver));
+    let strong = Arc::into_raw(driver.clone()) as _;
+    let weak = Weak::into_raw(Arc::downgrade(&driver)) as _;
     let (ready_send, ready_recv) = crossbeam::channel::bounded(1);
     RUNTIME.clone()
         .lock()
@@ -295,34 +310,29 @@ pub extern "C" fn rust_new_driver(driver_name: *const c_char, driver_path: *cons
         Ok(result) => match result {
             Ok(()) => {
                 warn!("device has signaled ready state");
-                retval as _
+                DriverHandle {
+                    strong,
+                    weak,
+                }
             }
             Err(e) => {
                 error!("failed to initialize: {:?}", e);
-                ptr::null_mut()
+                DriverHandle::null()
             }
         },
         Err(e) => {
             error!("ready channel error: {:?}", e);
-            ptr::null_mut()
+            DriverHandle::null()
         }
     }
 }
 
 #[no_mangle]
-pub extern "C" fn rust_stop_driver(driver: *mut c_void) {
-    let driver: Arc<Driver> = match unsafe {
-        Weak::from_raw(driver as _)
-    }.upgrade() {
-        Some(driver) => driver,
-        None => {
-            error!("rust_release_driver: driver is already deallocated");
-            return;
-        }
-    };
-    warn!("stopping driver for '{}'", &driver.spec.name);
+pub extern "C" fn rust_stop_driver(driver: *const c_void) {
+    let driver = unsafe { Arc::from_raw(driver as *const Driver) };
+    warn!("stopping driver '{}'", &driver.spec.name);
     driver.stop();
-    *DRIVER.lock().unwrap() = None;
+    warn!("stopped driver '{}'", &driver.spec.name);
 }
 
 #[cfg(test)]

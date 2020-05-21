@@ -528,6 +528,9 @@ ManufacturerName = "{}";
                             Ok(s) => s,
                         };
                         loop {
+                            if let Ok(()) = recv_stop.try_recv() {
+                                return;
+                            }
                             let (body, offset) = recv
                                 .read_unordered()
                                 .await
@@ -611,7 +614,7 @@ ManufacturerName = "{}";
             //let dur_since_last_data = SystemTime::now().duration_since(last_data.lock().unwrap().expect("no stream data")).unwrap();
             //assert!(dur_since_last_data.as_millis() > 10);
 
-            //send_stop.send(());
+            send_stop.send(()).unwrap();
             println!("Done!");
         }
     }

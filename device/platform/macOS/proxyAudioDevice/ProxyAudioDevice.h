@@ -8,6 +8,7 @@
 
 #include "AudioDevice.h"
 #include "CAMutex.h"
+#include "../../../include/paradise.h"
 
 class AudioRingBuffer;
 
@@ -480,7 +481,7 @@ class ProxyAudioDevice {
     dispatch_source_t inputMonitoringTimer = NULL;
     AudioRingBuffer *inputBuffer = NULL;
     Byte *workBuffer = NULL;
-    void* rust_driver = NULL;
+    DriverHandle rust_driver;
     AudioDevice outputDevice;
     bool outputDeviceReady = false;
     std::atomic_bool inputIOIsActive;

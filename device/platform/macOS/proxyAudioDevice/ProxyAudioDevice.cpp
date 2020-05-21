@@ -14,14 +14,14 @@
 
 #pragma mark Utility Functions
 
-static void* init_rust_driver() {
+static DriverHandle init_rust_driver() {
     CFBundleRef bundle = CFBundleGetBundleWithIdentifier(CFSTR(kPlugIn_BundleID));
     CFStringRef driverName = CFBundleCopyLocalizedString(
         bundle, CFSTR("DriverName"), CFSTR("DriverName"), CFSTR("Localizable"));
     if (CFStringCompare(driverName, CFSTR("DriverName"), 0) == kCFCompareEqualTo) {
         syslog(LOG_ERR,
                "ProxyAudio error: missing DriverName from Localizable.strings");
-        return NULL;
+        return { .weak =  0, .strong = 0 };
     }
     CFStringRef driverPath = CFBundleCopyLocalizedString(
         bundle, CFSTR("DriverPath"), CFSTR("DriverPath"), CFSTR("Localizable"));
@@ -29,17 +29,17 @@ static void* init_rust_driver() {
         syslog(LOG_ERR,
                "ProxyAudio error: missing DriverPath from Localizable.strings");
         CFRelease(driverName);
-        return NULL;
+        return { .weak =  0, .strong = 0 };
     }
     syslog(LOG_WARNING,
            "ProxyAudio: initializing rust components...");
-    void* rust_driver = rust_new_driver((const char*)CFStringGetCStringPtr(driverName, kCFStringEncodingUTF8),
+    DriverHandle driverHandle = rust_new_driver((const char*)CFStringGetCStringPtr(driverName, kCFStringEncodingUTF8),
                                         (const char*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
     syslog(LOG_WARNING,
            "ProxyAudio: rust components initialized successfully");
     CFRelease(driverName);
     CFRelease(driverPath);
-    return rust_driver;
+    return driverHandle;
 }
 
 template<typename T>
@@ -117,14 +117,14 @@ ProxyAudioDevice::ProxyAudioDevice()
     : inputIOIsActive(false)
 {
     rust_driver = init_rust_driver();
-    if (rust_driver == NULL) {
+    if (rust_driver.strong == NULL) {
         syslog(LOG_ERR, "ProxyAudio: error: failed to initialize rust driver");
     }
 }
 
 ProxyAudioDevice::~ProxyAudioDevice() {
-    if (rust_driver != NULL) {
-        rust_stop_driver(rust_driver);
+    if (rust_driver.strong != NULL) {
+        rust_stop_driver(rust_driver.strong);
     }
 }
 
@@ -5339,7 +5339,7 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
             //const float first = ((const float*)ioMainBuffer)[0];
             //DebugMsg("first element is %f", first);
             
-            rust_io_proc(rust_driver,
+            rust_io_proc(rust_driver.weak,
                          (const Byte *)ioMainBuffer,
                          inIOBufferFrameSize,
                          inIOCycleInfo->mOutputTime.mSampleTime);

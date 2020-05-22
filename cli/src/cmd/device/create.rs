@@ -21,7 +21,7 @@ use std::{
     sync::{Arc, mpsc, Mutex, atomic::{AtomicU64, Ordering}},
     fs,
 };
-use paradise_core::device::{DeviceSpec, Endpoint};
+use paradise_core::{Frame, device::{DeviceSpec, Endpoint}};
 use tracing::{error, info, info_span};
 use tracing_futures::Instrument as _;
 
@@ -464,6 +464,7 @@ ManufacturerName = "{}";
             let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
             let (mut send_stop, recv_stop) = crossbeam::channel::unbounded::<()>();
             let (mut send_conn, recv_conn) = crossbeam::channel::unbounded();
+            let (mut send_datagram, recv_datagram) = crossbeam::channel::unbounded();
             let last_data: Arc<Mutex<Option<SystemTime>>> = Arc::new(Mutex::new(None));
             let _last_data = last_data.clone();
             tokio::spawn(async move {
@@ -505,30 +506,24 @@ ManufacturerName = "{}";
                 while let Some(conn) = incoming.next().await {
                     let quinn::NewConnection {
                         connection,
-                        mut bi_streams,
+                        mut datagrams,
                         ..
                     } = conn.await.expect("failed to accept incoming connection");
                     send_conn.send(()).unwrap();
-                    recv_stop.recv().unwrap();
-                    return;
-                    let span = info_span!(
-                        "connection",
-                        remote = %connection.remote_address(),
-                        protocol = %connection
-                            .authentication_data()
-                            .protocol
-                            .map_or_else(|| "<none>".into(), |x| String::from_utf8_lossy(&x).into_owned())
-                    );
-                    while let Some(stream) = bi_streams.next().await {
-                        let (mut send, mut recv) = match stream {
-                            Err(quinn::ConnectionError::ApplicationClosed { .. }) => {
-                                continue;
-                            }
-                            Err(e) => {
-                                continue;
-                            }
-                            Ok(s) => s,
-                        };
+                    while let Some(data) = datagrams.next().await {
+                        let data = data.unwrap();
+                        let frame: Frame = bincode::deserialize(data.as_ref()).unwrap();
+                        send_datagram.send(()).unwrap();
+                        break;
+                        //let (mut send, mut recv) = match stream {
+                        //    Err(quinn::ConnectionError::ApplicationClosed { .. }) => {
+                        //        continue;
+                        //    }
+                        //    Err(e) => {
+                        //        continue;
+                        //    }
+                        //    Ok(s) => s,
+                        //};
                         //loop {
                         //    let (body, offset) = recv
                         //        .read_unordered()
@@ -540,6 +535,7 @@ ManufacturerName = "{}";
                         //    break;
                         //}
                     }
+                    recv_stop.recv().unwrap();
                 }
             });
             // Install a virtual audio device that connects to the server
@@ -583,7 +579,8 @@ ManufacturerName = "{}";
 
             output_stream.play().unwrap();
 
-            std::thread::sleep(Duration::from_secs(1));
+            recv_datagram.recv_timeout(Duration::from_secs(10))
+                .expect("did not receive audio over quic");
 
             drop(output_stream);
 

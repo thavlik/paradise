@@ -15,11 +15,10 @@ use std::{ptr, ffi::{c_void, CStr}};
 use std::path::PathBuf;
 use std::os::raw::c_char;
 use anyhow::{Result, Error};
-use paradise_core::device::{DeviceSpec, Endpoint};
+use paradise_core::{Frame, device::{DeviceSpec, Endpoint}};
 use futures::StreamExt;
 use std::{net::SocketAddr, sync::{Arc, Weak, Mutex}};
 use quinn::{ClientConfig, ClientConfigBuilder};
-
 /// Dummy certificate verifier that treats any certificate as valid.
 /// NOTE, such verification is vulnerable to MITM attacks, but convenient for testing.
 struct SkipServerVerification;
@@ -141,12 +140,6 @@ pub struct Driver {
     outputs: Mutex<Vec<Output>>,
     spec: DeviceSpec,
     stop: Mutex<Sender<()>>,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
-struct Frame {
-    buffer: Vec<u8>,
-    sample_time: f64,
 }
 
 impl Driver {

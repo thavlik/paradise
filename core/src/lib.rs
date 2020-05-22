@@ -24,3 +24,9 @@ extern crate lazy_static;
 //pub mod runtime;
 pub mod device;
 //pub mod stream;
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct Frame {
+    pub buffer: Vec<u8>,
+    pub sample_time: f64,
+}

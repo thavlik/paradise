@@ -78,28 +78,18 @@ pub struct CreateArgs {
     yes: bool,
 
     /// Virtual device name
+    #[clap(long = "name", short = "n")]
     name: String,
 
-    /// Number of input channels
-    #[clap(long = "inputs")]
-    inputs: Option<usize>,
-
-    /// Network interfaces on which the device should listen
-    #[clap(long = "listen")]
-    listeners: Vec<String>,
-
-    /// Number of output channels
-    #[clap(long = "outputs")]
-    outputs: Option<usize>,
-
-    /// Destination addresses for receiving audio
-    #[clap(long = "destination")]
-    destinations: Vec<String>,
+    /// Destination address for receiving audio
+    #[clap(long = "destination", short = "d")]
+    dest: String,
 }
 
-pub async fn main(args: CreateArgs) -> Result<(), Error> {
-    Err(anyhow!(
-        "name = {}, yes = {}, inputs = {:?}, outputs = {:?}",
-        &args.name, args.yes, &args.inputs, &args.outputs
-    ))
+pub async fn main(args: CreateArgs) -> Result<()> {
+    info!(
+        "name = {}, dest = {}, yes = {}",
+        &args.name, &args.dest, args.yes,
+    );
+    Ok(())
 }

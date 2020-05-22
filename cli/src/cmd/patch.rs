@@ -12,6 +12,7 @@ use anyhow::{anyhow, bail, Error, Context, Result};
 use futures::{StreamExt, TryFutureExt};
 use paradise_core::Frame;
 use ringbuf::{RingBuffer, Producer};
+use signal_hook::{iterator::Signals, SIGINT};
 
 const LATENCY_MS: f32 = 300.0;
 
@@ -144,6 +145,13 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     let err_fn = |err| error!("an error occurred on stream: {}", err);
     let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
     output_stream.play()?;
+    let signals = Signals::new(&[SIGINT])?;
+    loop {
+        for sig in signals.forever() {
+            return Ok(());
+        }
+        std::thread::yield_now();
+    }
     Ok(())
 }
 

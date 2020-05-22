@@ -638,8 +638,8 @@ pub struct CreateArgs {
 }
 
 pub async fn main(args: CreateArgs) -> Result<(), Error> {
-    Err(Error::msg(format!(
+    Err(anyhow!(
         "name = {}, yes = {}, inputs = {:?}, outputs = {:?}",
         &args.name, args.yes, &args.inputs, &args.outputs
-    )))
+    ))
 }

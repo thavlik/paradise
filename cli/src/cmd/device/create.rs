@@ -150,7 +150,7 @@ ManufacturerName = "{}";
             .write_all(&generate_localizable_strings(device).into_bytes()[..])?;
         let config: String = serde_yaml::to_string(device)?;
         fs::File::create(path.join("Contents/Resources/config.yaml"))?
-            .write_all(&config.into_bytes()[..]);
+            .write_all(&config.into_bytes()[..])?;
         Ok(path)
     }
 

@@ -6,12 +6,17 @@ use std::{
     str,
     sync::Arc,
 };
+use futures::future::{Abortable, AbortHandle, Aborted};
+use crossbeam::{Receiver, Sender};
 use anyhow::{anyhow, bail, Error, Context, Result};
 use futures::{StreamExt, TryFutureExt};
 use structopt::{self, StructOpt};
 use tracing::{error, info, info_span};
 use tracing_futures::Instrument as _;
 use paradise_core::Frame;
+use ringbuf::{RingBuffer, Producer};
+
+const LATENCY_MS: f32 = 300.0;
 
 /// A subcommand for controlling testing
 #[derive(clap::Clap)]
@@ -39,6 +44,47 @@ pub struct PatchArgs {
 #[allow(unused)]
 pub const ALPN_QUIC_HTTP: &[&[u8]] = &[b"hq-27"];
 
+fn get_device(name: &Option<String>, host: &cpal::Host) -> Result<cpal::Device> {
+    match name {
+        Some(name) => {
+            match name.parse::<usize>() {
+                Ok(index) => {
+                    if index >= host.devices()?.count() {
+                        return Err(Error::msg(format!("device index out of range (tip: run info)")));
+                    }
+                    match host.devices()?
+                        .skip(index)
+                        .next() {
+                        Some(device) => {
+                            println!("found device {}. \"{}\"", &name, device.name().unwrap_or(String::from("NULL")));
+                            Ok(device)
+                        },
+                        None => Err(Error::msg(format!("device at index \"{}\" not found (tip: run info)", &name))),
+                    }
+                },
+                _ => match host.devices()?
+                    .enumerate()
+                    .find(|(_, d)| match d.name() {
+                        Ok(n) => &n == name,
+                        _ => false,
+                    }) {
+                    Some((_, d)) => {
+                        println!("found device \"{}\"", &name);
+                        Ok(d)
+                    },
+                    None => Err(Error::msg(format!("device \"{}\" not found", name))),
+                },
+            }
+        },
+        None => match host.default_output_device() {
+            Some(device) => {
+                println!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
+                Ok(device)
+            },
+            None => Err(Error::msg(format!("default output device not available"))),
+        },
+    }
+}
 pub async fn main(args: PatchArgs) -> Result<()> {
     let host = match &args.host {
         Some(name) => {
@@ -55,56 +101,44 @@ pub async fn main(args: PatchArgs) -> Result<()> {
 
     let addr: SocketAddr = args.source.parse()?;
 
-    let device: cpal::Device = match args.device {
-        Some(name) => {
-            match name.parse::<usize>() {
-                Ok(index) => {
-                    if index >= host.devices()?.count() {
-                        return Err(Error::msg(format!("device index out of range (tip: run info)")));
-                    }
-                    match host.devices()?
-                        .skip(index)
-                        .next() {
-                        Some(device) => {
-                            println!("found device {}. \"{}\"", &name, device.name().unwrap_or(String::from("NULL")));
-                            device
-                        },
-                        None => return Err(Error::msg(format!("device at index \"{}\" not found (tip: run info)", &name))),
-                    }
-                },
-                _ => match host.devices()?
-                    .enumerate()
-                    .find(|(_, d)| match d.name() {
-                        Ok(n) => n == name,
-                        _ => false,
-                    }) {
-                    Some((_, d)) => {
-                        println!("found device \"{}\"", &name);
-                        d
-                    },
-                    None => return Err(Error::msg(format!("device \"{}\" not found", name))),
-                },
-            }
-        },
-        None => match host.default_output_device() {
-            Some(device) => {
-                println!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
-                device
-            },
-            None => return Err(Error::msg(format!("default output device not available"))),
-        },
-    };
+    let device = get_device(&args.device, &host)?;
 
+    let config: cpal::StreamConfig = device.default_output_config()?.into();
+    let latency_frames = (LATENCY_MS / 1_000.0) * config.sample_rate.0 as f32;
+    let latency_samples = latency_frames as usize * config.channels as usize;
+    let ring = RingBuffer::new(latency_samples * 2);
+    let (mut producer, mut consumer) = ring.split();
+    let (abort_handle, abort_registration) = AbortHandle::new_pair();
+    let future = Abortable::new(async move {
+        server_entry(addr, producer).await
+    }, abort_registration);
+    tokio::spawn(async move {
+        // Future should eventually be aborted. For whatever
+        // reason, it's not yielding an error. This code works
+        // and this discrepancy is trivial.
+        // TODO: make sure server exiting with error results in error
+        assert!(future.await.is_ok());
+    });
+    let _guard = scopeguard::guard((), move |_| {
+        abort_handle.abort();
+    });
+    let conf = device.default_output_config().unwrap();
+    let conf: cpal::StreamConfig = conf.into();
+    let output_data_fn = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+    };
+    let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
+    let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
+    output_stream.play()?;
+    Ok(())
+}
+
+async fn server_entry(addr: SocketAddr, mut producer: Producer<u8>) -> Result<()> {
     let mut transport_config = quinn::TransportConfig::default();
     transport_config.stream_window_uni(0);
     let mut server_config = quinn::ServerConfig::default();
     server_config.transport = std::sync::Arc::new(transport_config);
     let mut server_config = quinn::ServerConfigBuilder::new(server_config);
     server_config.protocols(ALPN_QUIC_HTTP);
-    if args.stateless_retry {
-        server_config.use_stateless_retry(true);
-    }
-
     let dirs = directories::ProjectDirs::from("org", "quinn", "quinn-examples").unwrap();
     let path = dirs.data_local_dir();
     let cert_path = path.join("cert.der");
@@ -128,33 +162,24 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     let key = quinn::PrivateKey::from_der(&key)?;
     let cert = quinn::Certificate::from_der(&cert)?;
     server_config.certificate(quinn::CertificateChain::from_certs(vec![cert]), key)?;
-
     let mut endpoint = quinn::Endpoint::builder();
     endpoint.listen(server_config.build());
-
     let mut incoming = {
         let (endpoint, incoming) = endpoint.bind(&addr)?;
         info!("listening on {}", endpoint.local_addr()?);
         incoming
     };
-
     while let Some(conn) = incoming.next().await {
         let quinn::NewConnection {
-            connection,
+            //connection,
             mut datagrams,
             ..
         } = conn.await?;
         while let Some(data) = datagrams.next().await {
             let frame: Frame = bincode::deserialize(data?.as_ref())?;
+            // TODO: verify timestamp
+            producer.push_slice(&frame.buffer[..]);
         }
     }
-    let conf = device.default_output_config().unwrap();
-    let conf: cpal::StreamConfig = conf.into();
-    let output_data_fn = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-    };
-    let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
-    let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
-    output_stream.play()?;
-
     Ok(())
 }

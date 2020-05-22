@@ -1796,6 +1796,8 @@ dependencies = [
  "quinn",
  "rand 0.7.3",
  "rcgen",
+ "ringbuf",
+ "scopeguard",
  "serde",
  "serde_yaml",
  "structopt",

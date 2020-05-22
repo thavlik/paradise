@@ -1,9 +1,9 @@
-use anyhow::{Error, Result};
-use cpal::traits::{DeviceTrait, HostTrait};
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::process::Command;
-use uuid::Uuid;
+
+
+
+
+
+
 use quinn::{
     ServerConfig,
     ServerConfigBuilder,
@@ -16,17 +16,13 @@ use quinn::{
 use std::{
     io,
     net::SocketAddr,
-    sync::{Arc, mpsc},
+    sync::{Arc},
     fs,
 };
-use futures::{
-    future::FutureExt,
-    pin_mut,
-    select,
-};
+
 use anyhow::Context;
-use tracing::{error, info, info_span};
-use tracing_futures::Instrument as _;
+
+
 
 #[allow(unused)]
 pub const ALPN_QUIC_HTTP: &[&[u8]] = &[b"hq-27"];
@@ -67,8 +63,8 @@ async fn socket() {
     let addr: SocketAddr = format!("127.0.0.1:{}", port).parse().unwrap();
     let mut endpoint = Endpoint::builder();
     endpoint.listen(server_config.build());
-    let mut incoming = {
-        let (endpoint, incoming) = endpoint.bind(&addr).unwrap(); // PANIC - cannot find runtime
+    let _incoming = {
+        let (_endpoint, incoming) = endpoint.bind(&addr).unwrap(); // PANIC - cannot find runtime
         incoming
     };
     println!("All good!");

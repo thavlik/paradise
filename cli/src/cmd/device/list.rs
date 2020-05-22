@@ -54,7 +54,7 @@ pub async fn main(args: ListArgs) -> Result<(), Error> {
         // Idea: all virtual devices have a suffix of (Paradise)
         println!("{}", host_id.name());
         let host = cpal::host_from_id(host_id)?;
-        let devices = host.devices()?;
+        let _devices = host.devices()?;
         //println!("  Devices: ");
 
         /*

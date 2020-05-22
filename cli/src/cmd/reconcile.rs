@@ -19,7 +19,7 @@ pub struct ReconcileArgs {
     pub dry_run: bool,
 }
 
-pub async fn main(args: ReconcileArgs) -> Result<(), anyhow::Error> {
+pub async fn main(_args: ReconcileArgs) -> Result<(), anyhow::Error> {
     println!("Supported hosts:\n  {:?}", cpal::ALL_HOSTS);
     let available_hosts = cpal::available_hosts();
     println!("Available hosts:\n  {:?}", available_hosts);

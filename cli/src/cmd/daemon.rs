@@ -1,5 +1,5 @@
-use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use std::net::SocketAddr;
+
+
 
 const LATENCY_MS: f32 = 0.0; //150.0;
 
@@ -14,7 +14,7 @@ pub struct DaemonArgs {
     port: u16,
 }
 
-pub async fn main(args: DaemonArgs) -> Result<(), anyhow::Error> {
+pub async fn main(_args: DaemonArgs) -> Result<(), anyhow::Error> {
     /*
     let host = match std::env::var("AUDIO_HOST") {
         Ok(name) => crate::util::get_host_by_name(&name)?,

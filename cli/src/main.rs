@@ -5,7 +5,7 @@ extern crate crossbeam;
 #[macro_use]
 extern crate log;
 
-use anyhow::{Error, Result};
+
 use clap::Clap;
 
 mod api;

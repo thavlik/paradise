@@ -1,5 +1,5 @@
 use anyhow::Error;
-use cpal::traits::{DeviceTrait, HostTrait};
+
 
 /// Apply a configuration file
 #[derive(clap::Clap)]

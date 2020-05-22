@@ -6,9 +6,9 @@ use std::{
     str,
     sync::Arc,
 };
-use futures::future::{Abortable, AbortHandle, Aborted};
-use crossbeam::{Receiver, Sender};
-use anyhow::{anyhow, bail, Error, Context, Result};
+use futures::future::{Abortable, AbortHandle};
+
+use anyhow::{anyhow, Context, Result};
 use futures::{StreamExt, TryFutureExt};
 use paradise_core::Frame;
 use ringbuf::{RingBuffer, Producer};
@@ -107,7 +107,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     let latency_frames = (LATENCY_MS / 1_000.0) * config.sample_rate.0 as f32;
     let latency_samples = latency_frames as usize * config.channels as usize;
     let ring = RingBuffer::new(latency_samples * 2);
-    let (mut producer, mut consumer) = ring.split();
+    let (producer, mut consumer) = ring.split();
     let (abort_handle, abort_registration) = AbortHandle::new_pair();
     let future = Abortable::new(async move {
         server_entry(addr, producer).await

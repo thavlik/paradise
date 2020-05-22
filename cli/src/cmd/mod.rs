@@ -5,7 +5,7 @@ pub mod daemon;
 pub mod device;
 //pub mod echo;
 pub mod info;
-//pub mod patch;
+pub mod patch;
 pub mod reconcile;
 
 #[derive(Clap)]
@@ -39,8 +39,8 @@ pub enum SubCommand {
     Info(info::InfoArgs),
 
     /// Patch mode
-    //#[clap(name = "patch")]
-    //Patch(patch::PatchArgs),
+    #[clap(name = "patch")]
+    Patch(patch::PatchArgs),
 
     /// Reconcile system drivers with config
     #[clap(name = "reconcile")]

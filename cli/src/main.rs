@@ -39,7 +39,7 @@ fn main() {
                 cmd::SubCommand::List(args) => cmd::device::list::main(args).await.unwrap(),
                 //cmd::SubCommand::Echo(args) => cmd::echo::main(args).await.unwrap(),
                 cmd::SubCommand::Info(args) => cmd::info::main(args).await.unwrap(),
-                //cmd::SubCommand::Patch(args) => cmd::patch::main(args).await.unwrap(),
+                cmd::SubCommand::Patch(args) => cmd::patch::main(args).await.unwrap(),
                 cmd::SubCommand::Reconcile(args) => cmd::reconcile::main(args).await.unwrap(),
             };
         });

@@ -34,9 +34,7 @@ static DriverHandle init_rust_driver() {
     syslog(LOG_WARNING,
            "ProxyAudio: initializing rust components...");
     DriverHandle driverHandle = rust_new_driver((const char*)CFStringGetCStringPtr(driverName, kCFStringEncodingUTF8),
-                                        (const char*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
-    syslog(LOG_WARNING,
-           "ProxyAudio: rust components initialized successfully");
+                                                (const char*)CFStringGetCStringPtr(driverPath, kCFStringEncodingUTF8));
     CFRelease(driverName);
     CFRelease(driverPath);
     return driverHandle;
@@ -119,6 +117,9 @@ ProxyAudioDevice::ProxyAudioDevice()
     rust_driver = init_rust_driver();
     if (rust_driver.strong == NULL) {
         syslog(LOG_ERR, "ProxyAudio: error: failed to initialize rust driver");
+    } else {
+        syslog(LOG_WARNING,
+               "ProxyAudio: rust components initialized successfully");
     }
 }
 
@@ -5313,6 +5314,12 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
     //    declare the local variables
     OSStatus theAnswer = 0;
 
+    if (rust_driver.strong == NULL) {
+        syslog(LOG_ERR,
+               "ProxyAudio error: DoIOOperation: rust components failed initialization");
+        return 0;
+    }
+
     //    check the arguments
     FailWithAction(inDriver != gAudioServerPlugInDriverRef,
                    theAnswer = kAudioHardwareBadObjectError,
@@ -5338,9 +5345,9 @@ OSStatus ProxyAudioDevice::DoIOOperation(AudioServerPlugInDriverRef inDriver,
             // This is audio played from cpal
             //const float first = ((const float*)ioMainBuffer)[0];
             //DebugMsg("first element is %f", first);
-            
+
             rust_io_proc(rust_driver.weak,
-                         (const Byte *)ioMainBuffer,
+                         (const Byte *) ioMainBuffer,
                          inIOBufferFrameSize,
                          inIOCycleInfo->mOutputTime.mSampleTime);
 

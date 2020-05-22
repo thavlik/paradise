@@ -64,6 +64,7 @@ impl DeviceSpec {
             let host = cpal::host_from_id(host_id)?;
             for (_, d) in host.devices()?.enumerate() {
                 if let Ok(name) = d.name() {
+                    info!("{}", name);
                     if name == self.display_name {
                         match (self.inputs > 0, d.default_input_config()) {
                             (true, Ok(conf)) => {

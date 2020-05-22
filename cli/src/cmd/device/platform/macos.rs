@@ -304,7 +304,7 @@ mod test {
             };
             while let Some(conn) = incoming.next().await {
                 let new_conn = conn.await.expect("failed to accept incoming connection");
-                send_conn.send(());
+                send_conn.send(()).unwrap();
             }
         });
         // Install a virtual audio device that connects to the server
@@ -476,10 +476,11 @@ mod test {
         // The driver doesn't stop until CoreAudio is restarted.
         recv_data.recv_timeout(Duration::from_secs(5))
             .expect("did not receive data");
-        send_data.lock().unwrap().1 = true;
 
         // The device should still be visible to cpal until CoreAudio is restarted
         device.verify().unwrap();
+
+        send_data.lock().unwrap().1 = true;
 
         // The driver directory shouldn't exist anymore
         assert_eq!(false, device_exists(&device.name).unwrap());

@@ -127,6 +127,22 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     let conf = device.default_output_config().unwrap();
     let conf: cpal::StreamConfig = conf.into();
     let output_data_fn = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+        let mut input_fell_behind = None;
+        for sample in data {
+            *sample = match consumer.pop() {
+                Ok(s) => s,
+                Err(err) => {
+                    input_fell_behind = Some(err);
+                    0.0
+                }
+            };
+        }
+        if let Some(err) = input_fell_behind {
+            eprintln!(
+                "input stream fell behind: {:?}: try increasing latency",
+                err
+            );
+        }
     };
     let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
     let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
@@ -134,7 +150,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     Ok(())
 }
 
-async fn server_entry(addr: SocketAddr, mut producer: Producer<u8>) -> Result<()> {
+async fn server_entry(addr: SocketAddr, mut producer: Producer<f32>) -> Result<()> {
     let mut transport_config = quinn::TransportConfig::default();
     transport_config.stream_window_uni(0);
     let mut server_config = quinn::ServerConfig::default();
@@ -180,7 +196,10 @@ async fn server_entry(addr: SocketAddr, mut producer: Producer<u8>) -> Result<()
         while let Some(data) = datagrams.next().await {
             let frame: Frame = bincode::deserialize(data?.as_ref())?;
             // TODO: verify timestamp
-            producer.push_slice(&frame.buffer[..]);
+            if frame.buffer.len() % 4 != 0 {
+                return anyhow!("encountered buffer with non-divisible by four length")
+            }
+            producer.push_slice(unsafe { std::slice::from_raw_parts(&frame.buffer[..].as_ptr() as *const f32, frame.buffer.len()/4) });
         }
     }
     Ok(())

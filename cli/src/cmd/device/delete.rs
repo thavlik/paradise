@@ -1,5 +1,5 @@
-use anyhow::Error;
-
+use anyhow::{Result, anyhow};
+use super::platform;
 
 /// Delete a virtual audio device
 #[derive(clap::Clap)]
@@ -15,11 +15,15 @@ pub struct DeleteArgs {
     names: Vec<String>,
 }
 
-pub async fn main(args: DeleteArgs) -> Result<(), Error> {
+pub async fn main(args: DeleteArgs) -> Result<()> {
     if args.names.len() == 0 && !args.all {
-        return Err(Error::msg(
+        return Err(anyhow!(
             "you must specify at least one device name or --all to delete all devices",
         ));
     }
-    Err(Error::msg("unimplemented"))
+    for name in &args.names {
+        platform::remove_device(name).await?;
+    }
+    platform::restart().await?;
+    Ok(())
 }

@@ -150,7 +150,7 @@ fn install_driver_package(device: &DeviceSpec, path: &PathBuf) -> Result<()> {
 
 // Generates and installs a driver package for the given Device.
 // Requires sudo.
-fn install_device(device: &DeviceSpec) -> Result<()> {
+pub async fn install_device(device: &DeviceSpec) -> Result<()> {
     if device_exists(&device.name)? {
         return Err(Error::msg(format!(
             "device '{}' already exists",
@@ -162,7 +162,7 @@ fn install_device(device: &DeviceSpec) -> Result<()> {
 
 // Removes the driver from the system without restarting Core Audio.
 // Requires sudo.
-fn remove_device(name: &str) -> Result<()> {
+pub async fn remove_device(name: &str) -> Result<()> {
     if !device_exists(name)? {
         return Err(Error::msg(format!("device '{}' not found", name)));
     }
@@ -179,6 +179,10 @@ fn remove_device(name: &str) -> Result<()> {
             status.code()
         )))
     }
+}
+
+pub async fn restart() -> Result<()> {
+    restart_core_audio()
 }
 
 // Restarts core audio. Requires sudo.

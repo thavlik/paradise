@@ -1,4 +1,4 @@
-use anyhow::{Error, Result};
+use anyhow::{Error, Result, anyhow, Context};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -18,7 +18,6 @@ use std::{
     sync::{Arc, mpsc},
     fs,
 };
-use anyhow::Context;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Endpoint {
@@ -56,7 +55,7 @@ impl DeviceSpec {
                 }
             }
         }
-        Err(Error::msg(format!("device '{}' not found", &self.name)))
+        Err(anyhow!("device '{}' not found", &self.name))
     }
 
     pub fn verify(&self) -> Result<()> {

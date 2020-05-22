@@ -233,8 +233,8 @@ mod test {
         }
     }
 
-    #[test]
-    fn install_uninstall() {
+    #[tokio::test(threaded_scheduler)]
+    async fn install_uninstall() {
         let _l = CORE_AUDIO_LOCK.lock().unwrap();
         cleanup();
         let name = test_device_name();
@@ -250,52 +250,15 @@ mod test {
             }],
             ..Default::default()
         };
-        install_device(&device).unwrap();
+        install_device(&device).await.unwrap();
         assert!(device_exists(&device.name).unwrap());
         restart_core_audio().unwrap();
         device.verify().unwrap();
-        remove_device(&device.name).expect("remove");
+        remove_device(&device.name).await.expect("remove");
         device.verify().unwrap();
         assert_eq!(false, device_exists(&device.name).unwrap());
         restart_core_audio().unwrap();
         device.verify().expect_err("should not exist");
-    }
-
-    async fn handle_connection(conn: quinn::Connecting) -> Result<()> {
-        Ok(())
-    }
-
-    fn process_get(x: &[u8]) -> Result<Box<[u8]>> {
-        if x.len() < 4 || &x[0..4] != b"GET " {
-            bail!("missing GET");
-        }
-        if x[4..].len() < 2 || &x[x.len() - 2..] != b"\r\n" {
-            bail!("missing \\r\\n");
-        }
-        let x = &x[4..x.len() - 2];
-        let end = x.iter().position(|&c| c == b' ').unwrap_or_else(|| x.len());
-        let path = str::from_utf8(&x[..end]).context("path is malformed UTF-8")?;
-        let path = Path::new(&path);
-        let mut real_path = PathBuf::from(".");
-        let mut components = path.components();
-        match components.next() {
-            Some(path::Component::RootDir) => {}
-            _ => {
-                bail!("path must be absolute");
-            }
-        }
-        for c in components {
-            match c {
-                path::Component::Normal(x) => {
-                    real_path.push(x);
-                }
-                x => {
-                    bail!("illegal component in path: {:?}", x);
-                }
-            }
-        }
-        let data = fs::read(&real_path).context("failed reading file")?;
-        Ok(data.into())
     }
 
     #[tokio::test(threaded_scheduler)]
@@ -360,7 +323,7 @@ mod test {
             }],
             ..Default::default()
         };
-        install_device(&device).unwrap();
+        install_device(&device).await.unwrap();
         assert!(device_exists(&device.name).unwrap());
         restart_core_audio().unwrap();
         device.verify().unwrap();
@@ -370,7 +333,7 @@ mod test {
             .expect("did not receive connection");
 
         // Remove the driver folder.
-        remove_device(&device.name).expect("remove");
+        remove_device(&device.name).await.expect("remove");
 
         // The device should still be visible to cpal until CoreAudio is restarted
         device.verify().unwrap();
@@ -382,38 +345,6 @@ mod test {
         restart_core_audio().unwrap();
 
         device.verify().expect_err("should not exist");
-    }
-
-    async fn handle_request(
-        (mut send, recv): (quinn::SendStream, quinn::RecvStream),
-    ) -> Result<()> {
-        let req = recv
-            .read_to_end(64 * 1024)
-            .await
-            .map_err(|e| anyhow!("failed reading request: {}", e))?;
-        let mut escaped = String::new();
-        for &x in &req[..] {
-            let part = ascii::escape_default(x).collect::<Vec<_>>();
-            escaped.push_str(str::from_utf8(&part).unwrap());
-        }
-        info!("{:?}", escaped);
-        // Execute the request
-        let resp = process_get(&req).unwrap_or_else(|e| {
-            error!("failed: {}", e);
-            format!("failed to process request: {}\n", e)
-                .into_bytes()
-                .into()
-        });
-        // Write the response
-        send.write_all(&resp)
-            .await
-            .map_err(|e| anyhow!("failed to send response: {}", e))?;
-        // Gracefully terminate the stream
-        send.finish()
-            .await
-            .map_err(|e| anyhow!("failed to shutdown stream: {}", e))?;
-        info!("complete");
-        Ok(())
     }
 
     async fn basic_stream_server(
@@ -509,7 +440,7 @@ mod test {
             }],
             ..Default::default()
         };
-        install_device(&device).unwrap();
+        install_device(&device).await.unwrap();
         assert!(device_exists(&device.name).unwrap());
         restart_core_audio().unwrap();
         device.verify().unwrap();
@@ -539,7 +470,7 @@ mod test {
             .expect("did not receive data");
         send_data.lock().unwrap().1 = true;
         // Remove the driver folder.
-        remove_device(&device.name).expect("remove");
+        remove_device(&device.name).await.expect("remove");
 
         // Verify we are still receiving data.
         // The driver doesn't stop until CoreAudio is restarted.

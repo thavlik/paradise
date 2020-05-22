@@ -15,7 +15,7 @@ pub struct CreateArgs {
     name: String,
 
     /// Destination address for receiving audio
-    #[clap(long = "destination", short = "d")]
+    #[clap(long = "dest", short = "d")]
     dest: String,
 }
 

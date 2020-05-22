@@ -147,7 +147,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
     output_stream.play()?;
     let signals = Signals::new(&[SIGINT])?;
     loop {
-        for sig in signals.forever() {
+        for _ in signals.forever() {
             return Ok(());
         }
         std::thread::yield_now();

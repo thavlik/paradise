@@ -152,10 +152,10 @@ fn install_driver_package(device: &DeviceSpec, path: &PathBuf) -> Result<()> {
 // Requires sudo.
 pub async fn install_device(device: &DeviceSpec) -> Result<()> {
     if device_exists(&device.name)? {
-        return Err(Error::msg(format!(
+        return Err(anyhow!(
             "device '{}' already exists",
             &device.name
-        )));
+        ));
     }
     install_driver_package(device, &generate_driver(device)?)
 }

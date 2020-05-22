@@ -85,24 +85,26 @@ fn get_device(name: &Option<String>, host: &cpal::Host) -> Result<cpal::Device> 
         },
     }
 }
-pub async fn main(args: PatchArgs) -> Result<()> {
-    let host = match &args.host {
+
+fn get_host(name: &Option<String>) -> Result<cpal::Host> {
+    match name {
         Some(name) => {
             let host = crate::util::get_host_by_name(name)?;
             println!("found host \"{}\"", name);
-            host
+            Ok(host)
         },
         None => {
             let host = cpal::default_host();
             info!("using default host \"{:?}\"", host.id());
-            host
+            Ok(host)
         },
-    };
+    }
+}
 
-    let addr: SocketAddr = args.source.parse()?;
-
+pub async fn main(args: PatchArgs) -> Result<()> {
+    let host = get_host(&args.host)?;
     let device = get_device(&args.device, &host)?;
-
+    let addr: SocketAddr = args.source.parse()?;
     let config: cpal::StreamConfig = device.default_output_config()?.into();
     let latency_frames = (LATENCY_MS / 1_000.0) * config.sample_rate.0 as f32;
     let latency_samples = latency_frames as usize * config.channels as usize;

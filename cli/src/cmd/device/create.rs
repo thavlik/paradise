@@ -605,9 +605,9 @@ ManufacturerName = "{}";
             drop(output_stream);
 
             device.verify().expect_err("should not exist");
-
+            println!("Stopping server");
             abort_handle.abort();
-            println!("Done!");
+            println!("Server stopped");
         }
     }
 }

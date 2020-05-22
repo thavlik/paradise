@@ -197,9 +197,10 @@ async fn server_entry(addr: SocketAddr, mut producer: Producer<f32>) -> Result<(
             let frame: Frame = bincode::deserialize(data?.as_ref())?;
             // TODO: verify timestamp
             if frame.buffer.len() % 4 != 0 {
-                return anyhow!("encountered buffer with non-divisible by four length")
+                return Err(anyhow!("encountered buffer with non-divisible by four length"))
             }
-            producer.push_slice(unsafe { std::slice::from_raw_parts(&frame.buffer[..].as_ptr() as *const f32, frame.buffer.len()/4) });
+            let samples = unsafe { std::slice::from_raw_parts(frame.buffer.as_ptr() as *const f32, frame.buffer.len()/4) };
+            producer.push_slice(samples);
         }
     }
     Ok(())

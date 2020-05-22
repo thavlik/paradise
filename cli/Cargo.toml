@@ -10,6 +10,7 @@ edition = "2018"
 tempfile = "3"
 cpal = { git = "https://github.com/rustaudio/cpal" }
 anyhow = "1.0.12"
+log = "0.4.0"
 env_logger = "0.7.1"
 clap = { git = "https://github.com/clap-rs/clap/" }
 tokio = { version = "0.2.6", features = ["rt-core", "rt-threaded", "io-driver", "time", "macros"] }

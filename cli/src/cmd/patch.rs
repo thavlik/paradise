@@ -10,9 +10,6 @@ use futures::future::{Abortable, AbortHandle, Aborted};
 use crossbeam::{Receiver, Sender};
 use anyhow::{anyhow, bail, Error, Context, Result};
 use futures::{StreamExt, TryFutureExt};
-use structopt::{self, StructOpt};
-use tracing::{error, info, info_span};
-use tracing_futures::Instrument as _;
 use paradise_core::Frame;
 use ringbuf::{RingBuffer, Producer};
 
@@ -50,16 +47,16 @@ fn get_device(name: &Option<String>, host: &cpal::Host) -> Result<cpal::Device> 
             match name.parse::<usize>() {
                 Ok(index) => {
                     if index >= host.devices()?.count() {
-                        return Err(Error::msg(format!("device index out of range (tip: run info)")));
+                        return Err(anyhow!("device index out of range (tip: run info)"));
                     }
                     match host.devices()?
                         .skip(index)
                         .next() {
                         Some(device) => {
-                            println!("found device {}. \"{}\"", &name, device.name().unwrap_or(String::from("NULL")));
+                            info!("found device {}. \"{}\"", &name, device.name().unwrap_or(String::from("NULL")));
                             Ok(device)
                         },
-                        None => Err(Error::msg(format!("device at index \"{}\" not found (tip: run info)", &name))),
+                        None => Err(anyhow!("device at index \"{}\" not found (tip: run info)", &name)),
                     }
                 },
                 _ => match host.devices()?
@@ -69,19 +66,19 @@ fn get_device(name: &Option<String>, host: &cpal::Host) -> Result<cpal::Device> 
                         _ => false,
                     }) {
                     Some((_, d)) => {
-                        println!("found device \"{}\"", &name);
+                        info!("found device \"{}\"", &name);
                         Ok(d)
                     },
-                    None => Err(Error::msg(format!("device \"{}\" not found", name))),
+                    None => Err(anyhow!("device \"{}\" not found", name)),
                 },
             }
         },
         None => match host.default_output_device() {
             Some(device) => {
-                println!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
+                info!("using default output device \"{}\"", &device.name().unwrap_or(String::from("NULL")));
                 Ok(device)
             },
-            None => Err(Error::msg(format!("default output device not available"))),
+            None => Err(anyhow!("default output device not available")),
         },
     }
 }
@@ -90,7 +87,7 @@ fn get_host(name: &Option<String>) -> Result<cpal::Host> {
     match name {
         Some(name) => {
             let host = crate::util::get_host_by_name(name)?;
-            println!("found host \"{}\"", name);
+            info!("found host \"{}\"", name);
             Ok(host)
         },
         None => {
@@ -119,7 +116,7 @@ pub async fn main(args: PatchArgs) -> Result<()> {
         // reason, it's not yielding an error. This code works
         // and this discrepancy is trivial.
         // TODO: make sure server exiting with error results in error
-        assert!(future.await.is_ok());
+        assert!(future.await.is_err());
     });
     let _guard = scopeguard::guard((), move |_| {
         abort_handle.abort();
@@ -138,13 +135,13 @@ pub async fn main(args: PatchArgs) -> Result<()> {
             };
         }
         if let Some(err) = input_fell_behind {
-            eprintln!(
+            error!(
                 "input stream fell behind: {:?}: try increasing latency",
                 err
             );
         }
     };
-    let err_fn = |err| eprintln!("an error occurred on stream: {}", err);
+    let err_fn = |err| error!("an error occurred on stream: {}", err);
     let output_stream = device.build_output_stream(&conf, output_data_fn, err_fn)?;
     output_stream.play()?;
     Ok(())
@@ -164,7 +161,7 @@ async fn server_entry(addr: SocketAddr, mut producer: Producer<f32>) -> Result<(
     let (cert, key) = match fs::read(&cert_path).and_then(|x| Ok((x, fs::read(&key_path)?))) {
         Ok(x) => x,
         Err(ref e) if e.kind() == io::ErrorKind::NotFound => {
-            println!("generating self-signed certificate");
+            info!("generating self-signed certificate");
             let cert = rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
             let key = cert.serialize_private_key_der();
             let cert = cert.serialize_der().unwrap();
@@ -200,7 +197,7 @@ async fn server_entry(addr: SocketAddr, mut producer: Producer<f32>) -> Result<(
                 return Err(anyhow!("encountered buffer with non-divisible by four length"))
             }
             let samples = unsafe { std::slice::from_raw_parts(frame.buffer.as_ptr() as *const f32, frame.buffer.len()/4) };
-            producer.push_slice(samples);
+            producer.push_slice(samples).map_err(|e| anyhow!("{:?}", e))?;
         }
     }
     Ok(())

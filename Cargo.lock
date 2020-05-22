@@ -1791,6 +1791,7 @@ dependencies = [
  "env_logger",
  "futures 0.3.4",
  "lazy_static",
+ "log",
  "paradise_core",
  "portpicker",
  "quinn",

@@ -477,8 +477,11 @@ mod test {
         recv_data.recv_timeout(Duration::from_secs(5))
             .expect("did not receive data");
 
-        // The device should still be visible to cpal until CoreAudio is restarted
-        device.verify().unwrap();
+        // There is a discrepancy here between my 2018 Mac Mini and 2016 Macbook Pro.
+        // On Mac Mini 2018, the device is only removed from the system once
+        // CoreAudio is restarted. On the Macbook Pro 2016, the device disappears
+        // as soon as the directory is removed.
+        //device.verify().unwrap();
 
         send_data.lock().unwrap().1 = true;
 

@@ -292,12 +292,12 @@
 				LastUpgradeCheck = 1010;
 				TargetAttributes = {
 					2D7477A81578168D00412279 = {
-						DevelopmentTeam = 9F38VUKBEB;
+						DevelopmentTeam = NT8P8N8KB5;
 						ProvisioningStyle = Automatic;
 					};
 					77CAB567221534640092B2B0 = {
 						CreatedOnToolsVersion = 10.1;
-						DevelopmentTeam = 9F38VUKBEB;
+						DevelopmentTeam = NT8P8N8KB5;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.HardenedRuntime = {
@@ -604,10 +604,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = 9F38VUKBEB;
+				DEVELOPMENT_TEAM = NT8P8N8KB5;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=0",
@@ -631,10 +631,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = 9F38VUKBEB;
+				DEVELOPMENT_TEAM = NT8P8N8KB5;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=1",
@@ -658,10 +658,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = 9F38VUKBEB;
+				DEVELOPMENT_TEAM = NT8P8N8KB5;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=1",
@@ -700,7 +700,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = 9F38VUKBEB;
+				DEVELOPMENT_TEAM = NT8P8N8KB5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -715,6 +715,7 @@
 				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.briankendall.Proxy-Audio-Device-Settings";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_SWIFT_SYMBOLS = NO;
 			};
@@ -740,7 +741,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 9F38VUKBEB;
+				DEVELOPMENT_TEAM = NT8P8N8KB5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -759,6 +760,7 @@
 				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.briankendall.Proxy-Audio-Device-Settings";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_SWIFT_SYMBOLS = NO;
 			};
@@ -784,7 +786,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 9F38VUKBEB;
+				DEVELOPMENT_TEAM = NT8P8N8KB5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -803,6 +805,7 @@
 				OTHER_LDFLAGS = "-lparadise_device";
 				PRODUCT_BUNDLE_IDENTIFIER = "net.briankendall.Proxy-Audio-Device-Settings";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_SWIFT_SYMBOLS = NO;
 			};

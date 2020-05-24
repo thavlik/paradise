@@ -477,10 +477,12 @@ mod test {
         recv_data.recv_timeout(Duration::from_secs(5))
             .expect("did not receive data");
 
-        // There is a discrepancy here between my 2018 Mac Mini and 2016 Macbook Pro.
-        // On Mac Mini 2018, the device is only removed from the system once
+        // There is a discrepancy here between my 2018 Mac Mini and 2016 Macbook
+        // Pro. On Mac Mini, the device is only removed from the system once
         // CoreAudio is restarted. On the Macbook Pro 2016, the device disappears
-        // as soon as the directory is removed.
+        // as soon as the directory is removed. Note they are running different
+        // versions of MacOS (Mojave 10.14.6 for the Macbook, Catalina 10.15.4
+        // for the Mac Mini).
         //device.verify().unwrap();
 
         send_data.lock().unwrap().1 = true;
